@@ -51,6 +51,9 @@ public sealed class PhysicalProcessRunner : IProcessRunner
         if (!process.WaitForExit(_timeoutMs))
         {
             try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+            // Let the readers observe the now-closed pipe before we dispose the Process, so we
+            // don't abandon tasks bound to a disposed handle. Best-effort, bounded by the timeout.
+            try { Task.WaitAll(new[] { stdoutTask, stderrTask }, _timeoutMs); } catch { /* best effort */ }
             return new ProcessResult(TimedOutExitCode, "", "");
         }
 

@@ -25,7 +25,7 @@ public class DependencyCheckerTests
     public void Found_when_allowlisted_and_on_path_with_version_from_probe()
     {
         var resolver = new FakePathResolver().Add("node", "/usr/bin/node");
-        var runner = new FakeProcessRunner().AddVersion("node", "v20.10.0");
+        var runner = new FakeProcessRunner().AddVersion("/usr/bin/node", "v20.10.0");
 
         var report = new DependencyChecker(resolver, runner).Check(new[] { Ref("node") });
 
@@ -34,7 +34,7 @@ public class DependencyCheckerTests
         Assert.Equal("v20.10.0", result.Status.Version);
         Assert.Equal("/usr/bin/node", result.Status.Path);
         var call = Assert.Single(runner.Invocations);
-        Assert.Equal("node", call.Executable);
+        Assert.Equal("/usr/bin/node", call.Executable); // probed by resolved path, not bare name
         Assert.Equal(new[] { "--version" }, call.Arguments);
     }
 
@@ -56,7 +56,7 @@ public class DependencyCheckerTests
     public void Version_falls_back_to_stderr_and_uses_first_nonempty_line()
     {
         var resolver = new FakePathResolver().Add("python3", "/usr/bin/python3");
-        var runner = new FakeProcessRunner().AddResult("python3", new ProcessResult(0, "", "\nPython 3.11.5\n"));
+        var runner = new FakeProcessRunner().AddResult("/usr/bin/python3", new ProcessResult(0, "", "\nPython 3.11.5\n"));
 
         var report = new DependencyChecker(resolver, runner).Check(new[] { Ref("python3") });
 

@@ -34,8 +34,8 @@ public class DependencyHealthServiceTests
             .Add("npx", "/usr/bin/npx")
             .Add("uvx", "/usr/bin/uvx"); // python3 intentionally absent
         var runner = new FakeProcessRunner()
-            .AddVersion("npx", "10.2.0")
-            .AddVersion("uvx", "uv 0.4.0");
+            .AddVersion("/usr/bin/npx", "10.2.0")
+            .AddVersion("/usr/bin/uvx", "uv 0.4.0");
 
         var report = new DependencyHealthService(fs, resolver, runner).Check("/home", "/repo");
 
