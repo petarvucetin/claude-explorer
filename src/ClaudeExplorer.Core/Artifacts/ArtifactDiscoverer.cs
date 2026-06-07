@@ -27,6 +27,7 @@ public sealed class ArtifactDiscoverer
     {
         foreach (var a in DiscoverCommands($"{root}/commands", source)) yield return a;
         foreach (var a in DiscoverSkills($"{root}/skills", source)) yield return a;
+        foreach (var a in DiscoverSubagents($"{root}/agents", source)) yield return a;
     }
 
     private IEnumerable<DiscoveredArtifact> DiscoverCommands(string dir, ArtifactSource source)
@@ -36,6 +37,16 @@ public sealed class ArtifactDiscoverer
             var fm = Frontmatter.Parse(_fs.ReadAllText(file));
             var name = NameFrom(fm, FileNameWithoutExtension(file));
             yield return new DiscoveredArtifact(ArtifactKind.Command, name, ArtifactSummary.Extract(fm), source, file);
+        }
+    }
+
+    private IEnumerable<DiscoveredArtifact> DiscoverSubagents(string dir, ArtifactSource source)
+    {
+        foreach (var file in _fs.GetFiles(dir, "*.md", recurse: false))
+        {
+            var fm = Frontmatter.Parse(_fs.ReadAllText(file));
+            var name = NameFrom(fm, FileNameWithoutExtension(file));
+            yield return new DiscoveredArtifact(ArtifactKind.Subagent, name, ArtifactSummary.Extract(fm), source, file);
         }
     }
 
