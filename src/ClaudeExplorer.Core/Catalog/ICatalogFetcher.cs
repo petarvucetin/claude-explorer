@@ -28,9 +28,11 @@ public sealed class HttpCatalogFetcher : ICatalogFetcher, IDisposable
     {
         try
         {
-            using var response = _http.GetAsync(url).GetAwaiter().GetResult();
+            // ConfigureAwait(false): this sync-over-async runs safely even when called from a
+            // UI dispatcher context (Photino/Blazor) — continuations resume off the captured context.
+            using var response = _http.GetAsync(url).ConfigureAwait(false).GetAwaiter().GetResult();
             return response.IsSuccessStatusCode
-                ? response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                ? response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult()
                 : null;
         }
         catch (HttpRequestException) { return null; }

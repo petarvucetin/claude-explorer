@@ -35,7 +35,7 @@ public sealed class CatalogService
 
     private static IReadOnlyList<CatalogItem> Dedupe(IReadOnlyList<CatalogItem> items)
         => items
-            .GroupBy(i => $"{i.Source.Name} {i.Name}", StringComparer.Ordinal)
+            .GroupBy(i => (i.Source.Name, i.Name)) // value-tuple key — no separator-collision risk
             .Select(g => g.First())
             .OrderBy(i => i.Source.Name, StringComparer.OrdinalIgnoreCase)
             .ThenBy(i => i.Name, StringComparer.OrdinalIgnoreCase)

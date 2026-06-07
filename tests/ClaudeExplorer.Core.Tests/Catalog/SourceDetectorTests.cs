@@ -20,6 +20,8 @@ public class SourceDetectorTests
     [InlineData("https://github.com/octocat/plugins")]
     [InlineData("https://github.com/octocat/plugins.git")]
     [InlineData("https://github.com/octocat/plugins/")]
+    [InlineData("https://github.com/octocat/plugins/tree/main")]
+    [InlineData("https://github.com/octocat/plugins/blob/main/README.md")]
     public void Detects_github_urls(string input)
     {
         var src = SourceDetector.Detect(input);

@@ -12,8 +12,10 @@ public static class SourceDetector
     private static readonly Regex OwnerRepo =
         new(@"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$", RegexOptions.Compiled);
 
+    // Matches a github.com repo URL, ignoring any trailing path (/tree/main, /blob/..., etc.) so a
+    // pasted deep link still resolves to the repo's HEAD marketplace manifest.
     private static readonly Regex GitHubUrl = new(
-        @"^https?://github\.com/(?<owner>[A-Za-z0-9._-]+)/(?<repo>[A-Za-z0-9._-]+?)(?:\.git)?/?$",
+        @"^https?://github\.com/(?<owner>[A-Za-z0-9._-]+)/(?<repo>[A-Za-z0-9._-]+?)(?:\.git)?(?:/.*)?$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public static CatalogSource Detect(string input)
