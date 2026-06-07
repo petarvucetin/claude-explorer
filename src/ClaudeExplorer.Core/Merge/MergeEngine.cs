@@ -22,7 +22,74 @@ public sealed class MergeEngine
             if (s is not null) results.Add(s);
         }
 
+        results.AddRange(ResolveEnv(ordered));
+        results.AddRange(ResolveHooks(ordered));
+
         return new EffectiveConfig(results);
+    }
+
+    private static IEnumerable<EffectiveSetting> ResolveEnv(List<ScopeSettings> ordered)
+    {
+        var keys = new List<string>();
+        foreach (var s in ordered)
+            if (Navigate(s.Root, new[] { "env" }) is JsonObject env)
+                foreach (var kv in env)
+                    if (!keys.Contains(kv.Key)) keys.Add(kv.Key);
+
+        foreach (var key in keys)
+        {
+            var contributions = new List<SettingContribution>();
+            foreach (var s in ordered)
+                if (Navigate(s.Root, new[] { "env" }) is JsonObject env
+                    && env.TryGetPropertyValue(key, out var v) && v is not null)
+                    contributions.Add(new SettingContribution(
+                        new SettingOrigin(s.Scope, s.FilePath, $"env.{key}"),
+                        v.DeepClone()));
+
+            var winner = contributions[^1];
+            var distinct = contributions.Select(c => c.Value?.ToJsonString() ?? "null").Distinct().Count();
+
+            yield return new EffectiveSetting(
+                Key: $"env.{key}",
+                Strategy: MergeStrategy.ScalarLastWins,
+                Value: winner.Value?.DeepClone(),
+                Winner: winner.Origin,
+                Contributions: contributions,
+                HasConflict: distinct > 1);
+        }
+    }
+
+    private static IEnumerable<EffectiveSetting> ResolveHooks(List<ScopeSettings> ordered)
+    {
+        var events = new List<string>();
+        foreach (var s in ordered)
+            if (Navigate(s.Root, new[] { "hooks" }) is JsonObject h)
+                foreach (var kv in h)
+                    if (!events.Contains(kv.Key)) events.Add(kv.Key);
+
+        foreach (var ev in events)
+        {
+            var contributions = new List<SettingContribution>();
+            var combined = new JsonArray();
+            foreach (var s in ordered)
+                if (Navigate(s.Root, new[] { "hooks" }) is JsonObject h
+                    && h.TryGetPropertyValue(ev, out var v) && v is JsonArray arr)
+                {
+                    contributions.Add(new SettingContribution(
+                        new SettingOrigin(s.Scope, s.FilePath, $"hooks.{ev}"),
+                        arr.DeepClone()));
+                    foreach (var item in arr)
+                        combined.Add(item?.DeepClone());
+                }
+
+            yield return new EffectiveSetting(
+                Key: $"hooks.{ev}",
+                Strategy: MergeStrategy.ArrayConcat,
+                Value: combined,
+                Winner: null,
+                Contributions: contributions,
+                HasConflict: false);
+        }
     }
 
     private static EffectiveSetting? ResolveListUnion(string key, string[] path, List<ScopeSettings> ordered)
