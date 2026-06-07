@@ -11,10 +11,11 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Current state (2026-06-07)
-- **Phases 1 & 2 are DONE, merged to `main`, and pushed** to `origin`
-  (`https://github.com/petarvucetin/claude-explorer.git`). `git log` tip ≈ `e170d36`.
-- **`dotnet test` → 53 passing.** `.NET SDK 10.0.300` is installed. Solution file is
-  `ClaudeExplorer.slnx` (new .NET 10 format — normal).
+- **Phases 1, 2 & 3 are DONE, merged to `main`, and pushed** to `origin`
+  (`https://github.com/petarvucetin/claude-explorer.git`). `git log` tip ≈ `9bfd03e`.
+- **`dotnet test` → 99 passing.** `.NET SDK 10.0.300` is installed. Solution file is
+  `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via PowerShell (it is
+  NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash fails with exit 127).
 - Library so far (`src/ClaudeExplorer.Core`):
   - **Config engine** (`Model/`, `Io/IFileSystem.cs`, `Discovery/`, `Reading/`, `Merge/`,
     `EffectiveConfigService.cs`) — effective merged `settings.json` across scopes with
@@ -22,7 +23,14 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
     concat, env expansion).
   - **Artifact discovery** (`Artifacts/`) — commands/skills/subagents across User/Project/
     Plugin with frontmatter parsing, summary extraction, and shadow/override resolution.
-- Next up: **Phase 3 — Dependency health** (plan not yet written).
+  - **Dependency health** (`Dependencies/`) — `IProcessRunner`/`IPathResolver` seams
+    (+ `Physical*` impls + fakes), `ExecutableExtractor`, minimal `McpServerReader`
+    (`mcpServers` from settings + project `.mcp.json`), `DependencyExtractor` (hooks `command`
+    strings + MCP commands → deduped refs), `DependencyChecker` (resolve + allowlisted
+    `--version` probe → Found/Missing/Unverifiable), `DependencyHealthService` façade.
+    **Safety:** only the 15-runtime allowlist is ever executed, only with `--version`, by
+    resolved path; discovered commands/arbitrary binaries are never run.
+- Next up: **Phase 4 — Catalog + user-added sources (trust)** (plan not yet written).
 
 ## Git
 - Work on `main` (normal repo, no worktrees). Remote `origin` = the GitHub URL above; `gh`
@@ -80,9 +88,13 @@ escalate to opus only if blocked. Each phase ≈ 1 plan + ~30–75 subagent tool
 - `.gitignore` already ignores `bin/`,`obj/`,`.playwright-mcp/`. A local static server for
   the prototypes may still be running on `localhost:8765` (harmless).
 
-## To resume: "continue to Phase 3"
-1. Confirm Linear is on the **CLA** workspace (`list_teams`).
-2. Author `docs/superpowers/plans/2026-06-07-03-dependency-health.md` from the roadmap's
-   Phase 3 outline (full TDD detail).
-3. Create Phase-3 task issues under the "Phase 3 — Dependency health" project.
-4. Run the playbook (branch → build → review → merge → push → close Linear).
+## To resume: "continue to Phase 4"
+1. Confirm Linear is on the **CLA** workspace (`list_teams` → "Claude Browser" / CLA).
+2. Author `docs/superpowers/plans/2026-06-07-04-catalog-sources.md` from the roadmap's
+   Phase 4 outline (full TDD detail). New seam: `ICatalogFetcher`/`IHttpClient` + fake
+   (no real network in tests). **Hard rule:** metadata-only — nothing fetched/run until install.
+3. Create Phase-4 task issues under the "Phase 4 — Catalog + user-added sources" project
+   (epic **CLA-28**), as children of the epic, status Todo.
+4. Run the playbook (branch `phase-4-…` → one implementer subagent (sonnet) → spec +
+   `feature-dev:code-reviewer` review → fix loop → ff-merge → push → close Linear).
+   Phase-3 reference: plan `…-03-dependency-health.md`, issues CLA-27 + CLA-33…CLA-41.
