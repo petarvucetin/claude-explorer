@@ -16,7 +16,46 @@ public sealed class MergeEngine
             if (s is not null) results.Add(s);
         }
 
+        foreach (var spec in SettingSpecs.Lists)
+        {
+            var s = ResolveListUnion(spec.Key, spec.Path, ordered);
+            if (s is not null) results.Add(s);
+        }
+
         return new EffectiveConfig(results);
+    }
+
+    private static EffectiveSetting? ResolveListUnion(string key, string[] path, List<ScopeSettings> ordered)
+    {
+        var contributions = new List<SettingContribution>();
+        var merged = new JsonArray();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var s in ordered)
+        {
+            if (Navigate(s.Root, path) is not JsonArray arr) continue;
+
+            contributions.Add(new SettingContribution(
+                new SettingOrigin(s.Scope, s.FilePath, string.Join('.', path)),
+                arr.DeepClone()));
+
+            foreach (var item in arr)
+            {
+                var itemKey = item?.ToJsonString() ?? "null";
+                if (seen.Add(itemKey))
+                    merged.Add(item?.DeepClone());
+            }
+        }
+
+        if (contributions.Count == 0) return null;
+
+        return new EffectiveSetting(
+            Key: key,
+            Strategy: MergeStrategy.ListUnion,
+            Value: merged,
+            Winner: null,
+            Contributions: contributions,
+            HasConflict: false);
     }
 
     private static JsonNode? Navigate(JsonObject root, string[] path)
