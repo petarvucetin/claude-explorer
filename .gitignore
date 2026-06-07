@@ -19,5 +19,6 @@ coverage*.json
 .DS_Store
 Thumbs.db
 
-# UX exploration tooling artifacts
+# Playwright / UX exploration tooling artifacts
+.playwright-mcp/
 ux-explorations/.playwright-mcp/
