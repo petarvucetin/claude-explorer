@@ -53,4 +53,39 @@ public class ArtifactResolverTests
             .Select(r => $"{r.Winner.Kind}:{r.Winner.Name}").ToArray();
         Assert.Equal(new[] { "Command:alpha", "Command:zeta", "Skill:beta" }, names);
     }
+
+    [Fact]
+    public void Shadowed_entries_retain_their_summary_and_path()
+    {
+        var user = new DiscoveredArtifact(ArtifactKind.Command, "review", "u",
+            new ArtifactSource(ArtifactSourceKind.User), "/U/review");
+        var project = new DiscoveredArtifact(ArtifactKind.Command, "review", "p",
+            new ArtifactSource(ArtifactSourceKind.Project), "/P/review");
+
+        var catalog = new ArtifactResolver().Resolve(new[] { user, project });
+        var review = catalog.Artifacts.Single();
+
+        Assert.Equal(ArtifactSourceKind.Project, review.Winner.Source.Kind);
+        var shadow = Assert.Single(review.Shadowed);
+        Assert.Equal("u", shadow.Summary);
+        Assert.Equal("/U/review", shadow.FilePath);
+    }
+
+    [Fact]
+    public void Plugin_vs_plugin_same_name_is_deterministic()
+    {
+        // Two Plugin-source skills with the same name from different plugins.
+        // Ordinal tie-break on plugin name: "alpha" < "beta", so "alpha" wins.
+        var beta = new DiscoveredArtifact(ArtifactKind.Skill, "x", null,
+            new ArtifactSource(ArtifactSourceKind.Plugin, "beta"), "/beta/x");
+        var alpha = new DiscoveredArtifact(ArtifactKind.Skill, "x", null,
+            new ArtifactSource(ArtifactSourceKind.Plugin, "alpha"), "/alpha/x");
+
+        var catalog = new ArtifactResolver().Resolve(new[] { beta, alpha });
+        var resolved = catalog.Artifacts.Single();
+
+        Assert.Equal("alpha", resolved.Winner.Source.PluginName);
+        var shadowedPlugin = Assert.Single(resolved.Shadowed);
+        Assert.Equal("beta", shadowedPlugin.Source.PluginName);
+    }
 }

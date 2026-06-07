@@ -38,4 +38,26 @@ public class FrontmatterTests
         Assert.Equal("y", fm.Fields["name"]);
         Assert.Contains("body", fm.Body);
     }
+
+    [Fact]
+    public void Body_separator_does_not_truncate_body()
+    {
+        // A markdown thematic break (---) in the body must NOT be treated as the closing fence.
+        var content = "---\nname: x\n---\nbefore\n---\nafter\n";
+        var fm = Frontmatter.Parse(content);
+
+        Assert.Equal("x", fm.Fields["name"]);
+        Assert.Contains("before", fm.Body);
+        Assert.Contains("after", fm.Body);
+    }
+
+    [Fact]
+    public void Strips_leading_utf8_bom()
+    {
+        // UTF-8 BOM (U+FEFF) prepended to the file must not prevent frontmatter detection.
+        var content = "﻿---\nname: y\n---\nbody";
+        var fm = Frontmatter.Parse(content);
+
+        Assert.Equal("y", fm.Fields["name"]);
+    }
 }

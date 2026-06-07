@@ -33,4 +33,13 @@ public class ArtifactDiscovererCommandTests
         var found = new ArtifactDiscoverer(fs).Discover("/home", null, Array.Empty<PluginLocation>());
         Assert.Equal("thing", found.Single().Name);
     }
+
+    [Fact]
+    public void Deeply_nested_command_name_is_leaf_filename()
+    {
+        var fs = new InMemoryFileSystem()
+            .AddFile("/home/.claude/commands/a/b/thing.md", "x");
+        var found = new ArtifactDiscoverer(fs).Discover("/home", null, Array.Empty<PluginLocation>());
+        Assert.Equal("thing", found.Single().Name);
+    }
 }

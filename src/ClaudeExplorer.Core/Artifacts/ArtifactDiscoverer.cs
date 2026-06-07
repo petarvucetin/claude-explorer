@@ -34,7 +34,8 @@ public sealed class ArtifactDiscoverer
     {
         foreach (var file in _fs.GetFiles(dir, "*.md", recurse: true))
         {
-            var fm = Frontmatter.Parse(_fs.ReadAllText(file));
+            if (!TryRead(file, out var text)) continue;
+            var fm = Frontmatter.Parse(text);
             var name = NameFrom(fm, FileNameWithoutExtension(file));
             yield return new DiscoveredArtifact(ArtifactKind.Command, name, ArtifactSummary.Extract(fm), source, file);
         }
@@ -44,7 +45,8 @@ public sealed class ArtifactDiscoverer
     {
         foreach (var file in _fs.GetFiles(dir, "*.md", recurse: false))
         {
-            var fm = Frontmatter.Parse(_fs.ReadAllText(file));
+            if (!TryRead(file, out var text)) continue;
+            var fm = Frontmatter.Parse(text);
             var name = NameFrom(fm, FileNameWithoutExtension(file));
             yield return new DiscoveredArtifact(ArtifactKind.Subagent, name, ArtifactSummary.Extract(fm), source, file);
         }
@@ -56,10 +58,18 @@ public sealed class ArtifactDiscoverer
         {
             var skillFile = $"{sub}/SKILL.md";
             if (!_fs.FileExists(skillFile)) continue;
-            var fm = Frontmatter.Parse(_fs.ReadAllText(skillFile));
+            if (!TryRead(skillFile, out var skillText)) continue;
+            var fm = Frontmatter.Parse(skillText);
             var name = NameFrom(fm, LastSegment(sub));
             yield return new DiscoveredArtifact(ArtifactKind.Skill, name, ArtifactSummary.Extract(fm), source, skillFile);
         }
+    }
+
+    private bool TryRead(string path, out string content)
+    {
+        try { content = _fs.ReadAllText(path); return true; }
+        catch (IOException) { content = ""; return false; }
+        catch (UnauthorizedAccessException) { content = ""; return false; }
     }
 
     private static string NameFrom(FrontmatterResult fm, string fallback)

@@ -15,17 +15,29 @@ public static class Frontmatter
         if (string.IsNullOrEmpty(content))
             return new FrontmatterResult(fields, content ?? "");
 
-        var text = content.Replace("\r\n", "\n").Replace("\r", "\n");
+        var text = content.TrimStart('﻿').Replace("\r\n", "\n").Replace("\r", "\n");
         if (!text.StartsWith("---\n", StringComparison.Ordinal))
             return new FrontmatterResult(fields, text);
 
-        var close = text.IndexOf("\n---", 4, StringComparison.Ordinal);
-        if (close < 0)
+        int close;          // index of the '\n' that begins the closing fence line
+        int bodyStart;
+        var idx = text.IndexOf("\n---\n", 4, StringComparison.Ordinal);
+        if (idx >= 0)
+        {
+            close = idx;
+            bodyStart = idx + 5; // length of "\n---\n"
+        }
+        else if (text.EndsWith("\n---", StringComparison.Ordinal))
+        {
+            close = text.Length - 4;
+            bodyStart = text.Length; // no body
+        }
+        else
+        {
             return new FrontmatterResult(fields, text);
-
+        }
         var block = text.Substring(4, close - 4);
-        var nl = text.IndexOf('\n', close + 1);
-        var body = nl >= 0 ? text.Substring(nl + 1) : "";
+        var body = bodyStart <= text.Length ? text.Substring(bodyStart) : "";
 
         foreach (var rawLine in block.Split('\n'))
         {
