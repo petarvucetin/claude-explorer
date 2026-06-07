@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Explorer — Effective Config (Blueprint)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F5; --grid:#D8DEE7; --grid-bold:#CAD2DD;
+    --panel:#FBFCFE; --edge:#C2CAD6; --edge-2:#1A2230;
+    --ink:#16202E; --ink-soft:#54616F; --ink-faint:#8893A1;
+    --blue:#1F47D6; --blue-soft:#3E63E0; --blue-wash:#E1E8FB; --blue-line:#9DB4F4;
+    --amber:#B5710C; --amber-wash:#F6ECD6; --red:#C2362B; --red-wash:#F6DDD9;
+    --green:#2E7D4F; --green-wash:#DDEEE2; --dim:#A7B0BC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Archivo",sans-serif;color:var(--ink);background:var(--paper);overflow:hidden;-webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+      linear-gradient(var(--grid-bold) 1px,transparent 1px),linear-gradient(90deg,var(--grid-bold) 1px,transparent 1px);
+    background-size:24px 24px,24px 24px,120px 120px,120px 120px;
+  }
+  .app{display:grid;grid-template-columns:230px 1fr;grid-template-rows:58px 1fr;height:100vh}
+  .topbar{grid-column:1/3;display:flex;align-items:center;gap:16px;padding:0 20px;border-bottom:2px solid var(--edge-2);background:var(--panel)}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:16px;letter-spacing:.4px;text-transform:uppercase}
+  .mark{width:26px;height:26px;border:2px solid var(--edge-2);border-radius:5px;position:relative;background:var(--blue-wash)}
+  .mark::before{content:"";position:absolute;inset:5px;border:2px solid var(--blue);border-radius:50%;border-bottom-color:transparent;transform:rotate(45deg)}
+  .mark::after{content:"";position:absolute;width:5px;height:5px;background:var(--blue);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .spacer{flex:1}
+  .coord{font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+  .proj{display:flex;align-items:center;gap:9px;padding:6px 12px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);cursor:pointer;font-family:"Spline Sans Mono";font-size:12px;font-weight:600;transition:.15s;box-shadow:3px 3px 0 var(--blue-wash)}
+  .proj:hover{box-shadow:4px 4px 0 var(--blue);transform:translate(-1px,-1px)}
+  .proj .dot{width:8px;height:8px;background:var(--green);border:1px solid var(--edge-2)}
+  .iconbtn{width:34px;height:34px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);display:grid;place-items:center;cursor:pointer;color:var(--ink);transition:.15s}
+  .iconbtn:hover{background:var(--blue);color:#fff}
+
+  .rail{border-right:2px solid var(--edge-2);padding:18px 12px;display:flex;flex-direction:column;gap:3px;background:var(--panel)}
+  .rail .lbl{font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:8px 8px 7px;display:flex;align-items:center;gap:8px}
+  .rail .lbl::after{content:"";flex:1;height:1px;background:var(--edge)}
+  .nav{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:6px;color:var(--ink-soft);font-size:13px;font-weight:600;cursor:pointer;transition:.14s;border:1.5px solid transparent}
+  .nav svg{width:17px;height:17px;flex:none}
+  .nav:hover{background:var(--blue-wash)}
+  .nav.active{background:var(--panel);color:var(--ink);border-color:var(--edge-2);box-shadow:3px 3px 0 var(--blue)}
+  .nav.active svg{color:var(--blue)}
+  .nav .count{margin-left:auto;font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint);font-weight:500}
+  .nav .count.bad{color:var(--red);font-weight:700}
+  .rail .foot{margin-top:auto;font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);padding:9px;line-height:1.7;border:1px dashed var(--edge);border-radius:6px}
+
+  .content{overflow:auto;padding:22px 28px 40px}
+  .pagehead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:20px}
+  .k{font-family:"Spline Sans Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .k::before{content:"";width:18px;height:2px;background:var(--blue)}
+  .pagehead h1{font-size:25px;font-weight:800;letter-spacing:-.3px;text-transform:uppercase}
+  /* ladder */
+  .ladder{display:flex;align-items:center;gap:0;font-family:"Spline Sans Mono";font-size:10.5px;font-weight:600;margin-top:4px}
+  .ladder .step{padding:4px 10px;border:1.5px solid var(--edge);background:var(--panel);color:var(--ink-faint);position:relative}
+  .ladder .step.on{border-color:var(--edge-2);color:var(--ink);background:var(--blue-wash)}
+  .ladder .arr{color:var(--blue);padding:0 7px;font-weight:700}
+  .ladder .note{margin-left:12px;color:var(--ink-faint);text-transform:none;font-weight:400}
+
+  /* toolbar */
+  .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .chips{display:flex;gap:6px}
+  .chip{font-family:"Spline Sans Mono";font-size:11px;font-weight:600;padding:6px 11px;border:1.5px solid var(--edge);background:var(--panel);cursor:pointer;border-radius:6px;color:var(--ink-soft);transition:.13s}
+  .chip:hover{border-color:var(--edge-2)}
+  .chip.on{background:var(--edge-2);color:#fff;border-color:var(--edge-2)}
+  .chip .n{opacity:.6;margin-left:5px}
+  .search{display:flex;align-items:center;gap:8px;width:230px;padding:7px 11px;border:1.5px solid var(--edge);border-radius:6px;background:var(--panel);color:var(--ink-faint);font-family:"Spline Sans Mono";font-size:11.5px}
+  .toggle{display:flex;align-items:center;gap:7px;font-family:"Spline Sans Mono";font-size:11px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+  .sw{width:30px;height:17px;border:1.5px solid var(--edge-2);border-radius:20px;background:var(--panel);position:relative}
+  .sw.on{background:var(--blue)}
+  .sw i{position:absolute;width:11px;height:11px;background:var(--edge-2);border-radius:50%;top:1px;left:2px;transition:.15s}
+  .sw.on i{left:15px;background:#fff}
+
+  /* legend */
+  .legend{display:flex;gap:16px;font-family:"Spline Sans Mono";font-size:10.5px;color:var(--ink-soft);margin-bottom:10px;flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .lg{width:11px;height:11px;border:1.5px solid;display:inline-block}
+  .lg.win{background:var(--blue-wash);border-color:var(--blue)}
+  .lg.over{background:var(--panel);border-color:var(--dim)}
+  .lg.merge{background:var(--green-wash);border-color:var(--green)}
+  .lg.conf{background:var(--amber-wash);border-color:var(--amber)}
+
+  /* matrix */
+  .panel{background:var(--panel);border:1.5px solid var(--edge-2);position:relative}
+  .panel::before,.panel::after{content:"";position:absolute;width:9px;height:9px;border:2px solid var(--blue);z-index:3}
+  .panel::before{left:-2px;top:-2px;border-right:none;border-bottom:none}
+  .panel::after{right:-2px;bottom:-2px;border-left:none;border-top:none}
+  table{width:100%;border-collapse:collapse;font-family:"Spline Sans Mono";font-size:11.5px}
+  thead th{position:sticky;top:0;background:#101826;color:#fff;text-align:left;padding:10px 12px;font-weight:600;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;z-index:2;white-space:nowrap}
+  thead th.eff{background:var(--blue);color:#fff}
+  thead th.scope{border-left:1px solid #2c3a52}
+  .grp td{background:#E7ECF3;font-family:"Archivo";font-weight:800;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);padding:7px 12px;border-top:1.5px solid var(--edge-2);border-bottom:1px solid var(--edge)}
+  tbody tr.row{border-bottom:1px solid var(--edge)}
+  tbody tr.row:hover td{background:var(--blue-wash)}
+  td{padding:9px 12px;vertical-align:middle;border-left:1px solid var(--edge)}
+  td:first-child{border-left:none}
+  .setting{font-weight:600;color:var(--ink);white-space:nowrap}
+  .setting .rule{display:block;font-size:9.5px;font-weight:400;color:var(--ink-faint);margin-top:2px}
+  .cell{color:var(--ink);white-space:nowrap}
+  .cell.empty{color:var(--dim)}
+  .cell.over{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--red)}
+  .cell.win{background:var(--blue-wash);box-shadow:inset 0 0 0 1.5px var(--blue);font-weight:600;position:relative}
+  .cell.win .pin{position:absolute;left:3px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:var(--blue)}
+  .cell.win{padding-left:16px}
+  .carry{background:linear-gradient(to bottom,transparent calc(50% - 1px),var(--blue-line) calc(50% - 1px),var(--blue-line) calc(50% + 1px),transparent calc(50% + 1px))}
+  td.eff{background:var(--blue-wash);border-left:2px solid var(--blue);font-weight:700;color:var(--ink);white-space:nowrap}
+  td.eff .v{display:flex;align-items:center;gap:6px}
+  td.eff .arrowin{color:var(--blue)}
+  .badge{font-size:9px;font-weight:700;padding:1px 5px;border:1.5px solid;text-transform:uppercase;letter-spacing:.03em}
+  .badge.conf{color:var(--amber);border-color:var(--amber);background:var(--amber-wash)}
+  .badge.merge{color:var(--green);border-color:var(--green);background:var(--green-wash)}
+  .expand{cursor:pointer}
+  .expand .setting::after{content:"▸";color:var(--blue);margin-left:7px;font-size:10px}
+  .expand.open .setting::after{content:"▾"}
+
+  /* detail row */
+  tr.detail td{background:#F4F7FB;border-left:2px solid var(--blue);padding:0}
+  .trace{padding:14px 16px 16px 16px}
+  .trace .th{font-family:"Archivo";font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;color:var(--ink-soft);display:flex;align-items:center;gap:8px}
+  .tline{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1.5px solid var(--edge);background:var(--panel);margin-bottom:7px;font-family:"Spline Sans Mono";font-size:11px}
+  .tline.winner{border-color:var(--blue);box-shadow:3px 3px 0 var(--blue-wash)}
+  .tline .scopetag{font-weight:700;text-transform:uppercase;font-size:9.5px;letter-spacing:.05em;padding:2px 7px;border:1.5px solid var(--edge-2);color:var(--ink)}
+  .tline.winner .scopetag{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .tline .val{font-weight:600}
+  .tline .val.struck{text-decoration:line-through;text-decoration-color:var(--red);color:var(--ink-faint)}
+  .tline .path{margin-left:auto;color:var(--ink-soft);border-bottom:1px dashed var(--ink-faint);cursor:pointer}
+  .tline .path:hover{color:var(--blue);border-color:var(--blue)}
+  .tline .why{color:var(--ink-faint)}
+  .actions{display:flex;gap:8px;margin-top:10px}
+  .btn{font-family:"Spline Sans Mono";font-size:10.5px;font-weight:600;padding:6px 11px;border:1.5px solid var(--edge-2);background:var(--panel);cursor:pointer;border-radius:5px;display:flex;align-items:center;gap:6px;transition:.13s}
+  .btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .btn.primary{background:var(--edge-2);color:#fff}
+  .btn.primary:hover{background:var(--blue);border-color:var(--blue)}
+  .miniview{margin-top:10px;border:1.5px solid var(--edge);background:#0f1622;color:#cdd6e6;font-family:"Spline Sans Mono";font-size:10.5px;border-radius:5px;overflow:hidden}
+  .miniview .vh{background:#0b111b;padding:6px 10px;color:var(--ink-faint);display:flex;gap:8px;border-bottom:1px solid #1d2738}
+  .miniview pre{padding:10px 12px;line-height:1.7;overflow:auto}
+  .miniview .ln{color:#4a586e;margin-right:12px;user-select:none}
+  .miniview .hl{background:#15233f;display:block;margin:0 -12px;padding:0 12px}
+  .miniview .key{color:#7fb0ff}.miniview .str{color:#9be29b}.miniview .num{color:#e0a96d}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="mark"></span> Claude&nbsp;Explorer</div>
+    <span class="coord">FIG.02 — PRECEDENCE MATRIX</span>
+    <div class="spacer"></div>
+    <div class="proj"><span class="dot"></span> webapp <span style="color:var(--ink-faint)">+2 ▾</span></div>
+    <div class="iconbtn" title="Refresh"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
+  </header>
+
+  <aside class="rail">
+    <div class="lbl">Workspace</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Dashboard</div>
+    <div class="nav active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><path d="M5 7h14M5 12h9M5 17h6"/></svg>Effective Config</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg>Commands &amp; Skills <span class="count">67</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>MCP &amp; Plugins <span class="count bad">1✗</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>Dependencies <span class="count bad">1✗</span></div>
+    <div class="lbl">Discover</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Marketplace</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M12 7v5l3 2M3 4v5h5"/></svg>Change Log <span class="count">3</span></div>
+    <div class="foot">RESOLVING: webapp<br>sources: 4 files<br>conflicts: 2<br>merged keys: 3</div>
+  </aside>
+
+  <main class="content">
+    <div class="pagehead">
+      <div>
+        <div class="k">Configuration · Resolved</div>
+        <h1>Effective Config</h1>
+        <div class="ladder">
+          <span class="step">MANAGED</span><span class="arr">▸</span>
+          <span class="step">USER</span><span class="arr">▸</span>
+          <span class="step on">PROJECT · webapp</span><span class="arr">▸</span>
+          <span class="step">LOCAL</span>
+          <span class="note">precedence increases left → right · later scope wins for scalars</span>
+        </div>
+      </div>
+      <div class="iconbtn" title="Export" style="margin-top:4px"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 21h14"/></svg></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="chips">
+        <div class="chip on">All <span class="n">9</span></div>
+        <div class="chip">Permissions <span class="n">3</span></div>
+        <div class="chip">Environment <span class="n">2</span></div>
+        <div class="chip">Hooks <span class="n">1</span></div>
+        <div class="chip">Model <span class="n">1</span></div>
+        <div class="chip">UI <span class="n">2</span></div>
+      </div>
+      <div class="spacer" style="flex:1"></div>
+      <div class="toggle"><span class="sw on"><i></i></span> Conflicts only</div>
+      <div class="toggle"><span class="sw"><i></i></span> Show inherited</div>
+      <div class="search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg> filter keys…</div>
+    </div>
+
+    <div class="legend">
+      <span><i class="lg win"></i> winning value</span>
+      <span><i class="lg over"></i> overridden</span>
+      <span><i class="lg merge"></i> merged (union/deep)</span>
+      <span><i class="lg conf"></i> conflict flagged</span>
+      <span style="color:var(--blue-soft)">— blue wire = value carried to Effective</span>
+    </div>
+
+    <div class="panel">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:230px">Setting</th>
+            <th class="scope" style="width:120px">Managed</th>
+            <th class="scope" style="width:150px">User</th>
+            <th class="scope" style="width:150px">Project</th>
+            <th class="scope" style="width:130px">Local</th>
+            <th class="eff" style="width:190px">→ Effective</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><td colspan="6">Model</td></tr>
+          <tr class="row expand open">
+            <td class="setting">model <span class="rule">scalar · last-wins</span></td>
+            <td class="cell empty">—</td>
+            <td class="cell win"><span class="pin"></span>opus</td>
+            <td class="cell over carry">sonnet</td>
+            <td class="cell empty carry">—</td>
+            <td class="eff"><div class="v">opus <span class="badge conf">conflict</span></div></td>
+          </tr>
+          <!-- DETAIL -->
+          <tr class="detail">
+            <td colspan="6">
+              <div class="trace">
+                <div class="th"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg> Provenance trace — <span style="color:var(--blue)">model</span></div>
+
+                <div class="tline winner">
+                  <span class="scopetag">User</span>
+                  <span class="val">opus</span>
+                  <span class="why">· highest-precedence value present → wins</span>
+                  <span class="path">~/.claude/settings.json : 3</span>
+                </div>
+                <div class="tline">
+                  <span class="scopetag">Project</span>
+                  <span class="val struck">sonnet</span>
+                  <span class="why">· overridden by User (global outranks project here)</span>
+                  <span class="path">webapp/.claude/settings.json : 8</span>
+                </div>
+
+                <div class="miniview">
+                  <div class="vh">~/.claude/settings.json · read-only preview</div>
+                  <pre>  <span class="ln">1</span>{
+  <span class="ln">2</span>  <span class="key">"$schema"</span>: <span class="str">"https://json.schemastore.org/claude-code-settings"</span>,
+<span class="hl">  <span class="ln">3</span>  <span class="key">"model"</span>: <span class="str">"opus"</span>,</span>
+  <span class="ln">4</span>  <span class="key">"permissions"</span>: { <span class="key">"defaultMode"</span>: <span class="str">"acceptEdits"</span> }
+  <span class="ln">5</span>}</pre>
+                </div>
+
+                <div class="actions">
+                  <div class="btn primary"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit winning value</div>
+                  <div class="btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M21 3l-9 9M5 7v12h12"/></svg> Open in editor</div>
+                  <div class="btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h6l2 2h10v9H3z"/></svg> Reveal file</div>
+                  <div class="btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5h10"/></svg> Copy path</div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="grp"><td colspan="6">Permissions</td></tr>
+          <tr class="row expand">
+            <td class="setting">permissions.allow <span class="rule">list · merged (union)</span></td>
+            <td class="cell empty">—</td>
+            <td class="cell merge-c">Bash(git*)</td>
+            <td class="cell merge-c">Read(src/**)</td>
+            <td class="cell merge-c">Bash(npm*)</td>
+            <td class="eff"><div class="v">3 rules <span class="badge merge">merged</span></div></td>
+          </tr>
+          <tr class="row expand">
+            <td class="setting">permissions.deny <span class="rule">list · merged (union)</span></td>
+            <td class="cell empty">—</td>
+            <td class="cell empty">—</td>
+            <td class="cell win carry"><span class="pin"></span>Bash(rm -rf*)</td>
+            <td class="cell empty carry">—</td>
+            <td class="eff"><div class="v">Bash(rm -rf*)</div></td>
+          </tr>
+          <tr class="row expand">
+            <td class="setting">permissions.defaultMode <span class="rule">scalar · last-wins</span></td>
+            <td class="cell empty">—</td>
+            <td class="cell win carry"><span class="pin"></span>acceptEdits</td>
+            <td class="cell empty carry">—</td>
+            <td class="cell empty carry">—</td>
+            <td class="eff"><div class="v">acceptEdits</div></td>
+          </tr>
+
+          <tr class="grp"><td colspan="6">Environment</td></tr>
+          <tr class="row expand">
+            <td class="setting">env.ANTHROPIC_LOG <span class="rule">scalar · last-wins</span></td>
+            <td class="cell empty">—</td>
+            <td class="cell empty">—</td>
+            <td class="cell win carry"><span class="pin"></span>debug</td>
+            <td class="cell empty carry">—</td>
+            <td class="eff"><div class="v">debug</div></td>
+          </tr>
+          <tr class="row expand">
+            <td class="setting">env.DISABLE_TELEMETRY <span class="rule">scalar · last-wins</span></td>
+            <td class="cell empty">—</td>
+            <td class="cell win carry"><span class="pin"></span>1</td>
+            <td class="cell empty carry">—</td>
+            <td class="cell empty carry">—</td>
+            <td class="eff"><div class="v">1</div></td>
+          </tr>
+
+          <tr class="grp"><td colspan="6">Hooks</td></tr>
+          <tr class="row expand">
+            <td class="setting">hooks.PreToolUse <span class="rule">array · merged (append)</span></td>
+            <td class="cell empty">—</td>
+            <td class="cell merge-c">1 hook</td>
+            <td class="cell merge-c">2 hooks</td>
+            <td class="cell empty">—</td>
+            <td class="eff"><div class="v">3 hooks <span class="badge merge">merged</span></div></td>
+          </tr>
+
+          <tr class="grp"><td colspan="6">UI</td></tr>
+          <tr class="row expand">
+            <td class="setting">outputStyle <span class="rule">scalar · last-wins</span></td>
+            <td class="cell empty">—</td>
+            <td class="cell over">default</td>
+            <td class="cell win carry"><span class="pin"></span>concise</td>
+            <td class="cell empty carry">—</td>
+            <td class="eff"><div class="v">concise <span class="badge conf">conflict</span></div></td>
+          </tr>
+          <tr class="row expand">
+            <td class="setting">statusLine.command <span class="rule">scalar · last-wins</span></td>
+            <td class="cell empty">—</td>
+            <td class="cell win carry"><span class="pin"></span>~/bin/ccline</td>
+            <td class="cell empty carry">—</td>
+            <td class="cell empty carry">—</td>
+            <td class="eff"><div class="v">~/bin/ccline</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

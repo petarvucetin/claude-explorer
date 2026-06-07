@@ -1,0 +1,213 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]: Claude Explorer
+    - generic [ref=e6]: FIG.03 — COMMAND INVENTORY
+    - generic [ref=e7] [cursor=pointer]:
+      - text: webapp
+      - generic [ref=e9]: +2 ▾
+    - generic "Refresh" [ref=e10] [cursor=pointer]:
+      - img [ref=e11]
+  - complementary [ref=e14]:
+    - generic [ref=e15]: Workspace
+    - generic [ref=e16] [cursor=pointer]:
+      - img [ref=e17]
+      - text: Dashboard
+    - generic [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+      - text: Effective Config
+    - generic [ref=e25] [cursor=pointer]:
+      - img [ref=e26]
+      - text: Commands & Skills
+      - generic [ref=e29]: "67"
+    - generic [ref=e30] [cursor=pointer]:
+      - img [ref=e31]
+      - text: MCP & Plugins
+      - generic [ref=e34]: 1✗
+    - generic [ref=e35] [cursor=pointer]:
+      - img [ref=e36]
+      - text: Dependencies
+      - generic [ref=e39]: 1✗
+    - generic [ref=e40]: Discover
+    - generic [ref=e41] [cursor=pointer]:
+      - img [ref=e42]
+      - text: Marketplace
+    - generic [ref=e45] [cursor=pointer]:
+      - img [ref=e46]
+      - text: Change Log
+      - generic [ref=e49]: "3"
+    - generic [ref=e50]:
+      - text: "INDEX: 67 items"
+      - text: cmd 31 · skill 27 · agent 9
+      - text: "sources: 6"
+      - text: "shadowed: 1"
+  - main [ref=e51]:
+    - generic [ref=e52]:
+      - generic [ref=e53]:
+        - generic [ref=e54]: Inventory · by source
+        - heading "Commands & Skills" [level=1] [ref=e55]
+      - generic [ref=e56]:
+        - text: 67 total · 28 built-in ·
+        - generic [ref=e57]: 14 user
+        - text: ·
+        - generic [ref=e58]: 25 from 4 plugins
+        - text: 1 shadowed by override
+    - generic [ref=e59]:
+      - generic [ref=e60]:
+        - generic [ref=e61] [cursor=pointer]: All 67
+        - generic [ref=e62] [cursor=pointer]: Commands 31
+        - generic [ref=e63] [cursor=pointer]: Skills 27
+        - generic [ref=e64] [cursor=pointer]: Subagents 9
+      - generic [ref=e66]:
+        - generic [ref=e67] [cursor=pointer]: Built-in
+        - generic [ref=e68] [cursor=pointer]: User
+        - generic [ref=e69] [cursor=pointer]: Plugins
+      - generic [ref=e70]:
+        - img [ref=e71]
+        - text: search 67 items…
+    - generic [ref=e74]:
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - text: User · ~/.claude
+          - generic [ref=e77]: 3 skills · 2 cmds
+        - generic [ref=e78] [cursor=pointer]:
+          - generic [ref=e79]: ◆
+          - generic [ref=e80]:
+            - generic [ref=e81]:
+              - text: graphify
+              - generic [ref=e82]: skill
+            - generic [ref=e83]: any input → knowledge graph → clustered communities → HTML/JSON
+        - generic [ref=e84] [cursor=pointer]:
+          - generic [ref=e85]: ◆
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - text: grill-me
+              - generic [ref=e88]: skill
+            - generic [ref=e89]: interview the user relentlessly about a plan until shared understanding
+        - generic [ref=e90] [cursor=pointer]:
+          - generic [ref=e91]: /
+          - generic [ref=e92]:
+            - generic [ref=e93]:
+              - text: /review
+              - generic [ref=e94]: cmd
+              - generic [ref=e95]: overrides built-in
+            - generic [ref=e96]: user-defined PR review — shadows Claude's built-in /review
+        - generic [ref=e97]:
+          - text: Plugin · superpowers
+          - generic [ref=e98]: "marketplace: official"
+        - generic [ref=e99] [cursor=pointer]:
+          - generic [ref=e100]: ◆
+          - generic [ref=e101]:
+            - generic [ref=e102]:
+              - text: brainstorming
+              - generic [ref=e103]: skill
+            - generic [ref=e104]: explore intent & design before implementation
+        - generic [ref=e105] [cursor=pointer]:
+          - generic [ref=e106]: ◆
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - text: test-driven-development
+              - generic [ref=e109]: skill
+            - generic [ref=e110]: write the failing test before implementation code
+        - generic [ref=e111] [cursor=pointer]:
+          - generic [ref=e112]: ◆
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - text: systematic-debugging
+              - generic [ref=e115]: skill
+            - generic [ref=e116]: root-cause a bug before proposing fixes
+        - generic [ref=e117]:
+          - text: Plugin · feature-dev
+          - generic [ref=e118]: "marketplace: official"
+        - generic [ref=e119] [cursor=pointer]:
+          - generic [ref=e120]: ⬡
+          - generic [ref=e121]:
+            - generic [ref=e122]:
+              - text: code-architect
+              - generic [ref=e123]: agent
+            - generic [ref=e124]: designs feature architecture from existing codebase patterns
+        - generic [ref=e125] [cursor=pointer]:
+          - generic [ref=e126]: ⬡
+          - generic [ref=e127]:
+            - generic [ref=e128]:
+              - text: code-explorer
+              - generic [ref=e129]: agent
+            - generic [ref=e130]: traces execution paths & maps architecture layers
+        - generic [ref=e131]:
+          - text: Built-in · Claude Code
+          - generic [ref=e132]: 28 items
+        - generic [ref=e133] [cursor=pointer]:
+          - generic [ref=e134]: /
+          - generic [ref=e135]:
+            - generic [ref=e136]:
+              - text: /compact
+              - generic [ref=e137]: cmd
+            - generic [ref=e138]: compact the conversation to free context
+        - generic [ref=e139] [cursor=pointer]:
+          - generic [ref=e140]: /
+          - generic [ref=e141]:
+            - generic [ref=e142]:
+              - text: /config
+              - generic [ref=e143]: cmd
+            - generic [ref=e144]: open the settings configuration UI
+        - generic [ref=e145] [cursor=pointer]:
+          - generic [ref=e146]: /
+          - generic [ref=e147]:
+            - generic [ref=e148]:
+              - text: /review
+              - generic [ref=e149]: cmd
+              - generic [ref=e150]: shadowed
+            - generic [ref=e151]: built-in PR review — overridden by user command
+        - generic [ref=e152] [cursor=pointer]:
+          - generic [ref=e153]: ⬡
+          - generic [ref=e154]:
+            - generic [ref=e155]:
+              - text: Explore
+              - generic [ref=e156]: agent
+            - generic [ref=e157]: read-only fan-out search agent
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - generic [ref=e160]:
+            - generic [ref=e161]: ◆
+            - heading "graphify" [level=2] [ref=e162]
+            - generic [ref=e163]: skill
+            - generic [ref=e164]: /graphify
+          - generic [ref=e165]:
+            - generic [ref=e166]: USER
+            - text: · ~/.claude/skills · enabled ● · invoked via Skill tool · no conflicts
+        - generic [ref=e167]:
+          - generic [ref=e168]:
+            - generic [ref=e169]: Summary
+            - paragraph [ref=e170]: "Turns any input — code, docs, papers, images — into a knowledge graph: extracts entities and relationships, clusters them into communities, and emits an interactive HTML view, a JSON graph, and an audit report."
+          - generic [ref=e171]:
+            - generic [ref=e172]: Trigger & behavior
+            - paragraph [ref=e173]:
+              - text: Runs when the user types
+              - code [ref=e174]: /graphify
+              - text: ", or proactively when a request matches its description. Defined in the user's global skills directory, so it is available across all projects."
+          - generic [ref=e175]:
+            - generic [ref=e176]: Source
+            - generic [ref=e177]:
+              - img [ref=e178]
+              - generic [ref=e181] [cursor=pointer]: ~/.claude/skills/graphify/SKILL.md
+              - generic [ref=e182]: md · 2.4 kB
+            - generic [ref=e183]:
+              - generic [ref=e184]: SKILL.md · frontmatter · read-only
+              - generic [ref=e185]: "1--- 2name: graphify 3description: any input → knowledge graph → clustered 4 communities → HTML + JSON + audit report 5---"
+          - generic [ref=e186]:
+            - generic [ref=e187]: Actions
+            - generic [ref=e188]:
+              - generic [ref=e189] [cursor=pointer]:
+                - img [ref=e190]
+                - text: View full source
+              - generic [ref=e193] [cursor=pointer]:
+                - img [ref=e194]
+                - text: Open in editor
+              - generic [ref=e196] [cursor=pointer]:
+                - img [ref=e197]
+                - text: Reveal
+              - generic [ref=e199] [cursor=pointer]:
+                - img [ref=e200]
+                - text: Copy path
+              - generic [ref=e203] [cursor=pointer]:
+                - img [ref=e204]
+                - text: Disable

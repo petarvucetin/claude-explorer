@@ -1,0 +1,23 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+
+# IDEs
+.vs/
+.idea/
+*.DotSettings.user
+
+# Test results
+[Tt]est[Rr]esults/
+*.trx
+coverage*.json
+*.coverage
+
+# OS
+.DS_Store
+Thumbs.db
+
+# UX exploration tooling artifacts
+ux-explorations/.playwright-mcp/

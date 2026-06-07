@@ -1,0 +1,125 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]: Interaction · Add Source & Install
+    - heading "Add a Source & Install" [level=1] [ref=e4]
+    - paragraph [ref=e5]: Pulling from a community catalog (skillsmp.com) — metadata only until you install. Install delegates to the claude CLI and runs through the same backup + change-log safety.
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: "1"
+        - generic [ref=e10]: Add source
+        - generic [ref=e11]: paste URL / repo · detect · trust
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]: Add source
+          - generic [ref=e15] [cursor=pointer]: ✕
+        - generic [ref=e16]:
+          - generic [ref=e17]: Source URL or GitHub repo
+          - generic [ref=e18]:
+            - img [ref=e19]
+            - generic [ref=e22]: https://skillsmp.com
+            - generic [ref=e24] [cursor=pointer]: Detect
+          - generic [ref=e25]:
+            - text: "accepts:"
+            - code [ref=e26]: marketplace URL
+            - text: ·
+            - code [ref=e27]: github.com/owner/repo
+            - text: ·
+            - code [ref=e28]: owner/repo
+            - text: (plugins or a bare skills folder)
+          - generic [ref=e29]:
+            - generic [ref=e30]:
+              - img [ref=e31]
+              - text: Detected — community skill marketplace
+            - generic [ref=e33]:
+              - text: 320 skills · 14 plugins · manifest valid · index reachable
+              - text: "name: skillsmp.com · refresh: on launch"
+          - generic [ref=e34]:
+            - img [ref=e35]
+            - generic [ref=e38]: Community source — not verified by Anthropic. Claude Explorer only reads catalog metadata. Nothing is downloaded or executed until you choose to install an item, and every install is backed up & reversible.
+        - generic [ref=e39]:
+          - generic [ref=e40] [cursor=pointer]: Cancel
+          - generic [ref=e41] [cursor=pointer]: Add source
+    - img [ref=e43]
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - generic [ref=e47]: "2"
+        - generic [ref=e48]: Install item
+        - generic [ref=e49]: contents · scope · deps · safety
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e52]: Install
+          - generic [ref=e53]: pdf-wizard
+          - generic [ref=e54]: skillsmp.com · community
+          - generic [ref=e55] [cursor=pointer]: ✕
+        - generic [ref=e56]:
+          - generic [ref=e57]: What this adds
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - generic [ref=e60]: skill
+              - text: pdf-wizard
+              - generic [ref=e61]: → ~/.claude/plugins/skillsmp/pdf-wizard
+            - generic [ref=e62]:
+              - generic [ref=e63]: runtime dep
+              - text: requires
+              - generic [ref=e64]: uvx
+              - text: (Python)
+              - generic [ref=e65]: resolved at run time
+          - generic [ref=e66]: Install to
+          - generic [ref=e67]:
+            - generic [ref=e68] [cursor=pointer]:
+              - generic [ref=e70]: User
+              - generic [ref=e71]: ~/.claude · all projects
+            - generic [ref=e72] [cursor=pointer]:
+              - generic [ref=e74]: Project
+              - generic [ref=e75]: webapp only
+          - generic [ref=e76]:
+            - img [ref=e77]
+            - generic [ref=e80]: "Dependency check: uvx not on PATH. Install will succeed, but the skill won't run until uvx is available. → fix in Dependencies after install."
+          - generic [ref=e81]:
+            - generic [ref=e82]: Safety
+            - generic [ref=e83]:
+              - img [ref=e84]
+              - text: Runs
+              - generic [ref=e87]: claude plugin install
+              - text: — authoritative, matches Claude's own behavior
+            - generic [ref=e88]:
+              - img [ref=e89]
+              - text: Backup
+              - generic [ref=e91]: "#186"
+              - text: of plugin state before install
+            - generic [ref=e92]:
+              - img [ref=e93]
+              - text: Logged to Change Log —
+              - generic [ref=e96]: uninstall in one click
+        - generic [ref=e97]:
+          - generic [ref=e98] [cursor=pointer]: ← Back
+          - generic [ref=e99] [cursor=pointer]: Install to User
+    - img [ref=e101]
+    - generic [ref=e103]:
+      - generic [ref=e104]:
+        - generic [ref=e105]: "3"
+        - generic [ref=e106]: Installed & Reversible
+        - generic [ref=e107]: logged · undo · dep follow-up
+      - generic [ref=e108]:
+        - generic [ref=e109]:
+          - generic [ref=e110]:
+            - img [ref=e111]
+            - text: Installed —
+            - generic [ref=e113]: pdf-wizard
+            - text: added at User scope
+          - generic [ref=e114]: New change-log entry
+          - generic [ref=e115]:
+            - img [ref=e117]
+            - generic [ref=e119]:
+              - generic [ref=e120]:
+                - text: Installed skill
+                - code [ref=e121]: pdf-wizard
+              - generic [ref=e122]: "USER · source: skillsmp.com (community) · just now · backup #186"
+              - generic [ref=e123] [cursor=pointer]:
+                - img [ref=e124]
+                - text: "Action needed: install uvx so pdf-wizard can run → Dependencies"
+            - generic [ref=e127] [cursor=pointer]: ↩ Uninstall
+        - generic [ref=e128]:
+          - generic [ref=e129]: "Uninstall restores backup #186 and removes the plugin files."
+          - generic [ref=e130] [cursor=pointer]: View Change Log →

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Explorer — Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F5; --grid:#D8DEE7; --grid-bold:#CAD2DD;
+    --panel:#FBFCFE; --edge:#C2CAD6; --edge-2:#1A2230;
+    --ink:#16202E; --ink-soft:#54616F; --ink-faint:#8893A1;
+    --blue:#1F47D6; --blue-soft:#3E63E0; --blue-wash:#E1E8FB;
+    --amber:#B5710C; --amber-wash:#F6ECD6; --red:#C2362B; --red-wash:#F6DDD9; --green:#2E7D4F; --green-wash:#DDEEE2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Archivo",sans-serif;color:var(--ink);background:var(--paper);overflow:hidden;-webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+      linear-gradient(var(--grid-bold) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid-bold) 1px,transparent 1px);
+    background-size:24px 24px,24px 24px,120px 120px,120px 120px;
+  }
+  .app{display:grid;grid-template-columns:230px 1fr;grid-template-rows:58px 1fr;height:100vh}
+
+  .topbar{grid-column:1/3;display:flex;align-items:center;gap:16px;padding:0 20px;
+    border-bottom:2px solid var(--edge-2);background:var(--panel)}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:16px;letter-spacing:.4px;text-transform:uppercase}
+  .mark{width:26px;height:26px;border:2px solid var(--edge-2);border-radius:5px;position:relative;background:var(--blue-wash)}
+  .mark::before{content:"";position:absolute;inset:5px;border:2px solid var(--blue);border-radius:50%;border-bottom-color:transparent;transform:rotate(45deg)}
+  .mark::after{content:"";position:absolute;width:5px;height:5px;background:var(--blue);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .spacer{flex:1}
+  .coord{font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+  .proj{display:flex;align-items:center;gap:9px;padding:6px 12px;border:1.5px solid var(--edge-2);border-radius:6px;
+    background:var(--panel);cursor:pointer;font-family:"Spline Sans Mono";font-size:12px;font-weight:600;transition:.15s;
+    box-shadow:3px 3px 0 var(--blue-wash)}
+  .proj:hover{box-shadow:4px 4px 0 var(--blue);transform:translate(-1px,-1px)}
+  .proj .dot{width:8px;height:8px;background:var(--green);border:1px solid var(--edge-2)}
+  .proj .more{color:var(--ink-faint)}
+  .iconbtn{width:34px;height:34px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);
+    display:grid;place-items:center;cursor:pointer;color:var(--ink);transition:.15s}
+  .iconbtn:hover{background:var(--blue);color:#fff}
+
+  .rail{border-right:2px solid var(--edge-2);padding:18px 12px;display:flex;flex-direction:column;gap:3px;background:var(--panel)}
+  .rail .lbl{font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);
+    margin:8px 8px 7px;display:flex;align-items:center;gap:8px}
+  .rail .lbl::after{content:"";flex:1;height:1px;background:var(--edge)}
+  .nav{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:6px;color:var(--ink-soft);
+    font-size:13px;font-weight:600;cursor:pointer;transition:.14s;border:1.5px solid transparent}
+  .nav svg{width:17px;height:17px;flex:none}
+  .nav:hover{background:var(--blue-wash)}
+  .nav.active{background:var(--panel);color:var(--ink);border-color:var(--edge-2);box-shadow:3px 3px 0 var(--blue)}
+  .nav.active svg{color:var(--blue)}
+  .nav .count{margin-left:auto;font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint);font-weight:500}
+  .nav .count.bad{color:var(--red);font-weight:700}
+  .rail .foot{margin-top:auto;font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);padding:9px;line-height:1.7;
+    border:1px dashed var(--edge);border-radius:6px}
+
+  .content{overflow:auto;padding:26px 32px 42px;position:relative}
+  .pagehead{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px}
+  .k{font-family:"Spline Sans Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:8px;
+    display:flex;align-items:center;gap:8px}
+  .k::before{content:"";width:18px;height:2px;background:var(--blue)}
+  .pagehead h1{font-size:27px;font-weight:800;letter-spacing:-.3px;text-transform:uppercase}
+  .scope{font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-soft);text-align:right;line-height:1.6}
+  .scope b{color:var(--blue)}
+
+  /* panel w/ corner ticks */
+  .panel{background:var(--panel);border:1.5px solid var(--edge-2);position:relative}
+  .panel::before,.panel::after{content:"";position:absolute;width:9px;height:9px;border:2px solid var(--blue);z-index:2}
+  .panel::before{left:-2px;top:-2px;border-right:none;border-bottom:none}
+  .panel::after{right:-2px;bottom:-2px;border-left:none;border-top:none}
+
+  .hero{display:grid;grid-template-columns:250px 1fr;gap:18px;margin-bottom:18px}
+  .gauge{padding:22px}
+  .gauge .ring{width:148px;height:148px;margin:2px auto 14px;position:relative}
+  .gauge .ring svg{transform:rotate(-90deg)}
+  .gauge .num{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .gauge .num b{font-size:42px;font-weight:800;letter-spacing:-1px}
+  .gauge .num small{display:block;font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .gauge .cap{font-family:"Spline Sans Mono";text-align:center;font-size:11.5px;color:var(--ink-soft);line-height:1.6}
+  .gauge .cap b{color:var(--ink)}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .stat{padding:15px 16px;cursor:pointer;transition:.14s}
+  .stat:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--blue)}
+  .stat .num-tag{display:flex;justify-content:space-between;align-items:flex-start}
+  .stat .idx{font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint)}
+  .stat .t{font-family:"Spline Sans Mono";font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+  .stat .v{font-size:29px;font-weight:800;margin:6px 0 3px;letter-spacing:-.5px;display:flex;align-items:center;gap:9px}
+  .stat .s{font-family:"Spline Sans Mono";font-size:10.5px;color:var(--ink-faint)}
+  .pill{font-family:"Spline Sans Mono";font-size:10px;padding:2px 6px;font-weight:600;border:1.5px solid}
+  .pill.ok{color:var(--green);border-color:var(--green);background:var(--green-wash)}
+  .pill.warn{color:var(--amber);border-color:var(--amber);background:var(--amber-wash)}
+  .pill.bad{color:var(--red);border-color:var(--red);background:var(--red-wash)}
+
+  .lower{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  .card h2{font-family:"Archivo";font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:15px 18px 4px;display:flex;align-items:center;gap:9px}
+  .card h2 .tag{margin-left:auto;font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);font-weight:500;text-transform:none;letter-spacing:0}
+  .card .sub{padding:0 18px 12px;font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint)}
+  .rowx{display:flex;gap:12px;padding:12px 18px;border-top:1px solid var(--edge);align-items:flex-start;transition:.13s}
+  .rowx:hover{background:var(--blue-wash)}
+  .glyph{width:26px;height:26px;display:grid;place-items:center;flex:none;margin-top:1px;border:1.5px solid}
+  .glyph.bad{color:var(--red);border-color:var(--red);background:var(--red-wash)}
+  .glyph.warn{color:var(--amber);border-color:var(--amber);background:var(--amber-wash)}
+  .glyph.ok{color:var(--green);border-color:var(--green);background:var(--green-wash)}
+  .glyph.info{color:var(--blue);border-color:var(--blue);background:var(--blue-wash)}
+  .rowx .body{flex:1;min-width:0}
+  .rowx .ttl{font-size:13px;font-weight:600;line-height:1.4}
+  code{font-family:"Spline Sans Mono";font-size:11.5px;background:var(--paper);border:1px solid var(--edge);padding:1px 5px;border-radius:3px;color:var(--blue)}
+  .rowx .meta{font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);margin-top:4px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  /* provenance connector */
+  .prov{display:flex;align-items:center;gap:6px}
+  .prov .src{color:var(--ink-soft);border-bottom:1px dashed var(--ink-faint);cursor:pointer}
+  .prov .src:hover{color:var(--blue);border-color:var(--blue)}
+  .prov .arrow{color:var(--blue);font-weight:700}
+  .undo{margin-left:auto;font-family:"Spline Sans Mono";font-size:10.5px;font-weight:700;color:var(--blue);cursor:pointer;white-space:nowrap;border:1px solid var(--blue);padding:2px 8px;border-radius:4px}
+  .undo:hover{background:var(--blue);color:#fff}
+
+  @keyframes up{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  .anim{animation:up .5s cubic-bezier(.2,.7,.2,1) both}
+  .d1{animation-delay:.04s}.d2{animation-delay:.1s}.d3{animation-delay:.16s}.d4{animation-delay:.22s}.d5{animation-delay:.28s}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="mark"></span> Claude&nbsp;Explorer</div>
+    <span class="coord">FIG.01 — ENVIRONMENT SCHEMATIC</span>
+    <div class="spacer"></div>
+    <div class="proj"><span class="dot"></span> webapp <span class="more">+2 ▾</span></div>
+    <div class="iconbtn" title="Refresh"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
+  </header>
+
+  <aside class="rail">
+    <div class="lbl">Workspace</div>
+    <div class="nav active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Dashboard</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><path d="M5 7h14M5 12h9M5 17h6"/></svg>Effective Config</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg>Commands &amp; Skills <span class="count">67</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>MCP &amp; Plugins <span class="count bad">1✗</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>Dependencies <span class="count bad">1✗</span></div>
+    <div class="lbl">Discover</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Marketplace</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M12 7v5l3 2M3 4v5h5"/></svg>Change Log <span class="count">3</span></div>
+    <div class="foot">SCOPES LOADED: 3<br>user · webapp · +2<br>cli: DETECTED<br>net: OFFLINE</div>
+  </aside>
+
+  <main class="content">
+    <div class="pagehead anim d1">
+      <div>
+        <div class="k">Environment Status</div>
+        <h1>Dashboard</h1>
+      </div>
+      <div class="scope">EFFECTIVE FOR <b>webapp</b><br>MERGE: user → project → local</div>
+    </div>
+
+    <section class="hero">
+      <div class="panel gauge anim d2">
+        <div class="ring">
+          <svg width="148" height="148" viewBox="0 0 148 148">
+            <circle cx="74" cy="74" r="62" fill="none" stroke="#D8DEE7" stroke-width="9"/>
+            <circle cx="74" cy="74" r="62" fill="none" stroke="var(--blue)" stroke-width="9" stroke-dasharray="389" stroke-dashoffset="31"/>
+          </svg>
+          <div class="num"><div><b>92</b><small>health</small></div></div>
+        </div>
+        <div class="cap"><b>1 dep missing</b> · <b>1 server down</b><br>3 overrides traced</div>
+      </div>
+      <div class="stats">
+        <div class="panel stat anim d2"><div class="num-tag"><span class="t">Commands</span><span class="idx">01</span></div><div class="v">42</div><div class="s">28 builtin / 14 user</div></div>
+        <div class="panel stat anim d3"><div class="num-tag"><span class="t">Skills+Agents</span><span class="idx">02</span></div><div class="v">25</div><div class="s">4 plugins</div></div>
+        <div class="panel stat anim d4"><div class="num-tag"><span class="t">MCP Servers</span><span class="idx">03</span></div><div class="v">6 <span class="pill bad">1 down</span></div><div class="s">5 reachable</div></div>
+        <div class="panel stat anim d3"><div class="num-tag"><span class="t">Dependencies</span><span class="idx">04</span></div><div class="v">14 <span class="pill warn">1 miss</span></div><div class="s">uvx not on path</div></div>
+        <div class="panel stat anim d4"><div class="num-tag"><span class="t">Conflicts</span><span class="idx">05</span></div><div class="v">3</div><div class="s">overrides resolved</div></div>
+        <div class="panel stat anim d5"><div class="num-tag"><span class="t">Warnings</span><span class="idx">06</span></div><div class="v">5</div><div class="s">non-blocking</div></div>
+      </div>
+    </section>
+
+    <section class="lower">
+      <div class="panel card anim d4">
+        <h2>Needs Attention <span class="tag">precedence-resolved</span></h2>
+        <div class="sub">// newest scope wins · click any node to trace source</div>
+
+        <div class="rowx">
+          <div class="glyph bad"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+          <div class="body">
+            <div class="ttl">Missing <code>uvx</code> — required by MCP “context7”</div>
+            <div class="meta prov"><span class="src">webapp/.mcp.json:14</span> · server cannot start</div>
+          </div>
+        </div>
+        <div class="rowx">
+          <div class="glyph warn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6 2 12l6 6M16 6l6 6-6 6"/></svg></div>
+          <div class="body">
+            <div class="ttl"><code>model</code>=opus overrides <code>sonnet</code></div>
+            <div class="meta prov"><span class="src">user:settings.json:3</span> <span class="arrow">▸</span> <span class="src">webapp:settings.json:8</span></div>
+          </div>
+        </div>
+        <div class="rowx">
+          <div class="glyph warn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg></div>
+          <div class="body">
+            <div class="ttl">“playwright” probe inconclusive</div>
+            <div class="meta prov"><code>npx</code> found · handshake skipped · <span class="src">run deeper check</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel card anim d5">
+        <h2>Recent Changes <span class="tag">reversible</span></h2>
+        <div class="sub">// logged per scope · backup before every write</div>
+
+        <div class="rowx">
+          <div class="glyph ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div class="body"><div class="ttl">Enabled hook <code>PreToolUse:Bash</code></div><div class="meta">global · 2h ago · #184</div></div>
+          <div class="undo">UNDO</div>
+        </div>
+        <div class="rowx">
+          <div class="glyph info"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 21h14"/></svg></div>
+          <div class="body"><div class="ttl">Installed plugin <code>linear</code></div><div class="meta">webapp · official mkt · 1d ago</div></div>
+          <div class="undo">UNDO</div>
+        </div>
+        <div class="rowx">
+          <div class="glyph info"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          <div class="body"><div class="ttl">Edited <code>allow Bash(git*)</code></div><div class="meta">api · 2d ago · #182</div></div>
+          <div class="undo">UNDO</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

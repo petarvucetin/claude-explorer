@@ -1,0 +1,149 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]: Claude Explorer
+    - generic [ref=e6] [cursor=pointer]:
+      - text: webapp
+      - generic [ref=e8]: +2 projects ▾
+    - generic "Refresh" [ref=e9] [cursor=pointer]:
+      - img [ref=e10]
+  - complementary [ref=e13]:
+    - generic [ref=e14]: Workspace
+    - generic [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - text: Dashboard
+    - generic [ref=e21] [cursor=pointer]:
+      - img [ref=e22]
+      - text: Effective Config
+    - generic [ref=e24] [cursor=pointer]:
+      - img [ref=e25]
+      - text: Commands & Skills
+      - generic [ref=e28]: "67"
+    - generic [ref=e29] [cursor=pointer]:
+      - img [ref=e30]
+      - text: MCP & Plugins
+      - generic [ref=e33]: "6"
+    - generic [ref=e34] [cursor=pointer]:
+      - img [ref=e35]
+      - text: Dependencies
+      - generic [ref=e38]: "14"
+    - generic [ref=e39]: Discover
+    - generic [ref=e40] [cursor=pointer]:
+      - img [ref=e41]
+      - text: Marketplace
+    - generic [ref=e44] [cursor=pointer]:
+      - img [ref=e45]
+      - text: Change Log
+      - generic [ref=e48]: "3"
+    - generic [ref=e49]:
+      - text: Local & offline · v0.1
+      - text: ~/.claude · 3 scopes loaded
+  - main [ref=e50]:
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]: Environment Overview
+        - heading "Good morning — your setup is healthy" [level=1] [ref=e54]
+      - generic [ref=e55]: Effective for webapp · merged across 3 scopes
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - img [ref=e59]
+          - generic [ref=e63]:
+            - text: "92"
+            - text: Health
+        - generic [ref=e64]: Everything loads. 1 missing dependency and 3 conflicts need a look.
+      - generic [ref=e65]:
+        - generic [ref=e66] [cursor=pointer]:
+          - generic [ref=e67]: Commands
+          - generic [ref=e68]: "42"
+          - generic [ref=e69]: 28 built-in · 14 yours
+        - generic [ref=e70] [cursor=pointer]:
+          - generic [ref=e71]: Skills
+          - generic [ref=e72]:
+            - text: "18"
+            - generic [ref=e73]: + 7 agents
+          - generic [ref=e74]: from 4 plugins
+        - generic [ref=e75] [cursor=pointer]:
+          - generic [ref=e76]: MCP servers
+          - generic [ref=e77]:
+            - text: "6"
+            - generic [ref=e78]: 1 down
+          - generic [ref=e79]: 5 reachable
+        - generic [ref=e80] [cursor=pointer]:
+          - generic [ref=e81]: Dependencies
+          - generic [ref=e82]:
+            - text: "14"
+            - generic [ref=e83]: 1 missing
+          - generic [ref=e84]: uvx not on PATH
+        - generic [ref=e85] [cursor=pointer]:
+          - generic [ref=e86]: Conflicts
+          - generic [ref=e87]: "3"
+          - generic [ref=e88]: override resolutions
+        - generic [ref=e89] [cursor=pointer]:
+          - generic [ref=e90]: Warnings
+          - generic [ref=e91]: "5"
+          - generic [ref=e92]: non-blocking
+    - generic [ref=e93]:
+      - generic [ref=e94]:
+        - heading "Needs attention 3 conflicts · 1 broken" [level=2] [ref=e95]:
+          - text: Needs attention
+          - generic [ref=e96]: 3 conflicts · 1 broken
+        - generic [ref=e97]: Resolved against precedence — newest scope wins.
+        - generic [ref=e98]:
+          - img [ref=e100]
+          - generic [ref=e103]:
+            - generic [ref=e104]:
+              - text: Missing dependency
+              - code [ref=e105]: uvx
+              - text: — required by MCP server “context7”
+            - generic [ref=e106]:
+              - generic [ref=e107] [cursor=pointer]: webapp/.mcp.json:14
+              - text: · won’t start until installed
+        - generic [ref=e108]:
+          - img [ref=e110]
+          - generic [ref=e112]:
+            - generic [ref=e113]:
+              - code [ref=e114]: model
+              - text: = opus overrides project value
+              - code [ref=e115]: sonnet
+            - generic [ref=e116]:
+              - text: winner
+              - generic [ref=e117] [cursor=pointer]: ~/.claude/settings.json:3
+              - text: · overrides
+              - generic [ref=e118] [cursor=pointer]: webapp/.claude/settings.json:8
+        - generic [ref=e119]:
+          - img [ref=e121]
+          - generic [ref=e124]:
+            - generic [ref=e125]: MCP server “playwright” — version probe inconclusive
+            - generic [ref=e126]:
+              - code [ref=e127]: npx
+              - text: found · handshake skipped (safe mode) ·
+              - generic [ref=e128] [cursor=pointer]: run deeper check
+      - generic [ref=e129]:
+        - heading "Recent changes reversible" [level=2] [ref=e130]:
+          - text: Recent changes
+          - generic [ref=e131]: reversible
+        - generic [ref=e132]: Every edit & install is logged per scope.
+        - generic [ref=e133]:
+          - img [ref=e135]
+          - generic [ref=e137]:
+            - generic [ref=e138]:
+              - text: Enabled hook
+              - code [ref=e139]: PreToolUse:Bash
+            - generic [ref=e140]: global · 2h ago
+          - generic [ref=e141] [cursor=pointer]: Undo
+        - generic [ref=e142]:
+          - img [ref=e144]
+          - generic [ref=e146]:
+            - generic [ref=e147]:
+              - text: Installed plugin
+              - code [ref=e148]: linear
+            - generic [ref=e149]: webapp · official marketplace · yesterday
+          - generic [ref=e150] [cursor=pointer]: Undo
+        - generic [ref=e151]:
+          - img [ref=e153]
+          - generic [ref=e155]:
+            - generic [ref=e156]:
+              - text: Edited permission
+              - code [ref=e157]: allow Bash(git*)
+            - generic [ref=e158]: "api · 2 days ago · backup #182"
+          - generic [ref=e159] [cursor=pointer]: Undo

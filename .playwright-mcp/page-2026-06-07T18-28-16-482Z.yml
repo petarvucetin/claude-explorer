@@ -1,0 +1,185 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]: Claude Explorer
+    - generic [ref=e6]: FIG.04 — SOURCE CATALOG
+    - generic [ref=e7] [cursor=pointer]:
+      - text: webapp
+      - generic [ref=e9]: +2 ▾
+    - generic "Refresh" [ref=e10] [cursor=pointer]:
+      - img [ref=e11]
+  - complementary [ref=e14]:
+    - generic [ref=e15]: Workspace
+    - generic [ref=e16] [cursor=pointer]:
+      - img [ref=e17]
+      - text: Dashboard
+    - generic [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+      - text: Effective Config
+    - generic [ref=e25] [cursor=pointer]:
+      - img [ref=e26]
+      - text: Commands & Skills
+      - generic [ref=e29]: "67"
+    - generic [ref=e30] [cursor=pointer]:
+      - img [ref=e31]
+      - text: MCP & Plugins
+      - generic [ref=e34]: 1✗
+    - generic [ref=e35] [cursor=pointer]:
+      - img [ref=e36]
+      - text: Dependencies
+      - generic [ref=e39]: 1✗
+    - generic [ref=e40]: Discover
+    - generic [ref=e41] [cursor=pointer]:
+      - img [ref=e42]
+      - text: Marketplace
+    - generic [ref=e45] [cursor=pointer]:
+      - img [ref=e46]
+      - text: Change Log
+      - generic [ref=e49]: "3"
+    - generic [ref=e50]:
+      - text: "SOURCES: 3"
+      - text: "verified: 1 · community: 2"
+      - text: "installable: 470"
+      - text: "installed: 12"
+  - main [ref=e51]:
+    - generic [ref=e52]:
+      - generic [ref=e53]:
+        - generic [ref=e54]: Discover · Install
+        - heading "Marketplace" [level=1] [ref=e55]
+      - generic [ref=e56] [cursor=pointer]:
+        - img [ref=e57]
+        - text: Add source
+    - generic [ref=e59]: Sources · 3
+    - generic [ref=e60]:
+      - generic [ref=e61] [cursor=pointer]:
+        - generic [ref=e63]: All sources
+        - generic [ref=e64]: 470 items · 3 catalogs
+      - generic [ref=e65] [cursor=pointer]:
+        - generic [ref=e66]:
+          - generic [ref=e67]: Anthropic
+          - generic [ref=e68]:
+            - img [ref=e69]
+            - text: verified
+        - generic [ref=e71]: official · 142 plugins
+      - generic [ref=e72] [cursor=pointer]:
+        - generic [ref=e73]:
+          - generic [ref=e74]: skillsmp.com
+          - generic [ref=e75]: community
+        - generic [ref=e76]: https · 320 skills
+      - generic [ref=e77] [cursor=pointer]:
+        - generic [ref=e78]:
+          - generic [ref=e79]: petar/claude-kit
+          - generic [ref=e80]: community
+        - generic [ref=e81]: github · 8 items
+      - generic [ref=e82] [cursor=pointer]:
+        - img [ref=e83]
+        - text: Add source
+    - generic [ref=e85]:
+      - generic [ref=e86]:
+        - generic [ref=e87] [cursor=pointer]: All 470
+        - generic [ref=e88] [cursor=pointer]: Plugins 150
+        - generic [ref=e89] [cursor=pointer]: Skills 298
+        - generic [ref=e90] [cursor=pointer]: Subagents 22
+      - generic [ref=e91] [cursor=pointer]: "Sort: Popular ▾"
+      - generic [ref=e92]:
+        - img [ref=e93]
+        - text: search catalog…
+    - generic [ref=e96]:
+      - generic [ref=e97]:
+        - generic [ref=e98]:
+          - generic [ref=e99]: ▣
+          - generic [ref=e100]: superpowers
+          - generic [ref=e101]: plugin
+        - generic [ref=e102]: "Skill framework: brainstorming, TDD, debugging, planning, and more disciplined workflows."
+        - generic [ref=e103]: Anthropic · verified
+        - generic [ref=e105]:
+          - generic [ref=e106]: ★ 4.9k
+          - generic [ref=e107]: ⤓ 38k
+          - generic [ref=e108]: ✓ installed
+      - generic [ref=e109]:
+        - generic [ref=e110]:
+          - generic [ref=e111]: ◆
+          - generic [ref=e112]: pdf-wizard
+          - generic [ref=e113]: skill
+        - generic [ref=e114]: Extract, merge, split & OCR PDFs from a prompt. Bundles a uvx-based helper.
+        - generic [ref=e115]: skillsmp.com · community
+        - generic [ref=e117]:
+          - generic [ref=e118]: ★ 612
+          - generic [ref=e119]: ⤓ 5.1k
+          - generic [ref=e120] [cursor=pointer]: Install
+      - generic [ref=e121]:
+        - generic [ref=e122]:
+          - generic [ref=e123]: ◆
+          - generic [ref=e124]: sql-explain
+          - generic [ref=e125]: skill
+        - generic [ref=e126]: Annotate and optimize SQL query plans inline. Postgres & MySQL dialect aware.
+        - generic [ref=e127]: skillsmp.com · community
+        - generic [ref=e129]:
+          - generic [ref=e130]: ★ 430
+          - generic [ref=e131]: ⤓ 3.3k
+          - generic [ref=e132] [cursor=pointer]: Install
+      - generic [ref=e133]:
+        - generic [ref=e134]:
+          - generic [ref=e135]: ⬡
+          - generic [ref=e136]: feature-dev
+          - generic [ref=e137]: agents
+        - generic [ref=e138]: Architect, explorer & reviewer subagents for guided feature development.
+        - generic [ref=e139]: Anthropic · verified
+        - generic [ref=e141]:
+          - generic [ref=e142]: ★ 2.1k
+          - generic [ref=e143]: ⤓ 15k
+          - generic [ref=e144]: ✓ installed
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - generic [ref=e147]: ◆
+          - generic [ref=e148]: standup-notes
+          - generic [ref=e149]: skill
+        - generic [ref=e150]: Generate standup updates from git log + Linear issues in your team's format.
+        - generic [ref=e151]: github · petar/claude-kit
+        - generic [ref=e153]:
+          - generic [ref=e154]: ★ 41
+          - generic [ref=e155]: ⤓ 120
+          - generic [ref=e156] [cursor=pointer]: Install
+      - generic [ref=e157]:
+        - generic [ref=e158]:
+          - generic [ref=e159]: ◆
+          - generic [ref=e160]: obsidian-sync
+          - generic [ref=e161]: skill
+        - generic [ref=e162]: Push notes & research reports into an Obsidian vault with backlinks.
+        - generic [ref=e163]: github · petar/claude-kit
+        - generic [ref=e165]:
+          - generic [ref=e166]: ★ 38
+          - generic [ref=e167]: v1.2 → v1.4
+          - generic [ref=e168] [cursor=pointer]: Update
+      - generic [ref=e169]:
+        - generic [ref=e170]:
+          - generic [ref=e171]: ▣
+          - generic [ref=e172]: k8s-copilot
+          - generic [ref=e173]: plugin
+        - generic [ref=e174]: Kubectl-aware skills + an MCP server for cluster inspection. Requires docker.
+        - generic [ref=e175]: skillsmp.com · community
+        - generic [ref=e177]:
+          - generic [ref=e178]: ★ 880
+          - generic [ref=e179]: ⤓ 6.7k
+          - generic [ref=e180] [cursor=pointer]: Install
+      - generic [ref=e181]:
+        - generic [ref=e182]:
+          - generic [ref=e183]: ▣
+          - generic [ref=e184]: unifi-network
+          - generic [ref=e185]: plugin
+        - generic [ref=e186]: Manage UniFi devices, firewall, VPN & WLANs via natural language.
+        - generic [ref=e187]: Anthropic · verified
+        - generic [ref=e189]:
+          - generic [ref=e190]: ★ 760
+          - generic [ref=e191]: ⤓ 4.2k
+          - generic [ref=e192]: ✓ installed
+      - generic [ref=e193]:
+        - generic [ref=e194]:
+          - generic [ref=e195]: ◆
+          - generic [ref=e196]: commit-craft
+          - generic [ref=e197]: skill
+        - generic [ref=e198]: Write conventional-commit messages from a staged diff with scope detection.
+        - generic [ref=e199]: skillsmp.com · community
+        - generic [ref=e201]:
+          - generic [ref=e202]: ★ 1.2k
+          - generic [ref=e203]: ⤓ 9.0k
+          - generic [ref=e204] [cursor=pointer]: Install

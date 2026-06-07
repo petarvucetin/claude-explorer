@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Explorer — Recommendations (Blueprint)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F5; --grid:#D8DEE7; --grid-bold:#CAD2DD;
+    --panel:#FBFCFE; --edge:#C2CAD6; --edge-2:#1A2230;
+    --ink:#16202E; --ink-soft:#54616F; --ink-faint:#8893A1;
+    --blue:#1F47D6; --blue-soft:#3E63E0; --blue-wash:#E1E8FB;
+    --amber:#B5710C; --amber-wash:#F6ECD6; --red:#C2362B; --red-wash:#F6DDD9;
+    --green:#2E7D4F; --green-wash:#DDEEE2; --violet:#6B3FB0; --violet-wash:#ECE3F8; --dim:#A7B0BC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Archivo",sans-serif;color:var(--ink);background:var(--paper);overflow:hidden;-webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+      linear-gradient(var(--grid-bold) 1px,transparent 1px),linear-gradient(90deg,var(--grid-bold) 1px,transparent 1px);
+    background-size:24px 24px,24px 24px,120px 120px,120px 120px;
+  }
+  .app{display:grid;grid-template-columns:230px 1fr;grid-template-rows:58px 1fr;height:100vh}
+  .topbar{grid-column:1/3;display:flex;align-items:center;gap:16px;padding:0 20px;border-bottom:2px solid var(--edge-2);background:var(--panel)}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:16px;letter-spacing:.4px;text-transform:uppercase}
+  .mark{width:26px;height:26px;border:2px solid var(--edge-2);border-radius:5px;position:relative;background:var(--blue-wash)}
+  .mark::before{content:"";position:absolute;inset:5px;border:2px solid var(--blue);border-radius:50%;border-bottom-color:transparent;transform:rotate(45deg)}
+  .mark::after{content:"";position:absolute;width:5px;height:5px;background:var(--blue);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .coord{font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint)}
+  .spacer{flex:1}
+  .proj{display:flex;align-items:center;gap:9px;padding:6px 12px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);cursor:pointer;font-family:"Spline Sans Mono";font-size:12px;font-weight:600;box-shadow:3px 3px 0 var(--blue-wash)}
+  .proj .dot{width:8px;height:8px;background:var(--green);border:1px solid var(--edge-2)}
+  .iconbtn{width:34px;height:34px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);display:grid;place-items:center;cursor:pointer;color:var(--ink);transition:.15s}
+  .iconbtn:hover{background:var(--blue);color:#fff}
+
+  .rail{border-right:2px solid var(--edge-2);padding:18px 12px;display:flex;flex-direction:column;gap:3px;background:var(--panel)}
+  .rail .lbl{font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:8px 8px 7px;display:flex;align-items:center;gap:8px}
+  .rail .lbl::after{content:"";flex:1;height:1px;background:var(--edge)}
+  .nav{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:6px;color:var(--ink-soft);font-size:13px;font-weight:600;cursor:pointer;transition:.14s;border:1.5px solid transparent}
+  .nav svg{width:17px;height:17px;flex:none}
+  .nav:hover{background:var(--blue-wash)}
+  .nav.active{background:var(--panel);color:var(--ink);border-color:var(--edge-2);box-shadow:3px 3px 0 var(--blue)}
+  .nav.active svg{color:var(--blue)}
+  .nav .count{margin-left:auto;font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint);font-weight:500}
+  .nav .count.bad{color:var(--red);font-weight:700}
+  .nav .count.rec{color:var(--blue);font-weight:700}
+  .rail .foot{margin-top:auto;font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);padding:9px;line-height:1.7;border:1px dashed var(--edge);border-radius:6px}
+
+  .content{overflow:auto;padding:20px 26px 36px}
+  .pagehead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .k{font-family:"Spline Sans Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+  .k::before{content:"";width:18px;height:2px;background:var(--blue)}
+  .pagehead h1{font-size:25px;font-weight:800;letter-spacing:-.3px;text-transform:uppercase}
+
+  .tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1.5px solid var(--edge)}
+  .tab{font-family:"Spline Sans Mono";font-size:12px;font-weight:700;padding:10px 16px;cursor:pointer;color:var(--ink-faint);border-bottom:2px solid transparent;margin-bottom:-1.5px}
+  .tab.on{color:var(--ink);border-bottom-color:var(--blue)}
+  .tab .n{color:var(--blue);margin-left:5px}
+
+  /* analysis banner */
+  .analysis{border:1.5px solid var(--edge-2);background:linear-gradient(180deg,#fff,#f4f7fc);padding:14px 16px;margin-bottom:18px;position:relative}
+  .analysis::before,.analysis::after{content:"";position:absolute;width:9px;height:9px;border:2px solid var(--blue)}
+  .analysis::before{left:-2px;top:-2px;border-right:none;border-bottom:none}
+  .analysis::after{right:-2px;bottom:-2px;border-left:none;border-top:none}
+  .analysis .top{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+  .analysis .top .t{font-weight:800;font-size:14px;display:flex;align-items:center;gap:9px}
+  .analysis .top .local{font-family:"Spline Sans Mono";font-size:10px;color:var(--green);border:1.5px solid var(--green);background:var(--green-wash);padding:2px 8px;border-radius:10px;font-weight:600}
+  .analysis .re{margin-left:auto;font-family:"Spline Sans Mono";font-size:10.5px;font-weight:700;padding:6px 12px;border:1.5px solid var(--edge-2);background:var(--panel);cursor:pointer;border-radius:5px;display:flex;align-items:center;gap:6px}
+  .analysis .re:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .siglabel{font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .signals{display:flex;gap:7px;flex-wrap:wrap}
+  .sig{font-family:"Spline Sans Mono";font-size:10.5px;font-weight:600;padding:4px 10px;border:1.5px solid var(--edge);background:var(--paper);border-radius:20px;display:flex;align-items:center;gap:6px}
+  .sig .d{width:6px;height:6px;border-radius:50%;background:var(--blue)}
+
+  /* sections */
+  .sec{font-family:"Archivo";font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);margin:4px 0 11px;display:flex;align-items:center;gap:10px}
+  .sec .cnt{font-family:"Spline Sans Mono";font-weight:600;color:var(--blue)}
+  .sec::after{content:"";flex:1;height:1.5px;background:var(--edge)}
+
+  .recs{display:flex;flex-direction:column;gap:12px;margin-bottom:22px}
+  .rec{border:1.5px solid var(--edge-2);background:var(--panel);padding:14px 16px;display:flex;gap:14px;align-items:flex-start;transition:.13s}
+  .rec:hover{box-shadow:4px 4px 0 var(--blue);transform:translate(-1px,-1px)}
+  .ic{width:34px;height:34px;border:1.5px solid var(--edge-2);display:grid;place-items:center;flex:none;font-family:"Spline Sans Mono";font-size:13px;font-weight:700;margin-top:2px}
+  .ic.plugin{color:var(--blue);background:var(--blue-wash)} .ic.skill{color:var(--violet);background:var(--violet-wash)} .ic.agent{color:var(--green);background:var(--green-wash)}
+  .rec .body{flex:1;min-width:0}
+  .rec .r1{display:flex;align-items:center;gap:9px}
+  .rec .nm{font-family:"Spline Sans Mono";font-weight:700;font-size:14px}
+  .typ{font-size:8.5px;font-weight:700;text-transform:uppercase;padding:1px 5px;border:1.5px solid}
+  .typ.plugin{color:var(--blue);border-color:var(--blue);background:var(--blue-wash)}
+  .typ.skill{color:var(--violet);border-color:var(--violet);background:var(--violet-wash)}
+  .typ.agent{color:var(--green);border-color:var(--green);background:var(--green-wash)}
+  .rec .srcl{font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);display:flex;align-items:center;gap:6px;margin-left:4px}
+  .tdot{width:7px;height:7px;border-radius:50%}.tdot.ver{background:var(--green)}.tdot.com{background:var(--amber)}
+  .rec .why{font-size:12.5px;color:var(--ink);margin-top:8px;line-height:1.5;display:flex;gap:8px;align-items:baseline}
+  .rec .why .lab{font-family:"Spline Sans Mono";font-size:9.5px;font-weight:700;color:var(--blue);text-transform:uppercase;flex:none;letter-spacing:.04em;margin-top:1px}
+  .evi{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+  .ev{font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-soft);background:var(--paper);border:1px solid var(--edge);padding:2px 7px;border-radius:3px;cursor:pointer}
+  .ev:hover{border-color:var(--blue);color:var(--blue)}
+  .rec .side{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:none;width:150px}
+  .conf{width:100%}
+  .conf .ct{font-family:"Spline Sans Mono";font-size:9.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;display:flex;justify-content:space-between;margin-bottom:4px}
+  .conf .ct b{color:var(--ink)}
+  .bar{height:7px;border:1.5px solid var(--edge-2);background:var(--panel);position:relative}
+  .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--blue)}
+  .install{font-family:"Spline Sans Mono";font-size:10.5px;font-weight:700;padding:7px 16px;border:1.5px solid var(--edge-2);background:var(--edge-2);color:#fff;cursor:pointer;border-radius:5px;transition:.12s;width:100%;text-align:center}
+  .install:hover{background:var(--blue);border-color:var(--blue)}
+  .install.sec{background:var(--panel);color:var(--ink)}
+  .install.sec:hover{background:var(--blue);color:#fff}
+  .dep-warn{font-family:"Spline Sans Mono";font-size:9.5px;color:var(--amber);display:flex;align-items:center;gap:5px;font-weight:600}
+
+  /* covered */
+  .covered{display:flex;gap:10px;flex-wrap:wrap}
+  .cov{display:flex;align-items:center;gap:9px;border:1.5px solid var(--edge);background:var(--paper);padding:9px 13px;font-family:"Spline Sans Mono";font-size:11.5px;color:var(--ink-soft)}
+  .cov .ok{width:18px;height:18px;border-radius:50%;background:var(--green-wash);border:1.5px solid var(--green);color:var(--green);display:grid;place-items:center;flex:none}
+  .cov b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="mark"></span> Claude&nbsp;Explorer</div>
+    <span class="coord">FIG.05 — PROJECT FIT ANALYSIS</span>
+    <div class="spacer"></div>
+    <div class="proj"><span class="dot"></span> webapp <span style="color:var(--ink-faint)">+2 ▾</span></div>
+    <div class="iconbtn" title="Refresh"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
+  </header>
+
+  <aside class="rail">
+    <div class="lbl">Workspace</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Dashboard</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><path d="M5 7h14M5 12h9M5 17h6"/></svg>Effective Config</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg>Commands &amp; Skills <span class="count">67</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>MCP &amp; Plugins <span class="count bad">1✗</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>Dependencies <span class="count bad">1✗</span></div>
+    <div class="lbl">Discover</div>
+    <div class="nav active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Marketplace <span class="count rec">5★</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M12 7v5l3 2M3 4v5h5"/></svg>Change Log <span class="count">3</span></div>
+    <div class="foot">PROJECT: webapp<br>signals: 7<br>matches: 4 · covered: 3<br>scan: local-only</div>
+  </aside>
+
+  <main class="content">
+    <div class="pagehead">
+      <div>
+        <div class="k">Discover · Project Fit</div>
+        <h1>Marketplace</h1>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab">Browse all <span class="n">470</span></div>
+      <div class="tab on">Recommended for webapp <span class="n">5</span></div>
+      <div class="tab">Installed <span class="n">12</span></div>
+    </div>
+
+    <div class="analysis">
+      <div class="top">
+        <div class="t"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6 7 18.2l1.9-5.8L4 8.8h6.1z"/></svg> Analyzed <span style="font-family:'Spline Sans Mono'">webapp</span> — 7 signals</div>
+        <span class="local">● scan is local-only · catalog metadata only</span>
+        <div class="re"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg> Re-analyze</div>
+      </div>
+      <div class="siglabel">// detected signals</div>
+      <div class="signals">
+        <span class="sig"><span class="d"></span>TypeScript</span>
+        <span class="sig"><span class="d"></span>React + Vite</span>
+        <span class="sig"><span class="d"></span>Playwright e2e</span>
+        <span class="sig"><span class="d"></span>PostgreSQL</span>
+        <span class="sig"><span class="d"></span>Prisma</span>
+        <span class="sig"><span class="d"></span>Linear refs</span>
+        <span class="sig"><span class="d"></span>pnpm</span>
+      </div>
+    </div>
+
+    <div class="sec">Strong matches <span class="cnt">3</span></div>
+    <div class="recs">
+
+      <div class="rec">
+        <div class="ic plugin">▣</div>
+        <div class="body">
+          <div class="r1"><span class="nm">playwright</span><span class="typ plugin">plugin · mcp</span><span class="srcl"><span class="tdot ver"></span>Anthropic · verified</span></div>
+          <div class="why"><span class="lab">why</span><span>Your repo runs Playwright end-to-end tests. This adds a browser-automation MCP server so Claude can drive &amp; debug those tests directly.</span></div>
+          <div class="evi"><span class="ev">playwright.config.ts</span><span class="ev">14 × *.spec.ts</span><span class="ev">pkg: @playwright/test</span></div>
+        </div>
+        <div class="side">
+          <div class="conf"><div class="ct">match <b>94%</b></div><div class="bar"><i style="width:94%"></i></div></div>
+          <div class="install">Install</div>
+        </div>
+      </div>
+
+      <div class="rec">
+        <div class="ic skill">◆</div>
+        <div class="body">
+          <div class="r1"><span class="nm">sql-explain</span><span class="typ skill">skill</span><span class="srcl"><span class="tdot com"></span>skillsmp.com · community</span></div>
+          <div class="why"><span class="lab">why</span><span>Postgres + Prisma migrations detected. Annotates &amp; optimizes query plans inline — useful for your <code style="font-family:'Spline Sans Mono';color:var(--blue)">/migrations</code> work.</span></div>
+          <div class="evi"><span class="ev">prisma/schema.prisma</span><span class="ev">9 × migrations/*.sql</span><span class="ev">DATABASE_URL=postgres…</span></div>
+        </div>
+        <div class="side">
+          <div class="conf"><div class="ct">match <b>83%</b></div><div class="bar"><i style="width:83%"></i></div></div>
+          <div class="install sec">Install</div>
+        </div>
+      </div>
+
+      <div class="rec">
+        <div class="ic plugin">▣</div>
+        <div class="body">
+          <div class="r1"><span class="nm">linear</span><span class="typ plugin">plugin · mcp</span><span class="srcl"><span class="tdot ver"></span>Anthropic · verified</span></div>
+          <div class="why"><span class="lab">why</span><span>Branch names &amp; commit messages reference Linear issues. Lets Claude read/update issues without leaving the editor.</span></div>
+          <div class="evi"><span class="ev">branch: lin-1284-checkout</span><span class="ev">7 commits w/ LIN-####</span></div>
+        </div>
+        <div class="side">
+          <div class="conf"><div class="ct">match <b>80%</b></div><div class="bar"><i style="width:80%"></i></div></div>
+          <div class="install">Install</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">Worth considering <span class="cnt">1</span></div>
+    <div class="recs">
+      <div class="rec">
+        <div class="ic skill">◆</div>
+        <div class="body">
+          <div class="r1"><span class="nm">commit-craft</span><span class="typ skill">skill</span><span class="srcl"><span class="tdot com"></span>skillsmp.com · community</span></div>
+          <div class="why"><span class="lab">why</span><span>Commit history looks inconsistent (mixed styles). Generates conventional-commit messages from your staged diff.</span></div>
+          <div class="evi"><span class="ev">62% non-conventional commits</span></div>
+        </div>
+        <div class="side">
+          <div class="conf"><div class="ct">match <b>61%</b></div><div class="bar"><i style="width:61%;background:var(--amber)"></i></div></div>
+          <div class="install sec">Install</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">Already covered <span class="cnt">3</span></div>
+    <div class="covered">
+      <div class="cov"><span class="ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span> <b>frontend-design</b> · skill</div>
+      <div class="cov"><span class="ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span> <b>superpowers</b> · TDD covers your test setup</div>
+      <div class="cov"><span class="ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span> <b>feature-dev</b> · agents</div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

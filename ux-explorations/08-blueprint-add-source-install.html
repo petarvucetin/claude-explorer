@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Explorer — Add Source & Install (Blueprint)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F5; --grid:#D8DEE7; --grid-bold:#CAD2DD;
+    --panel:#FBFCFE; --edge:#C2CAD6; --edge-2:#1A2230;
+    --ink:#16202E; --ink-soft:#54616F; --ink-faint:#8893A1;
+    --blue:#1F47D6; --blue-soft:#3E63E0; --blue-wash:#E1E8FB;
+    --amber:#B5710C; --amber-wash:#F6ECD6; --red:#C2362B; --red-wash:#F6DDD9;
+    --green:#2E7D4F; --green-wash:#DDEEE2; --violet:#6B3FB0; --violet-wash:#ECE3F8; --dim:#A7B0BC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Archivo",sans-serif;color:var(--ink);background:var(--paper);min-height:100vh;-webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+      linear-gradient(var(--grid-bold) 1px,transparent 1px),linear-gradient(90deg,var(--grid-bold) 1px,transparent 1px);
+    background-size:24px 24px,24px 24px,120px 120px,120px 120px;
+    padding:34px 20px 60px;
+  }
+  .head{max-width:860px;margin:0 auto 26px}
+  .k{font-family:"Spline Sans Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+  .k::before{content:"";width:18px;height:2px;background:var(--blue)}
+  .head h1{font-size:26px;font-weight:800;letter-spacing:-.3px;text-transform:uppercase}
+  .head p{font-family:"Spline Sans Mono";font-size:11.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6}
+
+  .flow{max-width:860px;margin:0 auto;display:flex;flex-direction:column;align-items:center}
+  .stepwrap{width:100%}
+  .steplabel{display:flex;align-items:center;gap:10px;margin:0 0 10px 4px}
+  .num{width:26px;height:26px;background:var(--edge-2);color:#fff;font-family:"Spline Sans Mono";font-weight:700;font-size:12px;display:grid;place-items:center;border-radius:5px}
+  .steplabel .t{font-family:"Archivo";font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+  .steplabel .sub{font-family:"Spline Sans Mono";font-size:10.5px;color:var(--ink-faint);margin-left:auto}
+
+  .panel{background:var(--panel);border:1.5px solid var(--edge-2);position:relative}
+  .panel::before,.panel::after{content:"";position:absolute;width:9px;height:9px;border:2px solid var(--blue);z-index:3}
+  .panel::before{left:-2px;top:-2px;border-right:none;border-bottom:none}
+  .panel::after{right:-2px;bottom:-2px;border-left:none;border-top:none}
+  .mh{padding:13px 17px;border-bottom:1.5px solid var(--edge-2);display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#fff,#f6f8fc)}
+  .mh .mt{font-weight:800;font-size:15px}
+  .mh .key{font-family:"Spline Sans Mono";color:var(--blue);font-weight:600;background:var(--blue-wash);border:1.5px solid var(--blue);padding:1px 8px;border-radius:5px;font-size:12px}
+  .mh .x{margin-left:auto;color:var(--ink-faint);cursor:pointer}
+  .mb{padding:16px 17px}
+  .ftitle{font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:8px}
+  .ftitle::after{content:"";flex:1;height:1px;background:var(--edge)}
+
+  .input{display:flex;align-items:center;gap:10px;border:1.5px solid var(--edge-2);background:var(--panel);padding:10px 13px;font-family:"Spline Sans Mono";font-size:13px;margin-bottom:6px;border-radius:5px}
+  .input svg{flex:none;color:var(--ink-faint)}
+  .input .url{color:var(--ink);font-weight:600}
+  .input .caret{width:1.5px;height:16px;background:var(--blue);animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .input .go{margin-left:auto;font-family:"Spline Sans Mono";font-size:10.5px;font-weight:700;padding:5px 11px;background:var(--edge-2);color:#fff;border-radius:4px;cursor:pointer}
+  .examples{font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);margin-bottom:16px}
+  .examples code{color:var(--blue)}
+
+  .detected{border:1.5px solid var(--green);background:var(--green-wash);padding:12px 14px;margin-bottom:14px}
+  .detected .dt{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13px;color:#14532d}
+  .detected .dd{font-family:"Spline Sans Mono";font-size:11px;color:#1f5135;margin-top:7px;line-height:1.6;padding-left:25px}
+  .detected .dd b{color:#0d3b21}
+
+  .trust-warn{display:flex;gap:11px;padding:12px 14px;background:var(--amber-wash);border:1.5px solid var(--amber);font-family:"Spline Sans Mono";font-size:11px;color:#6a4708;line-height:1.55;margin-bottom:8px}
+  .trust-warn b{color:#4a3206}
+
+  .foot{display:flex;gap:10px;justify-content:flex-end;padding:13px 17px;border-top:1.5px solid var(--edge);background:#f6f8fc}
+  .btn{font-family:"Spline Sans Mono";font-size:11px;font-weight:700;padding:8px 15px;border:1.5px solid var(--edge-2);background:var(--panel);cursor:pointer;border-radius:5px;display:flex;align-items:center;gap:7px;transition:.13s}
+  .btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .btn.primary{background:var(--edge-2);color:#fff}.btn.primary:hover{background:var(--blue);border-color:var(--blue)}
+  .btn.ghost{border-color:var(--edge)}
+
+  .connector{display:flex;flex-direction:column;align-items:center;color:var(--blue);margin:6px 0}
+  .connector svg{width:22px;height:30px}
+
+  /* install contents */
+  .contents{border:1.5px solid var(--edge);background:var(--paper);margin-bottom:14px}
+  .contents .ci{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--edge);font-family:"Spline Sans Mono";font-size:11.5px}
+  .contents .ci:last-child{border-bottom:none}
+  .cbadge{font-size:8.5px;font-weight:700;text-transform:uppercase;padding:1px 5px;border:1.5px solid}
+  .cbadge.skill{color:var(--violet);border-color:var(--violet);background:var(--violet-wash)}
+  .cbadge.dep{color:var(--amber);border-color:var(--amber);background:var(--amber-wash)}
+  .contents .ci .right{margin-left:auto;color:var(--ink-faint)}
+
+  .targets{display:flex;gap:10px;margin-bottom:14px}
+  .target{flex:1;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--edge);background:var(--panel);cursor:pointer;font-family:"Spline Sans Mono";font-size:11.5px}
+  .target.on{border-color:var(--blue);background:var(--blue-wash);box-shadow:3px 3px 0 var(--blue-wash)}
+  .radio{width:15px;height:15px;border:1.5px solid var(--edge-2);border-radius:50%;flex:none;display:grid;place-items:center}
+  .target.on .radio{border-color:var(--blue)} .target.on .radio::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--blue)}
+  .target .lab{font-weight:700}
+
+  .depcheck{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--red);background:var(--red-wash);font-family:"Spline Sans Mono";font-size:11px;color:#7a201a;margin-bottom:14px;line-height:1.5}
+  .depcheck b{color:#5c160f}
+
+  .safety{border:1.5px solid var(--edge-2);background:var(--paper);margin-bottom:4px}
+  .safety .sh{background:var(--edge-2);color:#fff;font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;padding:6px 12px}
+  .safety .si{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--edge);font-family:"Spline Sans Mono";font-size:11.5px}
+  .safety .si:last-child{border-bottom:none} .safety .si b{color:var(--ink)}
+
+  /* step3 */
+  .applied{display:flex;align-items:center;gap:11px;padding:13px 15px;background:var(--green-wash);border:1.5px solid var(--green);margin-bottom:14px;font-weight:600;font-size:13px;color:#14532d}
+  .logentry{display:flex;align-items:flex-start;gap:12px;padding:0 0 6px}
+  .glyph{width:28px;height:28px;border:1.5px solid var(--blue);background:var(--blue-wash);color:var(--blue);display:grid;place-items:center;flex:none}
+  .logentry .ttl{font-size:13px;font-weight:600}
+  .logentry .ttl code{font-family:"Spline Sans Mono";font-size:11.5px;background:var(--paper);border:1px solid var(--edge);padding:1px 5px;border-radius:3px}
+  .logentry .meta{font-family:"Spline Sans Mono";font-size:10.5px;color:var(--ink-faint);margin-top:4px}
+  .undo{font-family:"Spline Sans Mono";font-size:11px;font-weight:700;color:var(--blue);cursor:pointer;border:1.5px solid var(--blue);padding:6px 12px;border-radius:5px;white-space:nowrap}
+  .undo:hover{background:var(--blue);color:#fff}
+  .followup{display:flex;align-items:center;gap:8px;font-family:"Spline Sans Mono";font-size:11px;color:var(--amber);margin-top:12px;font-weight:600;cursor:pointer}
+  .followup:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="k">Interaction · Add Source &amp; Install</div>
+    <h1>Add a Source &amp; Install</h1>
+    <p>Pulling from a community catalog (skillsmp.com) — metadata only until you install. Install delegates to the <b style="color:var(--ink)">claude</b> CLI and runs through the same backup + change-log safety.</p>
+  </div>
+
+  <div class="flow">
+    <!-- STEP A -->
+    <div class="stepwrap">
+      <div class="steplabel"><span class="num">1</span><span class="t">Add source</span><span class="sub">paste URL / repo · detect · trust</span></div>
+      <div class="panel">
+        <div class="mh"><span class="mt">Add source</span><span class="x">✕</span></div>
+        <div class="mb">
+          <div class="ftitle">Source URL or GitHub repo</div>
+          <div class="input">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+            <span class="url">https://skillsmp.com</span><span class="caret"></span>
+            <span class="go">Detect</span>
+          </div>
+          <div class="examples">accepts: <code>marketplace URL</code> · <code>github.com/owner/repo</code> · <code>owner/repo</code> (plugins or a bare skills folder)</div>
+
+          <div class="detected">
+            <div class="dt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> Detected — community skill marketplace</div>
+            <div class="dd"><b>320 skills</b> · 14 plugins · manifest valid · index reachable<br>name: <b>skillsmp.com</b> · refresh: on launch</div>
+          </div>
+
+          <div class="trust-warn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b5710c" stroke-width="2" style="flex:none"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+            <div><b>Community source — not verified by Anthropic.</b> Claude Explorer only reads catalog metadata. Nothing is downloaded or executed until you choose to install an item, and every install is backed up &amp; reversible.</div>
+          </div>
+        </div>
+        <div class="foot"><div class="btn ghost">Cancel</div><div class="btn primary">Add source</div></div>
+      </div>
+    </div>
+
+    <div class="connector"><svg viewBox="0 0 24 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v26"/><path d="m5 21 7 7 7-7"/></svg></div>
+
+    <!-- STEP B -->
+    <div class="stepwrap">
+      <div class="steplabel"><span class="num">2</span><span class="t">Install item</span><span class="sub">contents · scope · deps · safety</span></div>
+      <div class="panel">
+        <div class="mh"><span class="mt">Install</span><span class="key">pdf-wizard</span><span style="font-family:'Spline Sans Mono';font-size:10.5px;color:var(--amber);margin-left:2px">skillsmp.com · community</span><span class="x">✕</span></div>
+        <div class="mb">
+          <div class="ftitle">What this adds</div>
+          <div class="contents">
+            <div class="ci"><span class="cbadge skill">skill</span> pdf-wizard <span class="right">→ ~/.claude/plugins/skillsmp/pdf-wizard</span></div>
+            <div class="ci"><span class="cbadge dep">runtime dep</span> requires <b style="margin:0 4px">uvx</b> (Python) <span class="right">resolved at run time</span></div>
+          </div>
+
+          <div class="ftitle">Install to</div>
+          <div class="targets">
+            <div class="target on"><span class="radio"></span><span class="lab">User</span><span style="margin-left:auto;color:var(--ink-faint)">~/.claude · all projects</span></div>
+            <div class="target"><span class="radio"></span><span class="lab">Project</span><span style="margin-left:auto;color:var(--ink-faint)">webapp only</span></div>
+          </div>
+
+          <div class="depcheck">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c2362b" stroke-width="2.2" style="flex:none"><path d="M12 9v4m0 4h.01"/><circle cx="12" cy="12" r="9"/></svg>
+            <div><b>Dependency check: uvx not on PATH.</b> Install will succeed, but the skill won't run until uvx is available. → fix in Dependencies after install.</div>
+          </div>
+
+          <div class="safety">
+            <div class="sh">Safety</div>
+            <div class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1f47d6" stroke-width="2"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg> Runs <b>claude plugin install</b> — authoritative, matches Claude's own behavior</div>
+            <div class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="2"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/></svg> Backup <b>#186</b> of plugin state before install</div>
+            <div class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1f47d6" stroke-width="2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg> Logged to Change Log — <b>uninstall in one click</b></div>
+          </div>
+        </div>
+        <div class="foot"><div class="btn ghost">← Back</div><div class="btn primary">Install to User</div></div>
+      </div>
+    </div>
+
+    <div class="connector"><svg viewBox="0 0 24 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v26"/><path d="m5 21 7 7 7-7"/></svg></div>
+
+    <!-- STEP C -->
+    <div class="stepwrap">
+      <div class="steplabel"><span class="num">3</span><span class="t">Installed &amp; Reversible</span><span class="sub">logged · undo · dep follow-up</span></div>
+      <div class="panel">
+        <div class="mb" style="padding-bottom:6px">
+          <div class="applied">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="2.6"><path d="M20 6 9 17l-5-5"/></svg>
+            Installed — <b style="margin:0 4px">pdf-wizard</b> added at User scope
+          </div>
+          <div class="ftitle">New change-log entry</div>
+          <div class="logentry">
+            <div class="glyph"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 21h14"/></svg></div>
+            <div style="flex:1">
+              <div class="ttl">Installed skill <code>pdf-wizard</code></div>
+              <div class="meta">USER · source: skillsmp.com (community) · just now · backup #186</div>
+              <div class="followup"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 9v4m0 4h.01"/><circle cx="12" cy="12" r="9"/></svg> Action needed: install uvx so pdf-wizard can run → Dependencies</div>
+            </div>
+            <div class="undo">↩ Uninstall</div>
+          </div>
+        </div>
+        <div class="foot" style="justify-content:space-between">
+          <span style="font-family:'Spline Sans Mono';font-size:10.5px;color:var(--ink-faint);align-self:center">Uninstall restores backup #186 and removes the plugin files.</span>
+          <div class="btn">View Change Log →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

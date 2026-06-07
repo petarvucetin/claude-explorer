@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Explorer — Observatory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0C0F; --bg2:#0E1014; --panel:#13161C; --panel-2:#171B22; --raised:#1C212A;
+    --line:#242B36; --line-soft:#1C222B;
+    --tx:#E8E6DF; --tx-soft:#9AA1AD; --tx-faint:#646C79;
+    --amber:#F0A94C; --coral:#E0734E; --teal:#46CFA6; --red:#F25563; --blue:#5AA9E6; --violet:#9b87f5;
+    --glow:0 0 0 1px #ffffff08, 0 10px 30px -16px #000c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"IBM Plex Sans",sans-serif;color:var(--tx);background:var(--bg);
+    -webkit-font-smoothing:antialiased;overflow:hidden;
+    background-image:
+      radial-gradient(90% 60% at 100% 0%, #16120c 0%, transparent 55%),
+      radial-gradient(80% 70% at 0% 100%, #0c1216 0%, transparent 55%),
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size:auto,auto,42px 42px,42px 42px;
+    background-position:0 0,0 0,-1px -1px,-1px -1px;
+  }
+  .app{display:grid;grid-template-columns:228px 1fr;grid-template-rows:56px 1fr;height:100vh}
+
+  .topbar{grid-column:1/3;display:flex;align-items:center;gap:16px;padding:0 18px;
+    border-bottom:1px solid var(--line);background:linear-gradient(180deg,#11141a,#0d1015);backdrop-filter:blur(8px)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;letter-spacing:.2px}
+  .mark{width:24px;height:24px;border-radius:7px;position:relative;
+    background:radial-gradient(circle at 30% 25%,var(--coral),#7a2c1c);box-shadow:0 0 14px -2px var(--coral),inset 0 1px 1px #fff5}
+  .mark::after{content:"";position:absolute;inset:6px;border:1.6px solid #1a0f0a;border-radius:50%;border-right-color:transparent;transform:rotate(40deg)}
+  .brand .tag{font-family:"IBM Plex Mono";font-size:10px;color:var(--tx-faint);border:1px solid var(--line);padding:2px 6px;border-radius:5px;margin-left:2px}
+  .spacer{flex:1}
+  .search{display:flex;align-items:center;gap:8px;width:300px;padding:7px 11px;border:1px solid var(--line);
+    border-radius:8px;background:#0c0e12;color:var(--tx-faint);font-size:12.5px}
+  .search kbd{margin-left:auto;font-family:"IBM Plex Mono";font-size:10px;background:#1a1f27;border:1px solid var(--line);
+    border-radius:4px;padding:1px 5px;color:var(--tx-soft)}
+  .proj{display:flex;align-items:center;gap:9px;padding:6px 11px;border:1px solid var(--line);border-radius:8px;
+    background:var(--panel-2);cursor:pointer;font-size:12.5px;font-weight:500;transition:.16s}
+  .proj:hover{border-color:#3a434f}
+  .proj .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal)}
+  .proj .more{color:var(--tx-faint);font-family:"IBM Plex Mono";font-size:11px}
+  .iconbtn{width:34px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);
+    display:grid;place-items:center;cursor:pointer;color:var(--tx-soft);transition:.16s}
+  .iconbtn:hover{color:var(--amber);border-color:#3a434f}
+
+  .rail{border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:2px;background:var(--bg2)}
+  .rail .lbl{font-family:"IBM Plex Mono";font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-faint);margin:8px 9px 7px}
+  .nav{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:8px;color:var(--tx-soft);
+    font-size:13px;font-weight:500;cursor:pointer;transition:.15s;border:1px solid transparent}
+  .nav svg{width:17px;height:17px;flex:none}
+  .nav:hover{background:#141821;color:var(--tx)}
+  .nav.active{background:linear-gradient(90deg,#1a1410,#16191f);color:var(--tx);border-color:#2c2620}
+  .nav.active svg{color:var(--amber)}
+  .nav.active::before{content:"";position:absolute;left:0;width:3px;height:18px;border-radius:3px;background:var(--amber);box-shadow:0 0 10px var(--amber);margin-left:-12px}
+  .nav .count{margin-left:auto;font-family:"IBM Plex Mono";font-size:11px;color:var(--tx-faint)}
+  .nav .count.bad{color:var(--red)}
+  .rail .foot{margin-top:auto;font-family:"IBM Plex Mono";font-size:10.5px;color:var(--tx-faint);padding:10px;line-height:1.6}
+  .rail .foot .on{color:var(--teal)}
+
+  .content{overflow:auto;padding:24px 30px 40px}
+  .pagehead{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+  .pagehead .k{font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+  .pagehead h1{font-size:24px;font-weight:600;letter-spacing:-.2px}
+  .scope{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--tx-faint)}
+  .scope b{color:var(--tx-soft)}
+
+  .hero{display:grid;grid-template-columns:248px 1fr;gap:18px;margin-bottom:18px}
+  .gauge{background:linear-gradient(180deg,#14181f,#10131a);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--glow);position:relative;overflow:hidden}
+  .gauge::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 0%,#f0a94c14,transparent 70%)}
+  .ring{width:150px;height:150px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;position:relative;
+    background:conic-gradient(var(--teal) 0 calc(92%*3.6deg*1),#1d232c 0);
+    background:conic-gradient(from -90deg, var(--teal) 0 331deg, #20262f 331deg 360deg);}
+  .ring::before{content:"";position:absolute;inset:13px;border-radius:50%;background:#0f131a;box-shadow:inset 0 0 24px #000}
+  .ring .v{position:relative;text-align:center}
+  .ring .v b{font-size:40px;font-weight:600;letter-spacing:-1px}
+  .ring .v small{display:block;font-family:"IBM Plex Mono";font-size:10px;letter-spacing:.14em;color:var(--tx-faint);text-transform:uppercase}
+  .gauge .cap{text-align:center;font-size:12.5px;color:var(--tx-soft);line-height:1.5;position:relative}
+  .gauge .cap b{color:var(--tx)}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 16px;cursor:pointer;transition:.16s;position:relative;overflow:hidden}
+  .stat:hover{border-color:#39424e;transform:translateY(-2px)}
+  .stat:hover::after{opacity:1}
+  .stat::after{content:"";position:absolute;left:0;top:0;height:2px;width:100%;background:var(--amber);opacity:0;transition:.2s}
+  .stat .t{font-family:"IBM Plex Mono";font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-faint)}
+  .stat .v{font-size:28px;font-weight:600;margin:7px 0 3px;letter-spacing:-.5px;display:flex;align-items:center;gap:9px}
+  .stat .s{font-size:11.5px;color:var(--tx-soft)}
+  .stat .s code{font-family:"IBM Plex Mono";color:var(--tx-faint)}
+  .pill{font-family:"IBM Plex Mono";font-size:10px;padding:2px 7px;border-radius:6px;font-weight:500;border:1px solid}
+  .pill.ok{color:var(--teal);border-color:#1c3b34;background:#0e1a17}
+  .pill.warn{color:var(--amber);border-color:#3a2f1a;background:#19140b}
+  .pill.bad{color:var(--red);border-color:#3a1f23;background:#1a0e10}
+
+  .lower{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .card h2{font-size:14px;font-weight:600;padding:15px 17px 4px;display:flex;align-items:center;gap:9px}
+  .card h2 .tag{margin-left:auto;font-family:"IBM Plex Mono";font-size:10px;color:var(--tx-faint);font-weight:400}
+  .card .sub{padding:0 17px 11px;font-size:11.5px;color:var(--tx-faint)}
+  .rowx{display:flex;gap:12px;padding:12px 17px;border-top:1px solid var(--line-soft);align-items:flex-start;transition:.14s}
+  .rowx:hover{background:#11151c}
+  .glyph{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;flex:none;margin-top:1px;border:1px solid}
+  .glyph.bad{color:var(--red);border-color:#3a1f23;background:#1a0e10}
+  .glyph.warn{color:var(--amber);border-color:#3a2f1a;background:#19140b}
+  .glyph.ok{color:var(--teal);border-color:#1c3b34;background:#0e1a17}
+  .glyph.info{color:var(--blue);border-color:#1d2f3d;background:#0c1620}
+  .rowx .body{flex:1;min-width:0}
+  .rowx .ttl{font-size:13px;font-weight:500;line-height:1.4}
+  code{font-family:"IBM Plex Mono";font-size:11.5px;background:#0c0e12;border:1px solid var(--line);padding:1px 5px;border-radius:5px;color:var(--amber)}
+  .rowx .meta{font-family:"IBM Plex Mono";font-size:10.5px;color:var(--tx-faint);margin-top:4px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .src{color:var(--tx-soft);border-bottom:1px dashed #3a434f;cursor:pointer}
+  .src:hover{color:var(--blue);border-color:var(--blue)}
+  .undo{margin-left:auto;font-size:11px;font-weight:600;color:var(--amber);cursor:pointer;white-space:nowrap;font-family:"IBM Plex Sans"}
+  .undo:hover{text-decoration:underline}
+
+  @keyframes up{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  .anim{animation:up .5s cubic-bezier(.2,.7,.2,1) both}
+  .d1{animation-delay:.04s}.d2{animation-delay:.1s}.d3{animation-delay:.16s}.d4{animation-delay:.22s}.d5{animation-delay:.28s}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="mark"></span> Claude Explorer <span class="tag">v0.1</span></div>
+    <div class="spacer"></div>
+    <div class="search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      Search settings, commands, deps…<kbd>⌘K</kbd>
+    </div>
+    <div class="proj"><span class="dot"></span> webapp <span class="more">+2 ▾</span></div>
+    <div class="iconbtn" title="Refresh"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
+  </header>
+
+  <aside class="rail">
+    <div class="lbl">// workspace</div>
+    <div class="nav active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><path d="M5 7h14M5 12h9M5 17h6"/></svg>Effective Config</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg>Commands &amp; Skills <span class="count">67</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18M3 9h6"/></svg>MCP &amp; Plugins <span class="count bad">1✗</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>Dependencies <span class="count bad">1✗</span></div>
+    <div class="lbl" style="margin-top:12px">// discover</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Marketplace</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M12 7v5l3 2M3 4v5h5"/></svg>Change Log <span class="count">3</span></div>
+    <div class="foot">● <span class="on">offline</span> · no telemetry<br>scopes: user · webapp · +2<br>claude cli <span class="on">detected</span></div>
+  </aside>
+
+  <main class="content">
+    <div class="pagehead anim d1">
+      <div>
+        <div class="k">// environment status</div>
+        <h1>Dashboard</h1>
+      </div>
+      <div class="scope">effective · <b>webapp</b> · merged(<b>user → project → local</b>)</div>
+    </div>
+
+    <section class="hero">
+      <div class="gauge anim d2">
+        <div class="ring"><div class="v"><b>92</b><small>health</small></div></div>
+        <div class="cap"><b>1 dependency missing</b>, <b>1 server down</b>.<br>3 overrides resolved cleanly.</div>
+      </div>
+      <div class="stats">
+        <div class="stat anim d2"><div class="t">commands</div><div class="v">42</div><div class="s"><code>28</code> built-in · <code>14</code> yours</div></div>
+        <div class="stat anim d3"><div class="t">skills + agents</div><div class="v">25</div><div class="s">across <code>4</code> plugins</div></div>
+        <div class="stat anim d4"><div class="t">mcp servers</div><div class="v">6 <span class="pill bad">1 down</span></div><div class="s"><code>5</code> reachable</div></div>
+        <div class="stat anim d3"><div class="t">dependencies</div><div class="v">14 <span class="pill warn">1 miss</span></div><div class="s"><code>uvx</code> not on PATH</div></div>
+        <div class="stat anim d4"><div class="t">conflicts</div><div class="v">3</div><div class="s">override resolutions</div></div>
+        <div class="stat anim d5"><div class="t">warnings</div><div class="v">5</div><div class="s">non-blocking</div></div>
+      </div>
+    </section>
+
+    <section class="lower">
+      <div class="card anim d4">
+        <h2>Needs attention <span class="tag">resolved by precedence</span></h2>
+        <div class="sub">Newest scope wins; full provenance on click.</div>
+
+        <div class="rowx">
+          <div class="glyph bad"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+          <div class="body">
+            <div class="ttl">Missing <code>uvx</code> — required by MCP server “context7”</div>
+            <div class="meta"><span class="src">webapp/.mcp.json:14</span> · server cannot start</div>
+          </div>
+        </div>
+        <div class="rowx">
+          <div class="glyph warn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6 2 12l6 6M16 6l6 6-6 6"/></svg></div>
+          <div class="body">
+            <div class="ttl"><code>model</code>=opus overrides <code>sonnet</code></div>
+            <div class="meta">win <span class="src">~/.claude/settings.json:3</span> ▸ over <span class="src">webapp/.claude/settings.json:8</span></div>
+          </div>
+        </div>
+        <div class="rowx">
+          <div class="glyph warn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg></div>
+          <div class="body">
+            <div class="ttl">“playwright” version probe inconclusive</div>
+            <div class="meta"><code>npx</code> found · handshake skipped · <span class="src">run deeper check</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card anim d5">
+        <h2>Recent changes <span class="tag">reversible</span></h2>
+        <div class="sub">Logged per scope · one-click undo.</div>
+
+        <div class="rowx">
+          <div class="glyph ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div class="body"><div class="ttl">Enabled hook <code>PreToolUse:Bash</code></div><div class="meta">global · 2h ago · backup #184</div></div>
+          <div class="undo">undo</div>
+        </div>
+        <div class="rowx">
+          <div class="glyph info"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 21h14"/></svg></div>
+          <div class="body"><div class="ttl">Installed plugin <code>linear</code></div><div class="meta">webapp · official marketplace · 1d ago</div></div>
+          <div class="undo">undo</div>
+        </div>
+        <div class="rowx">
+          <div class="glyph info"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          <div class="body"><div class="ttl">Edited <code>allow Bash(git*)</code></div><div class="meta">api · 2d ago · backup #182</div></div>
+          <div class="undo">undo</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

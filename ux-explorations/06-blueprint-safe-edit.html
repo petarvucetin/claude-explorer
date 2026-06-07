@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Explorer — Safe-Edit Flow (Blueprint)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F5; --grid:#D8DEE7; --grid-bold:#CAD2DD;
+    --panel:#FBFCFE; --edge:#C2CAD6; --edge-2:#1A2230;
+    --ink:#16202E; --ink-soft:#54616F; --ink-faint:#8893A1;
+    --blue:#1F47D6; --blue-soft:#3E63E0; --blue-wash:#E1E8FB;
+    --amber:#B5710C; --amber-wash:#F6ECD6; --red:#C2362B; --red-wash:#F6DDD9;
+    --green:#2E7D4F; --green-wash:#DDEEE2; --dim:#A7B0BC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Archivo",sans-serif;color:var(--ink);background:var(--paper);min-height:100vh;-webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+      linear-gradient(var(--grid-bold) 1px,transparent 1px),linear-gradient(90deg,var(--grid-bold) 1px,transparent 1px);
+    background-size:24px 24px,24px 24px,120px 120px,120px 120px;
+    padding:34px 20px 60px;
+  }
+  .head{max-width:860px;margin:0 auto 26px}
+  .k{font-family:"Spline Sans Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+  .k::before{content:"";width:18px;height:2px;background:var(--blue)}
+  .head h1{font-size:26px;font-weight:800;letter-spacing:-.3px;text-transform:uppercase}
+  .head p{font-family:"Spline Sans Mono";font-size:11.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6}
+  .head .ctx{display:inline-block;background:var(--amber-wash);border:1.5px solid var(--amber);color:var(--amber);font-weight:600;padding:2px 8px;border-radius:4px}
+
+  .flow{max-width:860px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:0}
+  .stepwrap{width:100%}
+  .steplabel{display:flex;align-items:center;gap:10px;margin:0 0 10px 4px}
+  .num{width:26px;height:26px;background:var(--edge-2);color:#fff;font-family:"Spline Sans Mono";font-weight:700;font-size:12px;display:grid;place-items:center;border-radius:5px}
+  .steplabel .t{font-family:"Archivo";font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+  .steplabel .sub{font-family:"Spline Sans Mono";font-size:10.5px;color:var(--ink-faint);margin-left:auto}
+
+  .panel{background:var(--panel);border:1.5px solid var(--edge-2);position:relative}
+  .panel::before,.panel::after{content:"";position:absolute;width:9px;height:9px;border:2px solid var(--blue);z-index:3}
+  .panel::before{left:-2px;top:-2px;border-right:none;border-bottom:none}
+  .panel::after{right:-2px;bottom:-2px;border-left:none;border-top:none}
+  .modal{padding:0}
+  .mh{padding:13px 17px;border-bottom:1.5px solid var(--edge-2);display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#fff,#f6f8fc)}
+  .mh .mt{font-weight:800;font-size:15px}
+  .mh .key{font-family:"Spline Sans Mono";color:var(--blue);font-weight:600;background:var(--blue-wash);border:1.5px solid var(--blue);padding:1px 8px;border-radius:5px;font-size:12px}
+  .mh .x{margin-left:auto;color:var(--ink-faint);cursor:pointer}
+  .mb{padding:16px 17px}
+
+  .ftitle{font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:8px}
+  .ftitle::after{content:"";flex:1;height:1px;background:var(--edge)}
+
+  /* scope target */
+  .targets{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .target{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1.5px solid var(--edge);background:var(--paper);cursor:pointer;font-family:"Spline Sans Mono";font-size:11.5px}
+  .target.on{border-color:var(--blue);background:var(--blue-wash);box-shadow:3px 3px 0 var(--blue-wash)}
+  .radio{width:15px;height:15px;border:1.5px solid var(--edge-2);border-radius:50%;flex:none;display:grid;place-items:center}
+  .target.on .radio{border-color:var(--blue)}
+  .target.on .radio::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--blue)}
+  .target .lab{font-weight:700;color:var(--ink)}
+  .target .pth{color:var(--ink-faint);margin-left:auto}
+  .target .scopetag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border:1.5px solid var(--edge-2)}
+
+  .valuerow{display:flex;align-items:center;gap:12px;margin-bottom:14px;font-family:"Spline Sans Mono";font-size:13px}
+  .valuerow .from{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--red)}
+  .valuerow .arrow{color:var(--blue);font-weight:700}
+  .valuerow .to{border:1.5px solid var(--blue);background:var(--panel);padding:6px 12px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:10px;border-radius:5px}
+  .valuerow .to .caret{color:var(--ink-faint)}
+
+  .hint{display:flex;gap:9px;padding:10px 12px;background:var(--amber-wash);border:1.5px solid var(--amber);font-family:"Spline Sans Mono";font-size:11px;color:#6a4708;line-height:1.5;margin-bottom:14px}
+  .validate{display:flex;gap:16px;font-family:"Spline Sans Mono";font-size:11px;margin-bottom:4px}
+  .vok{display:flex;align-items:center;gap:6px;color:var(--green);font-weight:600}
+
+  /* diff */
+  .diff{border:1.5px solid var(--edge);background:#0f1622;color:#cdd6e6;font-family:"Spline Sans Mono";font-size:11.5px;border-radius:5px;overflow:hidden;margin-bottom:14px}
+  .diff .vh{background:#0b111b;padding:7px 12px;color:var(--ink-faint);border-bottom:1px solid #1d2738;display:flex;gap:8px}
+  .diff pre{padding:10px 0;line-height:1.8}
+  .diff .row{display:block;padding:0 12px}
+  .diff .g{color:#4a586e;margin-right:14px;user-select:none}
+  .diff .del{background:#3a1620;color:#ffb3bd}
+  .diff .add{background:#143726;color:#a6f0c0}
+  .diff .sign{display:inline-block;width:12px;color:#7c8aa0}
+  .diff .key{color:#7fb0ff}.diff .str{color:#9be29b}
+
+  /* safety panel */
+  .safety{border:1.5px solid var(--edge-2);background:var(--paper);padding:0;margin-bottom:16px}
+  .safety .sh{background:var(--edge-2);color:#fff;font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;padding:6px 12px}
+  .safety .si{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--edge);font-family:"Spline Sans Mono";font-size:11.5px}
+  .safety .si:last-child{border-bottom:none}
+  .safety .si svg{flex:none}
+  .safety .si b{color:var(--ink)}
+
+  .foot{display:flex;gap:10px;justify-content:flex-end;padding:13px 17px;border-top:1.5px solid var(--edge);background:#f6f8fc}
+  .btn{font-family:"Spline Sans Mono";font-size:11px;font-weight:700;padding:8px 15px;border:1.5px solid var(--edge-2);background:var(--panel);cursor:pointer;border-radius:5px;display:flex;align-items:center;gap:7px;transition:.13s}
+  .btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .btn.primary{background:var(--edge-2);color:#fff}.btn.primary:hover{background:var(--blue);border-color:var(--blue)}
+  .btn.ghost{border-color:var(--edge)}
+
+  .connector{display:flex;flex-direction:column;align-items:center;color:var(--blue);margin:6px 0}
+  .connector svg{width:22px;height:30px}
+
+  /* step3 */
+  .applied{display:flex;align-items:center;gap:11px;padding:13px 15px;background:var(--green-wash);border:1.5px solid var(--green);margin-bottom:14px;font-weight:600;font-size:13px;color:#14532d}
+  .logentry{display:flex;align-items:flex-start;gap:12px;padding:13px 15px}
+  .glyph{width:28px;height:28px;border:1.5px solid var(--blue);background:var(--blue-wash);color:var(--blue);display:grid;place-items:center;flex:none}
+  .logentry .b{flex:1}
+  .logentry .ttl{font-size:13px;font-weight:600}
+  .logentry .ttl code{font-family:"Spline Sans Mono";font-size:11.5px;background:var(--paper);border:1px solid var(--edge);padding:1px 5px;border-radius:3px}
+  .logentry .meta{font-family:"Spline Sans Mono";font-size:10.5px;color:var(--ink-faint);margin-top:4px}
+  .undo{font-family:"Spline Sans Mono";font-size:11px;font-weight:700;color:var(--blue);cursor:pointer;border:1.5px solid var(--blue);padding:6px 12px;border-radius:5px;white-space:nowrap}
+  .undo:hover{background:var(--blue);color:#fff}
+  .resolved{font-family:"Spline Sans Mono";font-size:11px;color:var(--green);margin-top:12px;display:flex;align-items:center;gap:7px;font-weight:600}
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="k">Interaction · Safe Edit</div>
+    <h1>Safe-Edit &amp; Undo Flow</h1>
+    <p>Resolving the flagged conflict <span class="ctx">model = opus (User) ▸ overrides sonnet (Project)</span> by editing the winning value — every write is previewed, backed up, logged, and reversible.</p>
+  </div>
+
+  <div class="flow">
+    <!-- STEP 1 -->
+    <div class="stepwrap">
+      <div class="steplabel"><span class="num">1</span><span class="t">Compose</span><span class="sub">choose scope · enter value · validate</span></div>
+      <div class="panel modal">
+        <div class="mh"><span class="mt">Edit setting</span><span class="key">model</span><span class="x">✕</span></div>
+        <div class="mb">
+          <div class="ftitle">Where to write</div>
+          <div class="targets">
+            <div class="target on"><span class="radio"></span><span class="lab">Edit winner</span><span class="scopetag">User</span><span class="pth">~/.claude/settings.json:3</span></div>
+            <div class="target"><span class="radio"></span><span class="lab">Override here</span><span class="scopetag">Project</span><span class="pth">webapp/.claude/settings.json</span></div>
+            <div class="target"><span class="radio"></span><span class="lab">Override</span><span class="scopetag">Local</span><span class="pth">webapp/.claude/settings.local.json</span></div>
+          </div>
+
+          <div class="ftitle">New value</div>
+          <div class="valuerow"><span class="from">opus</span><span class="arrow">→</span><span class="to">sonnet <span class="caret">▾</span></span></div>
+
+          <div class="hint">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b5710c" stroke-width="2"><path d="M12 9v4m0 4h.01"/><circle cx="12" cy="12" r="9"/></svg>
+            Editing the <b>User</b> value affects every project. To change only <b>webapp</b>, pick “Override here · Project”.
+          </div>
+
+          <div class="validate">
+            <span class="vok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> valid enum: opus | sonnet | haiku</span>
+            <span class="vok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> schema OK</span>
+          </div>
+        </div>
+        <div class="foot"><div class="btn ghost">Cancel</div><div class="btn primary">Continue → Preview</div></div>
+      </div>
+    </div>
+
+    <div class="connector"><svg viewBox="0 0 24 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v26"/><path d="m5 21 7 7 7-7"/></svg></div>
+
+    <!-- STEP 2 -->
+    <div class="stepwrap">
+      <div class="steplabel"><span class="num">2</span><span class="t">Preview &amp; Confirm</span><span class="sub">exact diff · backup · reversible</span></div>
+      <div class="panel modal">
+        <div class="mh"><span class="mt">Confirm change</span><span class="key">~/.claude/settings.json</span><span class="x">✕</span></div>
+        <div class="mb">
+          <div class="ftitle">Diff</div>
+          <div class="diff">
+            <div class="vh">~/.claude/settings.json · 1 change</div>
+            <pre><span class="row"><span class="g">2</span>  <span class="sign"> </span><span class="key">"$schema"</span>: <span class="str">"…/claude-code-settings"</span>,</span><span class="row del"><span class="g">3</span>  <span class="sign">-</span><span class="key">"model"</span>: <span class="str">"opus"</span>,</span><span class="row add"><span class="g">3</span>  <span class="sign">+</span><span class="key">"model"</span>: <span class="str">"sonnet"</span>,</span><span class="row"><span class="g">4</span>  <span class="sign"> </span><span class="key">"permissions"</span>: { <span class="key">"defaultMode"</span>: <span class="str">"acceptEdits"</span> }</span></pre>
+          </div>
+
+          <div class="safety">
+            <div class="sh">Safety</div>
+            <div class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="2"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/></svg> Timestamped backup <b>#185</b> created before writing</div>
+            <div class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1f47d6" stroke-width="2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg> Reversible — one-click <b>undo</b> from Change Log</div>
+            <div class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Validated against settings schema</div>
+          </div>
+        </div>
+        <div class="foot"><div class="btn ghost">← Back</div><div class="btn primary">Apply change</div></div>
+      </div>
+    </div>
+
+    <div class="connector"><svg viewBox="0 0 24 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v26"/><path d="m5 21 7 7 7-7"/></svg></div>
+
+    <!-- STEP 3 -->
+    <div class="stepwrap">
+      <div class="steplabel"><span class="num">3</span><span class="t">Applied &amp; Reversible</span><span class="sub">logged per scope · undo anytime</span></div>
+      <div class="panel modal">
+        <div class="mb" style="padding-bottom:6px">
+          <div class="applied">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="2.6"><path d="M20 6 9 17l-5-5"/></svg>
+            Applied — <span style="font-family:'Spline Sans Mono';margin:0 4px">model</span> set to <b style="margin-left:3px">sonnet</b> at User scope
+          </div>
+          <div class="ftitle">New change-log entry</div>
+        </div>
+        <div class="logentry">
+          <div class="glyph"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          <div class="b">
+            <div class="ttl">Edited <code>model</code>: opus → sonnet</div>
+            <div class="meta">USER · ~/.claude/settings.json · just now · backup #185</div>
+            <div class="resolved"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Conflict resolved — webapp now resolves model = sonnet</div>
+          </div>
+          <div class="undo">↩ Undo</div>
+        </div>
+        <div class="foot" style="justify-content:space-between">
+          <span style="font-family:'Spline Sans Mono';font-size:10.5px;color:var(--ink-faint);align-self:center">Undo restores backup #185 and re-flags the conflict.</span>
+          <div class="btn">View Change Log →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

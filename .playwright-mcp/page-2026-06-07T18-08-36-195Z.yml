@@ -1,0 +1,240 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]: Claude Explorer
+    - generic [ref=e6]: FIG.02 — PRECEDENCE MATRIX
+    - generic [ref=e7] [cursor=pointer]:
+      - text: webapp
+      - generic [ref=e9]: +2 ▾
+    - generic "Refresh" [ref=e10] [cursor=pointer]:
+      - img [ref=e11]
+  - complementary [ref=e14]:
+    - generic [ref=e15]: Workspace
+    - generic [ref=e16] [cursor=pointer]:
+      - img [ref=e17]
+      - text: Dashboard
+    - generic [ref=e22] [cursor=pointer]:
+      - img [ref=e23]
+      - text: Effective Config
+    - generic [ref=e25] [cursor=pointer]:
+      - img [ref=e26]
+      - text: Commands & Skills
+      - generic [ref=e29]: "67"
+    - generic [ref=e30] [cursor=pointer]:
+      - img [ref=e31]
+      - text: MCP & Plugins
+      - generic [ref=e34]: 1✗
+    - generic [ref=e35] [cursor=pointer]:
+      - img [ref=e36]
+      - text: Dependencies
+      - generic [ref=e39]: 1✗
+    - generic [ref=e40]: Discover
+    - generic [ref=e41] [cursor=pointer]:
+      - img [ref=e42]
+      - text: Marketplace
+    - generic [ref=e45] [cursor=pointer]:
+      - img [ref=e46]
+      - text: Change Log
+      - generic [ref=e49]: "3"
+    - generic [ref=e50]:
+      - text: "RESOLVING: webapp"
+      - text: "sources: 4 files"
+      - text: "conflicts: 2"
+      - text: "merged keys: 3"
+  - main [ref=e51]:
+    - generic [ref=e52]:
+      - generic [ref=e53]:
+        - generic [ref=e54]: Configuration · Resolved
+        - heading "Effective Config" [level=1] [ref=e55]
+        - generic [ref=e56]:
+          - generic [ref=e57]: MANAGED
+          - generic [ref=e58]: ▸
+          - generic [ref=e59]: USER
+          - generic [ref=e60]: ▸
+          - generic [ref=e61]: PROJECT · webapp
+          - generic [ref=e62]: ▸
+          - generic [ref=e63]: LOCAL
+          - generic [ref=e64]: precedence increases left → right · later scope wins for scalars
+      - generic "Export" [ref=e65] [cursor=pointer]:
+        - img [ref=e66]
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70] [cursor=pointer]: All 9
+        - generic [ref=e71] [cursor=pointer]: Permissions 3
+        - generic [ref=e72] [cursor=pointer]: Environment 2
+        - generic [ref=e73] [cursor=pointer]: Hooks 1
+        - generic [ref=e74] [cursor=pointer]: Model 1
+        - generic [ref=e75] [cursor=pointer]: UI 2
+      - generic [ref=e76] [cursor=pointer]: Conflicts only
+      - generic [ref=e79] [cursor=pointer]: Show inherited
+      - generic [ref=e82]:
+        - img [ref=e83]
+        - text: filter keys…
+    - generic [ref=e86]:
+      - generic [ref=e87]: winning value
+      - generic [ref=e89]: overridden
+      - generic [ref=e91]: merged (union/deep)
+      - generic [ref=e93]: conflict flagged
+      - generic [ref=e95]: — blue wire = value carried to Effective
+    - table [ref=e97]:
+      - rowgroup [ref=e98]:
+        - row "Setting Managed User Project Local → Effective" [ref=e99]:
+          - columnheader "Setting" [ref=e100]
+          - columnheader "Managed" [ref=e101]
+          - columnheader "User" [ref=e102]
+          - columnheader "Project" [ref=e103]
+          - columnheader "Local" [ref=e104]
+          - columnheader "→ Effective" [ref=e105]
+      - rowgroup [ref=e106]:
+        - row "Model" [ref=e107]:
+          - cell "Model" [ref=e108]
+        - row "model scalar · last-wins ▾ — opus sonnet — opus conflict" [ref=e109] [cursor=pointer]:
+          - cell "model scalar · last-wins ▾" [ref=e110]:
+            - text: model
+            - generic [ref=e111]: scalar · last-wins
+            - text: ▾
+          - cell "—" [ref=e112]
+          - cell "opus" [ref=e113]: opus
+          - cell "sonnet" [ref=e115]
+          - cell "—" [ref=e116]
+          - cell "opus conflict" [ref=e117]:
+            - generic [ref=e118]:
+              - text: opus
+              - generic [ref=e119]: conflict
+        - 'row "Provenance trace — model User opus · highest-precedence value present → wins ~/.claude/settings.json : 3 Project sonnet · overridden by User (global outranks project here) webapp/.claude/settings.json : 8 ~/.claude/settings.json · read-only preview 1{ 2 \"$schema\": \"https://json.schemastore.org/claude-code-settings\", 3 \"model\": \"opus\", 4 \"permissions\": { \"defaultMode\": \"acceptEdits\" } 5} Edit winning value Open in editor Reveal file Copy path" [ref=e120]':
+          - 'cell "Provenance trace — model User opus · highest-precedence value present → wins ~/.claude/settings.json : 3 Project sonnet · overridden by User (global outranks project here) webapp/.claude/settings.json : 8 ~/.claude/settings.json · read-only preview 1{ 2 \"$schema\": \"https://json.schemastore.org/claude-code-settings\", 3 \"model\": \"opus\", 4 \"permissions\": { \"defaultMode\": \"acceptEdits\" } 5} Edit winning value Open in editor Reveal file Copy path" [ref=e121]':
+            - generic [ref=e122]:
+              - generic [ref=e123]:
+                - img [ref=e124]
+                - text: Provenance trace —
+                - generic [ref=e126]: model
+              - generic [ref=e127]:
+                - generic [ref=e128]: User
+                - generic [ref=e129]: opus
+                - generic [ref=e130]: · highest-precedence value present → wins
+                - generic [ref=e131] [cursor=pointer]: "~/.claude/settings.json : 3"
+              - generic [ref=e132]:
+                - generic [ref=e133]: Project
+                - generic [ref=e134]: sonnet
+                - generic [ref=e135]: · overridden by User (global outranks project here)
+                - generic [ref=e136] [cursor=pointer]: "webapp/.claude/settings.json : 8"
+              - generic [ref=e137]:
+                - generic [ref=e138]: ~/.claude/settings.json · read-only preview
+                - generic [ref=e139]:
+                  - text: "1{ 2 \"$schema\": \"https://json.schemastore.org/claude-code-settings\","
+                  - generic [ref=e140]: "3 \"model\": \"opus\","
+                  - text: "4 \"permissions\": { \"defaultMode\": \"acceptEdits\" } 5}"
+              - generic [ref=e141]:
+                - generic [ref=e142] [cursor=pointer]:
+                  - img [ref=e143]
+                  - text: Edit winning value
+                - generic [ref=e145] [cursor=pointer]:
+                  - img [ref=e146]
+                  - text: Open in editor
+                - generic [ref=e148] [cursor=pointer]:
+                  - img [ref=e149]
+                  - text: Reveal file
+                - generic [ref=e151] [cursor=pointer]:
+                  - img [ref=e152]
+                  - text: Copy path
+        - row "Permissions" [ref=e155]:
+          - cell "Permissions" [ref=e156]
+        - row "permissions.allow list · merged (union) ▸ — Bash(git*) Read(src/**) Bash(npm*) 3 rules merged" [ref=e157] [cursor=pointer]:
+          - cell "permissions.allow list · merged (union) ▸" [ref=e158]:
+            - text: permissions.allow
+            - generic [ref=e159]: list · merged (union)
+            - text: ▸
+          - cell "—" [ref=e160]
+          - cell "Bash(git*)" [ref=e161]
+          - cell "Read(src/**)" [ref=e162]
+          - cell "Bash(npm*)" [ref=e163]
+          - cell "3 rules merged" [ref=e164]:
+            - generic [ref=e165]:
+              - text: 3 rules
+              - generic [ref=e166]: merged
+        - row "permissions.deny list · merged (union) ▸ — — Bash(rm -rf*) — Bash(rm -rf*)" [ref=e167] [cursor=pointer]:
+          - cell "permissions.deny list · merged (union) ▸" [ref=e168]:
+            - text: permissions.deny
+            - generic [ref=e169]: list · merged (union)
+            - text: ▸
+          - cell "—" [ref=e170]
+          - cell "—" [ref=e171]
+          - cell "Bash(rm -rf*)" [ref=e172]: Bash(rm -rf*)
+          - cell "—" [ref=e174]
+          - cell "Bash(rm -rf*)" [ref=e175]:
+            - generic [ref=e176]: Bash(rm -rf*)
+        - row "permissions.defaultMode scalar · last-wins ▸ — acceptEdits — — acceptEdits" [ref=e177] [cursor=pointer]:
+          - cell "permissions.defaultMode scalar · last-wins ▸" [ref=e178]:
+            - text: permissions.defaultMode
+            - generic [ref=e179]: scalar · last-wins
+            - text: ▸
+          - cell "—" [ref=e180]
+          - cell "acceptEdits" [ref=e181]: acceptEdits
+          - cell "—" [ref=e183]
+          - cell "—" [ref=e184]
+          - cell "acceptEdits" [ref=e185]:
+            - generic [ref=e186]: acceptEdits
+        - row "Environment" [ref=e187]:
+          - cell "Environment" [ref=e188]
+        - row "env.ANTHROPIC_LOG scalar · last-wins ▸ — — debug — debug" [ref=e189] [cursor=pointer]:
+          - cell "env.ANTHROPIC_LOG scalar · last-wins ▸" [ref=e190]:
+            - text: env.ANTHROPIC_LOG
+            - generic [ref=e191]: scalar · last-wins
+            - text: ▸
+          - cell "—" [ref=e192]
+          - cell "—" [ref=e193]
+          - cell "debug" [ref=e194]: debug
+          - cell "—" [ref=e196]
+          - cell "debug" [ref=e197]:
+            - generic [ref=e198]: debug
+        - row "env.DISABLE_TELEMETRY scalar · last-wins ▸ — 1 — — 1" [ref=e199] [cursor=pointer]:
+          - cell "env.DISABLE_TELEMETRY scalar · last-wins ▸" [ref=e200]:
+            - text: env.DISABLE_TELEMETRY
+            - generic [ref=e201]: scalar · last-wins
+            - text: ▸
+          - cell "—" [ref=e202]
+          - cell "1" [ref=e203]: "1"
+          - cell "—" [ref=e205]
+          - cell "—" [ref=e206]
+          - cell "1" [ref=e207]:
+            - generic [ref=e208]: "1"
+        - row "Hooks" [ref=e209]:
+          - cell "Hooks" [ref=e210]
+        - row "hooks.PreToolUse array · merged (append) ▸ — 1 hook 2 hooks — 3 hooks merged" [ref=e211] [cursor=pointer]:
+          - cell "hooks.PreToolUse array · merged (append) ▸" [ref=e212]:
+            - text: hooks.PreToolUse
+            - generic [ref=e213]: array · merged (append)
+            - text: ▸
+          - cell "—" [ref=e214]
+          - cell "1 hook" [ref=e215]
+          - cell "2 hooks" [ref=e216]
+          - cell "—" [ref=e217]
+          - cell "3 hooks merged" [ref=e218]:
+            - generic [ref=e219]:
+              - text: 3 hooks
+              - generic [ref=e220]: merged
+        - row "UI" [ref=e221]:
+          - cell "UI" [ref=e222]
+        - row "outputStyle scalar · last-wins ▸ — default concise — concise conflict" [ref=e223] [cursor=pointer]:
+          - cell "outputStyle scalar · last-wins ▸" [ref=e224]:
+            - text: outputStyle
+            - generic [ref=e225]: scalar · last-wins
+            - text: ▸
+          - cell "—" [ref=e226]
+          - cell "default" [ref=e227]
+          - cell "concise" [ref=e228]: concise
+          - cell "—" [ref=e230]
+          - cell "concise conflict" [ref=e231]:
+            - generic [ref=e232]:
+              - text: concise
+              - generic [ref=e233]: conflict
+        - row "statusLine.command scalar · last-wins ▸ — ~/bin/ccline — — ~/bin/ccline" [ref=e234] [cursor=pointer]:
+          - cell "statusLine.command scalar · last-wins ▸" [ref=e235]:
+            - text: statusLine.command
+            - generic [ref=e236]: scalar · last-wins
+            - text: ▸
+          - cell "—" [ref=e237]
+          - cell "~/bin/ccline" [ref=e238]: ~/bin/ccline
+          - cell "—" [ref=e240]
+          - cell "—" [ref=e241]
+          - cell "~/bin/ccline" [ref=e242]:
+            - generic [ref=e243]: ~/bin/ccline
