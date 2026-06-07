@@ -46,6 +46,8 @@ public sealed class MergeEngine
                         new SettingOrigin(s.Scope, s.FilePath, $"env.{key}"),
                         v.DeepClone()));
 
+            if (contributions.Count == 0) continue;
+
             var winner = contributions[^1];
             var distinct = contributions.Select(c => c.Value?.ToJsonString() ?? "null").Distinct().Count();
 
@@ -81,6 +83,8 @@ public sealed class MergeEngine
                     foreach (var item in arr)
                         combined.Add(item?.DeepClone());
                 }
+
+            if (contributions.Count == 0) continue;
 
             yield return new EffectiveSetting(
                 Key: $"hooks.{ev}",
