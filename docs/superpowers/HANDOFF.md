@@ -41,7 +41,8 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
   workspace token at a time.)
 - Structure: one Linear **Project per phase** ("Phase N — …", already created for 1–8),
   one **issue per plan task**. Phases 1 & 2 projects are Completed (CLA-5…15, CLA-17…26).
-  Tech-debt issue: **CLA-16**.
+  Phases 3–8 each have a Backlog **epic** issue (CLA-27…CLA-32) carrying the scope — break
+  each into per-task issues when its detailed plan is written. Tech-debt issue: **CLA-16**.
 
 ## The execution playbook (how each phase was built — repeat it)
 This used the **superpowers** skills. Per phase:
