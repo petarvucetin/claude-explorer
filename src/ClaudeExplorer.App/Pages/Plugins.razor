@@ -1,0 +1,120 @@
+@page "/plugins"
+@using ClaudeExplorer.App.Screens.Plugins
+@using ClaudeExplorer.Core.Catalog
+@using ClaudeExplorer.Core.Plugins
+@inject PluginsViewModel Vm
+@inject RefreshService Refresh
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Plugins &amp; Marketplaces</div>
+        <h1>Plugins</h1>
+    </div>
+    @if (Vm.Inventory is { } hdr)
+    {
+        <div class="scope">@hdr.Plugins.Count INSTALLED · @hdr.Marketplaces.Count MARKETPLACES</div>
+    }
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card"><div class="sub" style="padding:18px">Loading…</div></CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel">
+        <div class="rowx"><div class="glyph bad"></div>
+            <div class="body"><div class="ttl">Failed to load plugins</div><div class="meta">@Vm.ErrorMessage</div></div>
+        </div>
+    </CornerTickPanel>
+}
+else if (Vm.Inventory is { } inv)
+{
+    @if (inv.Marketplaces.Count > 0)
+    {
+        <div class="grp-label">Marketplaces · @inv.Marketplaces.Count</div>
+        <div class="mkstrip">
+            @foreach (var m in inv.Marketplaces)
+            {
+                <div class="mkcard">
+                    <div class="mk-n">@m.Name <span class="badge @Trust(m.Trust)">@Trust(m.Trust)</span></div>
+                    <div class="mk-s">@(m.SourceRepo ?? "—") · @m.InstalledCount installed</div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="grp-label">Installed plugins · @inv.Plugins.Count</div>
+    @if (inv.Plugins.Count == 0)
+    {
+        <CornerTickPanel Class="card"><div class="sub" style="padding:18px">No plugins installed.</div></CornerTickPanel>
+    }
+    <div class="pgrid">
+        @foreach (var p in inv.Plugins)
+        {
+            var plugin = p;
+            <div class="pcard @(Vm.Selected == p ? "sel" : "")" @onclick="() => Vm.Selected = plugin">
+                <div class="p-h">
+                    <div>
+                        <div class="p-n">@p.Name</div>
+                        <div class="p-v">v@(p.Version) · @p.Marketplace</div>
+                    </div>
+                    <div class="ptog @(p.Enabled ? "on" : "off")">@(p.Enabled ? "● ON" : "○ OFF")</div>
+                </div>
+                <div style="margin-top:7px">
+                    <span class="badge @Trust(p.Trust)">@Trust(p.Trust)</span>
+                    <span class="scope-tag s-@p.Scope.ToLowerInvariant()">@p.Scope</span>
+                </div>
+                <div class="provides">
+                    @foreach (var part in PluginCardMapper.ProvidesParts(p.Provides))
+                    {
+                        <span class="pp">@part</span>
+                    }
+                    @if (p.Provides.IsEmpty)
+                    {
+                        <span class="pp">no artifacts</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Vm.Selected is { } sel)
+    {
+        <CornerTickPanel Class="card" style="margin-top:14px;padding:18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <h2 style="margin:0;font-size:18px">@sel.Name</h2>
+                <span class="badge @Trust(sel.Trust)">@Trust(sel.Trust)</span>
+                <span class="ptog @(sel.Enabled ? "on" : "off")">@(sel.Enabled ? "● ENABLED" : "○ DISABLED")</span>
+            </div>
+            <div class="kv">
+                <span class="kvk">marketplace</span><span class="kvv">@sel.Marketplace</span>
+                <span class="kvk">version</span><span class="kvv">@sel.Version</span>
+                <span class="kvk">scope</span><span class="kvv">@sel.Scope</span>
+                <span class="kvk">provides</span><span class="kvv">@string.Join(" · ", PluginCardMapper.ProvidesParts(sel.Provides))</span>
+                <span class="kvk">install path</span><span class="kvv">@sel.InstallPath</span>
+            </div>
+        </CornerTickPanel>
+    }
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+    private void OnRefreshRequested() => Vm.Load();
+
+    private static string Trust(TrustLevel t) => t == TrustLevel.Verified ? "verified" : "community";
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}

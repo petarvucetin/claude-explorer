@@ -7,6 +7,7 @@ using ClaudeExplorer.App.Screens.Dependencies;
 using ClaudeExplorer.App.Screens.EffectiveConfig;
 using ClaudeExplorer.App.Screens.Marketplace;
 using ClaudeExplorer.App.Screens.Mcp;
+using ClaudeExplorer.App.Screens.Plugins;
 using ClaudeExplorer.App.Screens.Recommendations;
 using ClaudeExplorer.App.Services;
 using ClaudeExplorer.App.ViewModels;
@@ -17,6 +18,7 @@ using ClaudeExplorer.Core.Dependencies;
 using ClaudeExplorer.Core.Io;
 using ClaudeExplorer.Core.Mcp;
 using ClaudeExplorer.Core.Mutation;
+using ClaudeExplorer.Core.Plugins;
 using ClaudeExplorer.Core.Recommendations;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
@@ -69,6 +71,7 @@ internal static class Program
             sp.GetRequiredService<IFileSystem>(), sp.GetRequiredService<IPathResolver>(), sp.GetRequiredService<IProcessRunner>()));
         builder.Services.AddSingleton(sp => new McpServerReader(sp.GetRequiredService<IFileSystem>()));
         builder.Services.AddSingleton(sp => new McpInventoryReader(sp.GetRequiredService<IFileSystem>()));
+        builder.Services.AddSingleton(sp => new PluginInventoryReader(sp.GetRequiredService<IFileSystem>()));
         builder.Services.AddSingleton<IBackupStore>(sp => new FileBackupStore(
             sp.GetRequiredService<IFileSystem>(), sp.GetRequiredService<IFileWriter>(),
             $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile).Replace('\\', '/')}/.claude/.claude-explorer/backups"));
@@ -101,6 +104,7 @@ internal static class Program
         builder.Services.AddTransient<DependencyViewModel>();
         builder.Services.AddTransient<ChangeLogViewModel>();
         builder.Services.AddTransient<McpViewModel>();
+        builder.Services.AddTransient<PluginsViewModel>();
 
         // Batch-B screen ViewModels (transient).
         builder.Services.AddTransient(sp => new MarketplaceViewModel(
