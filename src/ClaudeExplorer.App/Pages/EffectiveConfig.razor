@@ -1,9 +1,11 @@
 @page "/effective"
 @using ClaudeExplorer.App.Screens.EffectiveConfig
 @using ClaudeExplorer.Core.Model
+@using ClaudeExplorer.Core.Mutation
 @inject EffectiveConfigViewModel Vm
 @inject RefreshService Refresh
 @inject ClaudeExplorer.Core.Io.IFileSystem Fs
+@inject ClaudeExplorer.App.Services.IWorkspaceContext Workspace
 @implements IDisposable
 
 <div class="pagehead">
@@ -163,7 +165,10 @@ else if (Vm.View is { } view)
             return;
         }
         _editingKey = row.Key;
-        _editVm = new SafeEditViewModel(Vm.Mutations, row.Winner, () => DateTime.UtcNow.ToString("o"));
+        _editVm = new SafeEditViewModel(Vm.Mutations, row.Winner, () => DateTime.UtcNow.ToString("o"), Workspace.ProjectDir);
+        // For merged list settings where there is no single winner, default to OverrideAtProject
+        // so PreviewSettingsEdit always has a valid target path.
+        if (row.Winner is null) _editVm.Mode = EditMode.OverrideAtProject;
         _editVm.NewContent = row.EffectiveDisplay;
     }
 

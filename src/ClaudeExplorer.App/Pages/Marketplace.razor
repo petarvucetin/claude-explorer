@@ -11,11 +11,28 @@
         <div class="k">Discover</div>
         <h1>Marketplace</h1>
     </div>
+    <div class="scope" style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;letter-spacing:.05em;color:var(--ink-faint)">INSTALL TO</span>
+        <select class="scope-select"
+                value="@Vm.InstallScope.ToString()"
+                @onchange="e => Vm.InstallScope = Enum.Parse<ScopeKind>(e.Value!.ToString()!)">
+            <option value="User">User (~/.claude)</option>
+            <option value="Project">Project (.claude/)</option>
+            <option value="Local">Local (.claude/local)</option>
+        </select>
+    </div>
 </div>
 
 @if (Vm.Error is not null)
 {
     <div class="err-banner" style="margin-bottom:14px">@Vm.Error</div>
+}
+
+@if (Vm.MissingRuntimes.Count > 0)
+{
+    <div class="warn-callout" style="margin-bottom:14px">
+        ⚠ Missing on this machine: @string.Join(", ", Vm.MissingRuntimes) — an installed item may require these runtimes.
+    </div>
 }
 
 @if (Vm.LastInstall is { IsUndone: false } install)

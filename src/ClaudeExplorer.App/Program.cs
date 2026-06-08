@@ -72,11 +72,9 @@ internal static class Program
         builder.Services.AddSingleton(sp => new RecommendationService(sp.GetRequiredService<IFileSystem>()));
 
         // Batch-A screen ViewModels (transient; each page owns its own instance).
+        // Note: SafeEditViewModel is NOT registered in DI — EffectiveConfig.razor creates it
+        // via `new` so it can pass the winning SettingOrigin and real projectDir at runtime.
         builder.Services.AddTransient<EffectiveConfigViewModel>();
-        builder.Services.AddTransient<SafeEditViewModel>(sp => new SafeEditViewModel(
-            sp.GetRequiredService<SafeMutationService>(),
-            winner: null,
-            sp.GetRequiredService<Func<string>>()));
         builder.Services.AddTransient<ArtifactBrowserViewModel>();
         builder.Services.AddTransient<DependencyViewModel>();
         builder.Services.AddTransient<ChangeLogViewModel>();
@@ -86,7 +84,8 @@ internal static class Program
             sp.GetRequiredService<CatalogService>(),
             sp.GetRequiredService<SafeMutationService>(),
             sp.GetRequiredService<IWorkspaceContext>(),
-            sp.GetRequiredService<Func<string>>()));
+            sp.GetRequiredService<Func<string>>(),
+            sp.GetRequiredService<DependencyHealthService>()));
         builder.Services.AddTransient(sp => new RecommendationsViewModel(
             sp.GetRequiredService<CatalogService>(),
             sp.GetRequiredService<RecommendationService>(),

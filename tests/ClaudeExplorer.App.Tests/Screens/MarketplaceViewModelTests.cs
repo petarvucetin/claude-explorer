@@ -1,6 +1,7 @@
 using ClaudeExplorer.App.Screens.Marketplace;
 using ClaudeExplorer.App.Tests.Fakes;
 using ClaudeExplorer.Core.Catalog;
+using ClaudeExplorer.Core.Dependencies;
 using ClaudeExplorer.Core.Model;
 using ClaudeExplorer.Core.Mutation;
 
@@ -38,12 +39,13 @@ public class MarketplaceViewModelTests
     private static MarketplaceViewModel BuildVm(
         ICatalogFetcher? fetcher = null,
         FakeProcessRunner? runner = null,
-        InMemoryFileSystem? installedFs = null)
+        InMemoryFileSystem? installedFs = null,
+        DependencyHealthService? depHealth = null)
     {
         var fs = installedFs ?? new InMemoryFileSystem();
         var catalog = new CatalogService(fs, fetcher ?? new FakeCatalogFetcher());
         var mutation = BuildMutation(runner);
-        return new MarketplaceViewModel(catalog, mutation, BuildWorkspace(), () => "2026-06-07T00:00:00Z");
+        return new MarketplaceViewModel(catalog, mutation, BuildWorkspace(), () => "2026-06-07T00:00:00Z", depHealth);
     }
 
     // ── mapper unit tests ──────────────────────────────────────────────────────
@@ -195,6 +197,92 @@ public class MarketplaceViewModelTests
 
         Assert.True(vm.LastInstall!.IsUndone);
         Assert.Null(vm.Error);
+    }
+
+    // ── Fix 4: InstallScope ────────────────────────────────────────────────────
+
+    [Fact]
+    public void InstallScope_defaults_to_User()
+    {
+        var vm = BuildVm();
+        Assert.Equal(ScopeKind.User, vm.InstallScope);
+    }
+
+    [Fact]
+    public void Install_uses_InstallScope_Project_records_ChangeLogEntry_with_Project_scope()
+    {
+        var runner = new FakeProcessRunner().AddVersion("claude", "1.0", exitCode: 0);
+        var vm = BuildVm(runner: runner);
+        var row = new MarketplaceItemRow("scoped-tool", CatalogItemType.Plugin, null, null, TrustLevel.Verified,
+            CatalogSourceKind.ClaudeMarketplace, "Src");
+
+        vm.InstallScope = ScopeKind.Project;
+        vm.Install(row);
+
+        Assert.NotNull(vm.LastInstall);
+        Assert.Equal(ScopeKind.Project, vm.LastInstall!.Scope);
+        Assert.Null(vm.Error);
+    }
+
+    // ── Fix 5: MissingRuntimes ─────────────────────────────────────────────────
+
+    [Fact]
+    public void MissingRuntimes_populated_when_dep_health_reports_missing_runtime()
+    {
+        // Build an in-memory filesystem with a settings.json hook referencing python3,
+        // and a FakePathResolver that does NOT have python3 on PATH.
+        var configFs = new InMemoryFileSystem()
+            .AddFile($"{UserDir}/.claude/settings.json", """
+                {
+                  "hooks": {
+                    "PreToolUse": [
+                      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "python3 -m lint" } ] }
+                    ]
+                  }
+                }
+                """);
+
+        var resolver = new FakePathResolver(); // python3 deliberately absent
+        var runner = new FakeProcessRunner();
+        var depHealth = new DependencyHealthService(configFs, resolver, runner);
+
+        var vm = BuildVm(depHealth: depHealth);
+
+        vm.LoadInstalled();
+
+        Assert.Contains("python3", vm.MissingRuntimes);
+    }
+
+    [Fact]
+    public void MissingRuntimes_empty_when_dep_health_not_injected()
+    {
+        var vm = BuildVm(); // no depHealth
+        vm.LoadInstalled();
+        Assert.Empty(vm.MissingRuntimes);
+    }
+
+    [Fact]
+    public void MissingRuntimes_empty_when_all_runtimes_present()
+    {
+        var configFs = new InMemoryFileSystem()
+            .AddFile($"{UserDir}/.claude/settings.json", """
+                {
+                  "hooks": {
+                    "PreToolUse": [
+                      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "npx -y eslint" } ] }
+                    ]
+                  }
+                }
+                """);
+
+        var resolver = new FakePathResolver().Add("npx", "/usr/bin/npx");
+        var runner = new FakeProcessRunner().AddVersion("/usr/bin/npx", "10.0.0");
+        var depHealth = new DependencyHealthService(configFs, resolver, runner);
+
+        var vm = BuildVm(depHealth: depHealth);
+        vm.LoadInstalled();
+
+        Assert.Empty(vm.MissingRuntimes);
     }
 }
 
