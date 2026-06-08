@@ -1,0 +1,15 @@
+<div class="codeview">
+    <div class="codeview-head">@Title</div>
+    <pre class="codeview-body"><code>@for (var i = 0; i < _lines.Length; i++)
+{<span class="ln">@(i + 1)</span>@_lines[i]
+}</code></pre>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Content { get; set; } = "";
+    private string[] _lines = Array.Empty<string>();
+
+    protected override void OnParametersSet()
+        => _lines = (Content ?? "").Replace("\r\n", "\n").Split('\n');
+}

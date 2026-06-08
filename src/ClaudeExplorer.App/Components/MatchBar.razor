@@ -1,0 +1,6 @@
+<div class="matchbar"><div class="matchbar-fill" style="width:@(Percent)%"></div><span class="matchbar-pct">@Percent%</span></div>
+
+@code {
+    [Parameter] public double Confidence { get; set; }
+    private int Percent => (int)Math.Round(Math.Clamp(Confidence, 0, 1) * 100);
+}

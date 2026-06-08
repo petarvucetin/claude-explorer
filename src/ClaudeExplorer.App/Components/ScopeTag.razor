@@ -1,0 +1,6 @@
+@using ClaudeExplorer.Core.Model
+<span class="scope-tag s-@Scope.ToString().ToLowerInvariant()">@Scope.ToString().ToUpperInvariant()</span>
+
+@code {
+    [Parameter] public ScopeKind Scope { get; set; }
+}

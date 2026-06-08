@@ -1,0 +1,6 @@
+@using ClaudeExplorer.Core.Catalog
+<span class="badge @(Trust == TrustLevel.Verified ? "verified" : "community")">@(Trust == TrustLevel.Verified ? "VERIFIED" : "COMMUNITY")</span>
+
+@code {
+    [Parameter] public TrustLevel Trust { get; set; }
+}
