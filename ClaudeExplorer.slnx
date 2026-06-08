@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/ClaudeExplorer.App/ClaudeExplorer.App.csproj" />
     <Project Path="src/ClaudeExplorer.Core/ClaudeExplorer.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">

@@ -1,0 +1,25 @@
+/* Minimal foundation styles — Blueprint theme is layered in during Phase 7 build. */
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+.app-shell {
+    height: 100vh;
+}
+
+.page-probe {
+    padding: 32px;
+}
+
+#blazor-error-ui {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 16px;
+    background: #b32121;
+    color: #fff;
+}
