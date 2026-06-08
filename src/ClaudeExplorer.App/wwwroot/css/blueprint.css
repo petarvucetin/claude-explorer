@@ -940,7 +940,9 @@ code {
 }
 
 /* Environment chip in topbar/selector */
-.envsel { display: flex; align-items: center; gap: 8px; }
+/* position:relative anchors the absolutely-positioned .env-dropdown (a sibling of the chip) to this
+   container, so the menu opens directly under the chip instead of against a far-up ancestor. */
+.envsel { display: flex; align-items: center; gap: 8px; position: relative; }
 .envchip {
   display: flex;
   align-items: center;
@@ -970,7 +972,7 @@ code {
 .env-dropdown {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  right: 0; /* anchor to the chip's right edge (it sits top-right) so the menu stays on screen */
   min-width: 200px;
   background: var(--panel);
   border: 1.5px solid var(--edge-2);
