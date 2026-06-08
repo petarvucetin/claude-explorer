@@ -155,7 +155,10 @@ else if (Vm.View is { } view)
     }
 
     private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
-    private void OnRefreshRequested() => Vm.Load();
+
+    // A refresh rebuilds the row list, so the index-based selection (and the editor built from the
+    // old row) can desync. Drop the open editor before reloading.
+    private void OnRefreshRequested() { _selectedKey = null; _editor = null; Vm.Load(); }
 
     public void Dispose()
     {
