@@ -1,0 +1,67 @@
+@page "/changelog"
+@using ClaudeExplorer.App.Screens.ChangeLog
+@using ClaudeExplorer.Core.Model
+@using ClaudeExplorer.Core.Mutation
+@inject ChangeLogViewModel Vm
+@inject RefreshService Refresh
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">History</div>
+        <h1>Change Log</h1>
+    </div>
+</div>
+
+@if (Vm.ErrorMessage is not null)
+{
+    <div class="err-banner" style="margin-bottom:14px">@Vm.ErrorMessage</div>
+}
+
+<CornerTickPanel Class="card">
+    @if (!Vm.Groups.Any())
+    {
+        <div class="sub" style="padding:18px">No changes recorded yet. Edits and installs appear here.</div>
+    }
+    @foreach (var group in Vm.Groups)
+    {
+        <div class="clog-scope-head">
+            <ScopeTag Scope="group.Key" />
+            <span>@group.Count() changes</span>
+        </div>
+        @foreach (var entry in group)
+        {
+            var capturedEntry = entry;
+            <div class="clog-row @(entry.IsUndone ? "undone" : "")">
+                <div style="flex:1;min-width:0">
+                    <div class="clog-desc">@entry.Description</div>
+                    <div class="clog-ts">@entry.Timestamp · @entry.Kind.ToString().ToUpperInvariant() · @entry.FilePath</div>
+                </div>
+                <button class="btn-undo" disabled="@entry.IsUndone"
+                        @onclick="() => Vm.Undo(capturedEntry)">
+                    @(entry.IsUndone ? "UNDONE" : "UNDO")
+                </button>
+            </div>
+        }
+    }
+</CornerTickPanel>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnRefreshRequested() => Vm.Load();
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}
