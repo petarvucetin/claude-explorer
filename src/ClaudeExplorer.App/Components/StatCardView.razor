@@ -1,0 +1,16 @@
+@using ClaudeExplorer.App.Dashboard
+<CornerTickPanel Class="stat">
+    <div class="num-tag"><span class="t">@Card.Label</span><span class="idx">@Card.Index</span></div>
+    <div class="v">
+        @Card.Value
+        @if (Card.Badge is not null)
+        {
+            <Pill Text="@Card.Badge" Tone="@Card.Tone" />
+        }
+    </div>
+    <div class="s">@Card.Sub</div>
+</CornerTickPanel>
+
+@code {
+    [Parameter] public StatCard Card { get; set; } = default!;
+}

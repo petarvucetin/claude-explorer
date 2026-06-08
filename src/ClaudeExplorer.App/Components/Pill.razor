@@ -1,0 +1,15 @@
+@using ClaudeExplorer.App.Dashboard
+<span class="pill @ToneClass">@Text</span>
+
+@code {
+    [Parameter] public string Text { get; set; } = "";
+    [Parameter] public BadgeTone Tone { get; set; } = BadgeTone.None;
+
+    private string ToneClass => Tone switch
+    {
+        BadgeTone.Ok => "ok",
+        BadgeTone.Warn => "warn",
+        BadgeTone.Bad => "bad",
+        _ => "",
+    };
+}

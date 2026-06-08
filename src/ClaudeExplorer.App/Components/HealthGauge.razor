@@ -1,0 +1,18 @@
+<CornerTickPanel Class="gauge">
+    <div class="ring">
+        <svg width="148" height="148" viewBox="0 0 148 148">
+            <circle cx="74" cy="74" r="62" fill="none" stroke="#D8DEE7" stroke-width="9" />
+            <circle cx="74" cy="74" r="62" fill="none" stroke="var(--blue)" stroke-width="9"
+                    stroke-dasharray="389" stroke-dashoffset="@Offset" />
+        </svg>
+        <div class="num"><div><b>@Score</b><small>health</small></div></div>
+    </div>
+    <div class="cap">@Caption</div>
+</CornerTickPanel>
+
+@code {
+    [Parameter] public int Score { get; set; }
+    [Parameter] public string Caption { get; set; } = "";
+    // 389 = circumference; offset hides the (100-score)% remainder.
+    private double Offset => 389 * (1 - Math.Clamp(Score, 0, 100) / 100.0);
+}
