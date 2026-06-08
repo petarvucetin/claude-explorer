@@ -30,7 +30,7 @@ else if (Vm.View is { } view)
     }
     @foreach (var group in view.Groups)
     {
-        <div class="grp-label">@group.Event · @group.Rows.Count</div>
+        <div class="grp-label"><span class="name">@group.Event</span><span class="cnt">@group.Rows.Count</span></div>
         @foreach (var row in group.Rows)
         {
             var r = row;

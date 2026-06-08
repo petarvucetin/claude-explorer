@@ -322,8 +322,11 @@ body {
 .toolchip.off { border-color: var(--edge); background: var(--paper); color: var(--ink-faint); text-decoration: line-through; }
 .fieldlabel { font-family: "Spline Sans Mono", monospace; font-size: 10px; letter-spacing: .08em; color: var(--ink-faint); text-transform: uppercase; margin-bottom: 4px; }
 
-/* group label (between sections on a screen) */
-.grp-label { font-family: "Spline Sans Mono", monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); margin: 16px 2px 8px; display: flex; align-items: center; gap: 8px; }
+/* group label (section header between content blocks) — "ink eyebrow": blue tick + dark name + count chip + trailing rule */
+.grp-label { display: flex; align-items: center; gap: 10px; margin: 18px 2px 9px; }
+.grp-label::before { content: ""; flex: none; width: 16px; height: 3px; border-radius: 2px; background: var(--blue); }
+.grp-label .name { font-family: "Spline Sans Mono", monospace; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+.grp-label .cnt { font-family: "Spline Sans Mono", monospace; font-size: 10px; font-weight: 700; color: var(--blue); background: var(--blue-wash); border-radius: 10px; padding: 1px 8px; }
 .grp-label::after { content: ""; flex: 1; height: 1px; background: var(--edge); }
 
 /* marketplaces strip + plugin cards */

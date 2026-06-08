@@ -33,7 +33,7 @@ else if (Vm.Inventory is { } inv)
 {
     @if (inv.Marketplaces.Count > 0)
     {
-        <div class="grp-label">Marketplaces · @inv.Marketplaces.Count</div>
+        <div class="grp-label"><span class="name">Marketplaces</span><span class="cnt">@inv.Marketplaces.Count</span></div>
         <div class="mkstrip">
             @foreach (var m in inv.Marketplaces)
             {
@@ -45,7 +45,7 @@ else if (Vm.Inventory is { } inv)
         </div>
     }
 
-    <div class="grp-label">Installed plugins · @inv.Plugins.Count</div>
+    <div class="grp-label"><span class="name">Installed plugins</span><span class="cnt">@inv.Plugins.Count</span></div>
     @if (inv.Plugins.Count == 0)
     {
         <CornerTickPanel Class="card"><div class="sub" style="padding:18px">No plugins installed.</div></CornerTickPanel>
