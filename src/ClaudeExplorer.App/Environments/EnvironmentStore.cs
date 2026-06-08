@@ -11,15 +11,18 @@ public sealed class EnvironmentState
     public string? ActiveId { get; init; }
     public List<ClaudeEnvironment> Custom { get; init; } = new();
     public Dictionary<string, string> Projects { get; init; } = new();
+    public List<ProjectEndpointDef> ComparedProjects { get; init; } = new();
 
     [JsonConstructor]
     public EnvironmentState() { }
 
-    public EnvironmentState(string? ActiveId, IEnumerable<ClaudeEnvironment> Custom, IDictionary<string, string> Projects)
+    public EnvironmentState(string? ActiveId, IEnumerable<ClaudeEnvironment> Custom, IDictionary<string, string> Projects,
+        IEnumerable<ProjectEndpointDef>? ComparedProjects = null)
     {
         this.ActiveId = ActiveId;
         this.Custom = new List<ClaudeEnvironment>(Custom);
         this.Projects = new Dictionary<string, string>(Projects);
+        this.ComparedProjects = ComparedProjects is null ? new() : new(ComparedProjects);
     }
 
     public static EnvironmentState Empty { get; } = new(null, Array.Empty<ClaudeEnvironment>(), new Dictionary<string, string>());
