@@ -11,11 +11,9 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Current state (2026-06-07)
-- **Phases 1, 2, 3, 4 & 5 are DONE, merged to `main`, and pushed** to `origin`
-  (`https://github.com/petarvucetin/claude-explorer.git`). `git log` tip ≈ `2ea15ab`.
-- **Phase 6 is DONE** on branch `phase-6-safe-mutation` (9 commits, `e23d042`…`19558bd`);
-  awaiting merge/push.
-- **`dotnet test` → 203 passing.** `.NET SDK 10.0.300` is installed. Solution file is
+- **Phases 1–6 are DONE, merged to `main`, and pushed** to `origin`
+  (`https://github.com/petarvucetin/claude-explorer.git`). `git log` tip ≈ `db9fb7a`.
+- **`dotnet test` → 205 passing.** `.NET SDK 10.0.300` is installed. Solution file is
   `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via PowerShell (it is
   NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash fails with exit 127).
 - Library so far (`src/ClaudeExplorer.Core`):
