@@ -6,11 +6,17 @@ using ClaudeExplorer.Core.Artifacts;
 using ClaudeExplorer.Core.Dependencies;
 using ClaudeExplorer.Core.Model;
 using ClaudeExplorer.Core.Mutation;
+using ClaudeExplorer.Core.Plugins;
 
 namespace ClaudeExplorer.App.Tests.ViewModels;
 
 public class ShellViewModelTests
 {
+    private static ShellViewModel BuildVm(DashboardInputs inputs)
+        => new(new FakeDashboardDataSource(inputs),
+               new PluginInventoryReader(new InMemoryFileSystem()),
+               new WorkspaceContext("/home/u", "/work/my-project"));
+
     private static ResolvedArtifact Art(ArtifactKind kind, string name, ArtifactSourceKind src, string? plugin = null)
     {
         var winner = new DiscoveredArtifact(kind, name, null, new ArtifactSource(src, plugin), $"/{name}");
@@ -46,21 +52,23 @@ public class ShellViewModelTests
         "my-project");
 
     [Fact]
-    public void Load_sets_CommandsAndSkills_correctly()
+    public void Load_sets_per_type_counts()
     {
-        var workspace = new WorkspaceContext("/home/u", "/work/my-project");
-        var vm = new ShellViewModel(new FakeDashboardDataSource(BuildInputs()), workspace);
+        var vm = BuildVm(BuildInputs());
 
         vm.Load();
 
-        Assert.Equal(3, vm.CommandsAndSkills);
+        Assert.Equal(2, vm.Commands);
+        Assert.Equal(1, vm.Skills);
+        Assert.Equal(0, vm.Subagents);
+        Assert.Equal(1, vm.Mcp);
+        Assert.Equal(0, vm.Plugins);   // empty plugin fs
     }
 
     [Fact]
     public void Load_sets_HasDependencyProblem_true_when_dep_missing()
     {
-        var workspace = new WorkspaceContext("/home/u", "/work/my-project");
-        var vm = new ShellViewModel(new FakeDashboardDataSource(BuildInputs()), workspace);
+        var vm = BuildVm(BuildInputs());
 
         vm.Load();
 
@@ -70,8 +78,7 @@ public class ShellViewModelTests
     [Fact]
     public void Load_sets_HasMcpProblem_true_when_mcp_server_down()
     {
-        var workspace = new WorkspaceContext("/home/u", "/work/my-project");
-        var vm = new ShellViewModel(new FakeDashboardDataSource(BuildInputs()), workspace);
+        var vm = BuildVm(BuildInputs());
 
         vm.Load();
 
@@ -81,8 +88,7 @@ public class ShellViewModelTests
     [Fact]
     public void ProjectLabel_flows_from_workspace()
     {
-        var workspace = new WorkspaceContext("/home/u", "/work/my-project");
-        var vm = new ShellViewModel(new FakeDashboardDataSource(BuildInputs()), workspace);
+        var vm = BuildVm(BuildInputs());
 
         Assert.Equal("my-project", vm.ProjectLabel);
     }
@@ -99,13 +105,15 @@ public class ShellViewModelTests
             Array.Empty<McpServer>(),
             Array.Empty<ChangeLogEntry>(),
             "empty");
-        var workspace = new WorkspaceContext("/home/u", "/work/empty");
-        var vm = new ShellViewModel(new FakeDashboardDataSource(minimalInputs), workspace);
+        var vm = new ShellViewModel(new FakeDashboardDataSource(minimalInputs),
+            new PluginInventoryReader(new InMemoryFileSystem()),
+            new WorkspaceContext("/home/u", "/work/empty"));
 
         var ex = Record.Exception(() => vm.Load());
 
         Assert.Null(ex);
-        Assert.Equal(0, vm.CommandsAndSkills);
+        Assert.Equal(0, vm.Commands);
+        Assert.Equal(0, vm.Skills);
         Assert.False(vm.HasDependencyProblem);
         Assert.False(vm.HasMcpProblem);
     }
