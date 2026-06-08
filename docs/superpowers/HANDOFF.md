@@ -11,11 +11,13 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Current state (2026-06-07)
-- **Phases 1–6 are DONE, merged to `main`, and pushed** to `origin`
-  (`https://github.com/petarvucetin/claude-explorer.git`). `git log` tip ≈ `db9fb7a`.
-- **`dotnet test` → 205 passing.** `.NET SDK 10.0.300` is installed. Solution file is
-  `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via PowerShell (it is
-  NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash fails with exit 127).
+- **Phases 1–7 are DONE**. Phases 1–6 merged to `main` and pushed. Phase 7 is on branch
+  `phase-7-ui-shell` (built, tested, ready for review + ff-merge).
+  `https://github.com/petarvucetin/claude-explorer.git`. `git log` tip ≈ `69b352c` (on branch).
+- **`dotnet test` → 220 passing** (205 Core + 15 App). `.NET SDK 10.0.300` is installed.
+  Solution file is `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via
+  PowerShell (it is NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash
+  fails with exit 127).
 - Library so far (`src/ClaudeExplorer.Core`):
   - **Config engine** (`Model/`, `Io/IFileSystem.cs`, `Discovery/`, `Reading/`, `Merge/`,
     `EffectiveConfigService.cs`) — effective merged `settings.json` across scopes with
@@ -58,7 +60,18 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
     config edits; `IProcessRunner` + `claude` CLI delegation for installs; `Undo` restores/deletes
     or runs uninstall command); `SafeMutationService` façade (wires resolver + mutator; owns the
     session `ChangeLog`; single entry point for the UI). Plan: `2026-06-07-06-safe-mutation.md`.
-- Next up: **Phase 7 — Blueprint UI shell + Dashboard**.
+  - **Blueprint UI shell + Dashboard** (`src/ClaudeExplorer.App`) — Photino.Blazor 4.0.13 +
+    MudBlazor 9.5.0 desktop app; MVVM (`ObservableObject` base, `DashboardViewModel`,
+    `ShellViewModel`); Blueprint theme (graph-paper grid, corner-tick panels, Archivo + Spline
+    Sans Mono bundled as woff2, electric-blue accent) ported from `ux-explorations/03-blueprint.html`
+    into `wwwroot/css/blueprint.css`; reusable components (`CornerTickPanel`, `Pill`, `HealthGauge`,
+    `StatCardView`); app chrome (`TopBar`, `LeftRail`, `MainLayout`); Dashboard page (health gauge,
+    stat cards, Needs Attention, Recent Changes) bound to `DashboardViewModel` → `DashboardComputer`
+    (pure derivation, fully tested) → `EngineDashboardDataSource` (real Core façades); route stubs
+    for all other screens. Plan: `2026-06-07-07-blueprint-ui-shell.md`.
+    **Note:** Visual/runtime behavior verified by human via `/run` (Photino opens a native window
+    — not observable headless). `dotnet build` + ViewModel/computer tests are the automated gates.
+- **Next up: Phase 8 — Per-screen UI**.
 
 ## Git
 - Work on `main` (normal repo, no worktrees). Remote `origin` = the GitHub URL above; `gh`
@@ -116,17 +129,18 @@ escalate to opus only if blocked. Each phase ≈ 1 plan + ~30–75 subagent tool
 - `.gitignore` already ignores `bin/`,`obj/`,`.playwright-mcp/`. A local static server for
   the prototypes may still be running on `localhost:8765` (harmless).
 
-## To resume: "continue to Phase 7"
-1. Finish Phase 6: `finishing-a-development-branch` skill on `phase-6-safe-mutation` →
-   fast-forward merge to `main` → push `origin main` → delete branch → close Linear issues.
+## To resume: "continue to Phase 8"
+1. Finish Phase 7: `finishing-a-development-branch` skill on `phase-7-ui-shell` →
+   fast-forward merge to `main` → push `origin main` → delete branch → close Linear issues
+   (epic **CLA-31** + task issues → Done, Project → Completed).
+   Visual verify: run `/run` to confirm Blueprint shell + Dashboard look matches `03-blueprint.html`.
 2. Confirm Linear is on the **CLA** workspace (`list_teams` → "Claude Browser" / CLA).
-3. Author `docs/superpowers/plans/2026-06-07-07-blueprint-ui-shell.md` from the roadmap's
-   Phase 7 outline (full TDD detail). `src/ClaudeExplorer.App` (Photino.Blazor), MVVM
-   (observable ViewModels + logic-light Blazor views, DI to Core), Blueprint theme/tokens,
-   reusable component library, app chrome (left rail, top bar), and the Dashboard screen.
-   **Depends:** Phases 1–6 (Phases 2, 3 for dashboard counts).
-4. Create Phase-7 task issues under the "Phase 7 — Blueprint UI shell + Dashboard" project
-   (epic **CLA-31**), as children of the epic, status Todo.
-5. Run the playbook (branch `phase-7-…` → one implementer subagent (sonnet) → spec +
+3. Author `docs/superpowers/plans/2026-06-07-08-per-screen-ui.md` from the roadmap's Phase 8
+   outline (full TDD detail). Screens: Effective Config precedence matrix (`04-blueprint-…`),
+   Commands & Skills (`05`), Dependencies, Marketplace browse + add-source + install (`07`, `08`),
+   Recommended-for-project (`09`), Change Log, multi-project compare.
+   **Depends:** Phases 1–7 + per-screen Core engines.
+4. Create Phase-8 task issues under "Phase 8 — Per-screen UI" project (epic **CLA-32**).
+5. Run the playbook (branch `phase-8-…` → one implementer subagent (sonnet) → spec +
    `feature-dev:code-reviewer` review → fix loop → ff-merge → push → close Linear).
-   Phase-6 reference: plan `…-06-safe-mutation.md`, issues CLA-30 + task issues.
+   Phase-7 reference: plan `…-07-blueprint-ui-shell.md`, issues CLA-31 + task issues.
