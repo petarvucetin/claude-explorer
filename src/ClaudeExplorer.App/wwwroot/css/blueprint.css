@@ -540,6 +540,7 @@ code {
   border-right: 1px solid #1E2D40;
   padding-right: 8px;
 }
+.codeview.capped .codeview-body { max-height: 340px; overflow: auto; }
 
 /* ── Effective Config matrix ──────────────────────────────────────────────── */
 .matrix-wrap { overflow-x: auto; }

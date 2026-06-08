@@ -1,15 +1,43 @@
-<div class="codeview">
+@inject IJSRuntime JS
+
+<div class="codeview @(Capped ? "capped" : "")">
     <div class="codeview-head">@Title</div>
-    <pre class="codeview-body"><code>@for (var i = 0; i < _lines.Length; i++)
+    @if (Language is null)
+    {
+        <pre class="codeview-body"><code>@for (var i = 0; i < _lines.Length; i++)
 {<span class="ln">@(i + 1)</span>@_lines[i]
 }</code></pre>
+    }
+    else
+    {
+        <pre class="codeview-body"><code @ref="_codeEl" class="@($"language-{Language}")">@Content</code></pre>
+    }
 </div>
 
 @code {
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string Content { get; set; } = "";
+    /// <summary>highlight.js language id (e.g. "javascript", "json"). Null = plain text with JSON
+    /// pretty-print and a manual line gutter (legacy behavior).</summary>
+    [Parameter] public string? Language { get; set; }
+    /// <summary>Cap the body height and scroll vertically when content overflows.</summary>
+    [Parameter] public bool Capped { get; set; }
+
     private string[] _lines = Array.Empty<string>();
+    private ElementReference _codeEl;
+    private string? _highlighted;
 
     protected override void OnParametersSet()
-        => _lines = ClaudeExplorer.App.Util.JsonFormat.TryPretty(Content).Replace("\r\n", "\n").Split('\n');
+        => _lines = Language is null
+            ? ClaudeExplorer.App.Util.JsonFormat.TryPretty(Content).Replace("\r\n", "\n").Split('\n')
+            : Array.Empty<string>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Language is not null && _highlighted != Content)
+        {
+            await JS.InvokeVoidAsync("cx.highlight", _codeEl);
+            _highlighted = Content;
+        }
+    }
 }
