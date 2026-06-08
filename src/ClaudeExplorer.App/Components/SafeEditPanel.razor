@@ -1,0 +1,149 @@
+@using ClaudeExplorer.App.Screens.EffectiveConfig
+@using ClaudeExplorer.Core.Mutation
+
+<div class="edit-panel">
+    <div class="edit-panel-head">
+        <span>✎ SAFE EDIT</span>
+        @if (Vm.Applied is null)
+        {
+            <span style="font-size:10px;opacity:.7">// backup → diff → validate → apply → undo</span>
+        }
+    </div>
+    <div class="edit-panel-body">
+
+        @* Step 1: scope target *@
+        @if (Vm.Applied is null)
+        {
+            <div>
+                <div style="font-family:var(--font-mono,monospace);font-size:10px;color:var(--ink-faint);margin-bottom:8px">STEP 1 · WHERE DOES THE WRITE LAND?</div>
+                <div class="step-row">
+                    <label class="radio-opt">
+                        <input type="radio" name="edit-mode-@_id" value="EditWinner"
+                               checked="@(Vm.Mode == EditMode.EditWinner)"
+                               @onchange="() => Vm.Mode = EditMode.EditWinner" />
+                        Edit winner (current source)
+                    </label>
+                    <label class="radio-opt">
+                        <input type="radio" name="edit-mode-@_id" value="OverrideAtProject"
+                               checked="@(Vm.Mode == EditMode.OverrideAtProject)"
+                               @onchange="() => Vm.Mode = EditMode.OverrideAtProject" />
+                        Override at Project
+                    </label>
+                    <label class="radio-opt">
+                        <input type="radio" name="edit-mode-@_id" value="OverrideAtLocal"
+                               checked="@(Vm.Mode == EditMode.OverrideAtLocal)"
+                               @onchange="() => Vm.Mode = EditMode.OverrideAtLocal" />
+                        Override at Local
+                    </label>
+                </div>
+                @if (Vm.IsGlobalEdit)
+                {
+                    <div class="warn-callout" style="margin-top:10px">
+                        ⚠ Editing the winning source will affect all projects using this scope.
+                        Consider "Override at Project" to keep changes scoped.
+                    </div>
+                }
+            </div>
+
+            <div>
+                <div style="font-family:var(--font-mono,monospace);font-size:10px;color:var(--ink-faint);margin-bottom:8px">STEP 2 · NEW VALUE (JSON)</div>
+                <textarea class="edit-textarea"
+                          value="@Vm.NewContent"
+                          @oninput="e => Vm.NewContent = e.Value?.ToString() ?? string.Empty"></textarea>
+            </div>
+
+            <div class="step-row">
+                <button class="btn-primary" @onclick="Vm.DoPreview">Preview changes</button>
+                @if (OnClose.HasDelegate)
+                {
+                    <button class="btn-secondary" @onclick="OnClose">Cancel</button>
+                }
+            </div>
+        }
+
+        @* Preview + validation *@
+        @if (Vm.Preview is { } preview && Vm.Applied is null)
+        {
+            <div>
+                <div style="font-family:var(--font-mono,monospace);font-size:10px;color:var(--ink-faint);margin-bottom:8px">
+                    STEP 3 · DIFF PREVIEW → @preview.Target.FilePath
+                    @if (!preview.TargetExisted) { <span style="color:var(--amber)"> (new file)</span> }
+                </div>
+                @if (preview.Diff.HasChanges)
+                {
+                    <div class="diff-view">
+                        @foreach (var line in preview.Diff.Lines)
+                        {
+                            var cls = line.Kind switch
+                            {
+                                DiffKind.Added => "added",
+                                DiffKind.Removed => "removed",
+                                _ => "context",
+                            };
+                            var lineNum = line.Kind == DiffKind.Removed ? line.OldLine?.ToString() : line.NewLine?.ToString();
+                            <div class="diff-line @cls">
+                                <span class="dl">@lineNum</span>
+                                <span class="dt">@(line.Kind == DiffKind.Added ? "+" : line.Kind == DiffKind.Removed ? "-" : " ")@line.Text</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="sub">No changes detected.</div>
+                }
+
+                @if (!preview.Validation.IsValid)
+                {
+                    <div class="validation-errors">
+                        <ul>
+                            @foreach (var err in preview.Validation.Errors)
+                            {
+                                <li>@err</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <div class="step-row" style="margin-top:10px">
+                    <button class="btn-primary" disabled="@(!preview.Validation.IsValid || !preview.Diff.HasChanges)"
+                            @onclick="Vm.Apply">
+                        Apply (with backup)
+                    </button>
+                    <button class="btn-secondary" @onclick="Vm.Reset">Back</button>
+                </div>
+            </div>
+        }
+
+        @* Applied banner *@
+        @if (Vm.Applied is { } applied)
+        {
+            <div class="applied-banner">
+                <span>✓ Applied — @applied.Description</span>
+                @if (!applied.IsUndone)
+                {
+                    <button class="btn-undo" @onclick="Vm.Undo">UNDO</button>
+                }
+                else
+                {
+                    <span style="font-size:11px;opacity:.7">Undone</span>
+                }
+            </div>
+        }
+
+        @* Error *@
+        @if (Vm.Error is not null)
+        {
+            <div class="err-banner">Error: @Vm.Error</div>
+        }
+
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public SafeEditViewModel Vm { get; set; } = null!;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    // Unique id per panel instance (avoids radio-button name collision when multiple rows are open)
+    private readonly string _id = Guid.NewGuid().ToString("N")[..8];
+}
