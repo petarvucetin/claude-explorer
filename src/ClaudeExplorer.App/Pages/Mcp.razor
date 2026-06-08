@@ -1,0 +1,99 @@
+@page "/mcp"
+@using ClaudeExplorer.App.Screens.Mcp
+@using ClaudeExplorer.Core.Mcp
+@inject McpViewModel Vm
+@inject RefreshService Refresh
+@inject ClaudeExplorer.Core.Io.IFileSystem Fs
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Model Context Protocol</div>
+        <h1>MCP Servers</h1>
+    </div>
+    @if (Vm.View is { } v)
+    {
+        <div class="scope">@v.Total SERVERS · @v.Stdio STDIO · @v.Remote REMOTE@if (v.Missing > 0) { <text> · <b>@v.Missing MISSING</b></text> }<br />local config only · remote connectors not shown</div>
+    }
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card"><div class="sub" style="padding:18px">Loading…</div></CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel">
+        <div class="rowx"><div class="glyph bad"></div>
+            <div class="body"><div class="ttl">Failed to load MCP servers</div><div class="meta">@Vm.ErrorMessage</div></div>
+        </div>
+    </CornerTickPanel>
+}
+else if (Vm.View is { } view)
+{
+    @if (view.Rows.Count == 0)
+    {
+        <CornerTickPanel Class="card"><div class="sub" style="padding:18px">No MCP servers configured locally. Account-managed (remote) connectors are not shown.</div></CornerTickPanel>
+    }
+    @foreach (var row in view.Rows)
+    {
+        var r = row;
+        <div class="mcprow @(Vm.Selected == row ? "sel" : "")" @onclick="() => Vm.Selected = r">
+            <span class="mcp-name">@row.Name</span>
+            <span class="tbadge @row.Transport.ToString().ToLowerInvariant()">@row.Transport.ToString().ToUpperInvariant()</span>
+            <span class="mcp-ep">@row.Endpoint</span>
+            <span class="scope-tag s-@(row.SourceLabel.StartsWith("plugin") ? "plugin" : row.SourceLabel)">@row.SourceLabel</span>
+            <span class="pill @McpRowsMapper.Pill(row.Health)">@HealthText(row)</span>
+        </div>
+    }
+
+    @if (Vm.Selected is { } sel)
+    {
+        <CornerTickPanel Class="card" style="margin-top:14px;padding:18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <h2 style="margin:0;font-size:18px">@sel.Name</h2>
+                <span class="tbadge @sel.Transport.ToString().ToLowerInvariant()">@sel.Transport.ToString().ToUpperInvariant()</span>
+                <span class="pill @McpRowsMapper.Pill(sel.Health)">@HealthText(sel)</span>
+            </div>
+            <div class="kv">
+                @if (sel.Command is not null) { <span class="kvk">command</span><span class="kvv">@sel.Command</span> }
+                @if (sel.Args.Count > 0) { <span class="kvk">args</span><span class="kvv">[@string.Join(", ", sel.Args)]</span> }
+                @if (sel.Url is not null) { <span class="kvk">url</span><span class="kvv">@sel.Url</span> }
+                @if (sel.Runtime is not null) { <span class="kvk">runtime</span><span class="kvv">@sel.Runtime — @HealthText(sel)</span> }
+                @foreach (var e in sel.Env) { <span class="kvk">env · @e.Key</span><span class="kvv">@e.Value</span> }
+                <span class="kvk">source</span><span class="kvv">@sel.SourceLabel</span>
+                <span class="kvk">file</span><span class="kvv">@sel.SourceFile</span>
+            </div>
+            @if (Fs.FileExists(sel.SourceFile))
+            {
+                <div style="margin-top:12px"><CodeViewer Title="@sel.SourceFile" Content="@Fs.ReadAllText(sel.SourceFile)" /></div>
+            }
+        </CornerTickPanel>
+    }
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+    private void OnRefreshRequested() => Vm.Load();
+
+    private static string HealthText(McpRow r) => r.Health switch
+    {
+        McpHealth.Ok => $"{r.Runtime} ✓ found",
+        McpHealth.Missing => $"{r.Runtime} ✗ missing",
+        McpHealth.Na => "remote · n/a",
+        _ => $"{r.Runtime} · present",
+    };
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}

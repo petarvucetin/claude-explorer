@@ -296,6 +296,48 @@ body {
 .pill.ok { color: var(--green); border-color: var(--green); background: var(--green-wash); }
 .pill.warn { color: var(--amber); border-color: var(--amber); background: var(--amber-wash); }
 .pill.bad { color: var(--red); border-color: var(--red); background: var(--red-wash); }
+.pill.na { color: var(--ink-faint); border-color: var(--edge); background: var(--paper); }
+
+/* ───────────────────────── Phase 11: split artifact / MCP / plugins screens ───────────────────────── */
+/* transport badges (MCP) */
+.tbadge { font-family: "Spline Sans Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; padding: 2px 7px; border: 1.5px solid; border-radius: 3px; white-space: nowrap; }
+.tbadge.http  { color: #6B3FB0; border-color: #6B3FB0; background: #ECE3F8; }
+.tbadge.stdio { color: var(--blue); border-color: var(--blue); background: var(--blue-wash); }
+.tbadge.sse   { color: var(--amber); border-color: var(--amber); background: var(--amber-wash); }
+
+/* MCP rows */
+.mcprow { display: flex; align-items: center; gap: 12px; border: 1.5px solid var(--edge); border-radius: 8px; background: var(--panel); padding: 11px 14px; margin-bottom: 8px; cursor: pointer; }
+.mcprow.sel { border-color: var(--edge-2); box-shadow: 3px 3px 0 var(--blue-wash); }
+.mcprow .mcp-name { font-weight: 700; font-size: 14px; min-width: 120px; }
+.mcprow .mcp-ep { font-family: "Spline Sans Mono", monospace; font-size: 12px; color: var(--ink-soft); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* key/value meta grid (MCP + plugin detail) */
+.kv { display: grid; grid-template-columns: 130px 1fr; gap: 5px 12px; font-family: "Spline Sans Mono", monospace; font-size: 11.5px; }
+.kv .kvk { color: var(--ink-faint); text-transform: uppercase; letter-spacing: .04em; }
+.kv .kvv { color: var(--ink); word-break: break-all; }
+
+/* subagent tool chips */
+.toolchips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
+.toolchip { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; padding: 3px 8px; border: 1.5px solid var(--blue); border-radius: 5px; background: var(--blue-wash); color: var(--blue); }
+.toolchip.off { border-color: var(--edge); background: var(--paper); color: var(--ink-faint); text-decoration: line-through; }
+.fieldlabel { font-family: "Spline Sans Mono", monospace; font-size: 10px; letter-spacing: .08em; color: var(--ink-faint); text-transform: uppercase; margin-bottom: 4px; }
+
+/* marketplaces strip + plugin cards */
+.mkstrip { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.mkcard { border: 1.5px solid var(--edge); border-radius: 8px; background: var(--panel); padding: 10px 13px; min-width: 200px; }
+.mkcard .mk-n { font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.mkcard .mk-s { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--ink-faint); margin-top: 4px; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 10px; }
+.pcard { border: 1.5px solid var(--edge); border-radius: 8px; background: var(--panel); padding: 12px 14px; cursor: pointer; }
+.pcard.sel { border-color: var(--edge-2); box-shadow: 3px 3px 0 var(--blue-wash); }
+.pcard .p-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.pcard .p-n { font-weight: 800; font-size: 14px; }
+.pcard .p-v { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--ink-faint); margin-top: 2px; }
+.pcard .provides { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.provides .pp { font-family: "Spline Sans Mono", monospace; font-size: 10px; padding: 2px 7px; border-radius: 5px; background: var(--paper); border: 1px solid var(--edge); color: var(--ink-soft); }
+.ptog { font-family: "Spline Sans Mono", monospace; font-size: 9.5px; font-weight: 700; }
+.ptog.on { color: var(--green); }
+.ptog.off { color: var(--ink-faint); }
 
 /* Lower section */
 .lower { display: grid; grid-template-columns: 1.25fr 1fr; gap: 18px; }
