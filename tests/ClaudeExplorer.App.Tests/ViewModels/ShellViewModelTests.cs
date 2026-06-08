@@ -63,6 +63,8 @@ public class ShellViewModelTests
         Assert.Equal(0, vm.Subagents);
         Assert.Equal(1, vm.Mcp);
         Assert.Equal(0, vm.Plugins);   // empty plugin fs
+        Assert.Equal(0, vm.Hooks);     // no hooks in the empty effective config
+        Assert.False(vm.HasHookProblem);
     }
 
     [Fact]

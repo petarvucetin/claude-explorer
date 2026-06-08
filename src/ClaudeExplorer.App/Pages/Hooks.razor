@@ -1,0 +1,85 @@
+@page "/hooks"
+@using ClaudeExplorer.App.Screens.Hooks
+@inject HooksViewModel Vm
+@inject RefreshService Refresh
+@inject ClaudeExplorer.Core.Io.IFileSystem Fs
+@implements IDisposable
+
+<div class="pagehead">
+    <div><div class="k">Event Hooks</div><h1>Hooks</h1></div>
+    @if (Vm.View is { } v)
+    {
+        <div class="scope">@v.Total HOOKS · @v.Groups.Count EVENTS@if (v.Missing > 0) { <text> · <b>@v.Missing MISSING</b></text> }</div>
+    }
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card"><div class="sub" style="padding:18px">Loading…</div></CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel"><div class="rowx"><div class="glyph bad"></div>
+        <div class="body"><div class="ttl">Failed to load hooks</div><div class="meta">@Vm.ErrorMessage</div></div></div></CornerTickPanel>
+}
+else if (Vm.View is { } view)
+{
+    @if (view.Total == 0)
+    {
+        <CornerTickPanel Class="card"><div class="sub" style="padding:18px">No hooks configured in this environment (settings.json or plugins).</div></CornerTickPanel>
+    }
+    @foreach (var group in view.Groups)
+    {
+        <div class="grp-label">@group.Event · @group.Rows.Count</div>
+        @foreach (var row in group.Rows)
+        {
+            var r = row;
+            <div class="mcprow @(Vm.Selected == row ? "sel" : "")" @onclick="() => Vm.Selected = r">
+                <span class="mcp-name">@row.Matcher</span>
+                <span class="mcp-ep">@row.Command</span>
+                <ScopeTag Scope="row.Source" />
+                <span class="pill @HookRowsMapper.Pill(row.Health)">@HookRowsMapper.HealthText(row)</span>
+            </div>
+        }
+    }
+
+    @if (Vm.Selected is { } sel)
+    {
+        <CornerTickPanel Class="card" style="margin-top:14px;padding:18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <h2 style="margin:0;font-size:18px">@sel.Event</h2>
+                <ScopeTag Scope="sel.Source" />
+                <span class="pill @HookRowsMapper.Pill(sel.Health)">@HookRowsMapper.HealthText(sel)</span>
+            </div>
+            <div class="kv">
+                <span class="kvk">matcher</span><span class="kvv">@sel.Matcher</span>
+                <span class="kvk">type</span><span class="kvv">@(sel.Type ?? "command")</span>
+                <span class="kvk">command</span><span class="kvv">@sel.Command</span>
+                @if (sel.Runtime is not null) { <span class="kvk">runtime</span><span class="kvv">@sel.Runtime — @HookRowsMapper.HealthText(sel)</span> }
+                <span class="kvk">source</span><span class="kvv">@sel.SourceFile</span>
+            </div>
+            @if (Fs.FileExists(sel.SourceFile))
+            {
+                <div style="margin-top:12px"><CodeViewer Title="@sel.SourceFile" Content="@Fs.ReadAllText(sel.SourceFile)" /></div>
+            }
+        </CornerTickPanel>
+    }
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+    private void OnRefreshRequested() => Vm.Load();
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}

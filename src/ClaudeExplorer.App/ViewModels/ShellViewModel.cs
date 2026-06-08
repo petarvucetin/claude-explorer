@@ -1,5 +1,6 @@
 using ClaudeExplorer.App.Dashboard;
 using ClaudeExplorer.App.Mvvm;
+using ClaudeExplorer.App.Screens.Hooks;
 using ClaudeExplorer.App.Services;
 using ClaudeExplorer.Core.Artifacts;
 using ClaudeExplorer.Core.Plugins;
@@ -14,9 +15,10 @@ public sealed class ShellViewModel : ObservableObject
     private readonly PluginInventoryReader _plugins;
     private readonly IWorkspaceContext _workspace;
 
-    private int _commands, _skills, _subagents, _mcp, _pluginCount;
+    private int _commands, _skills, _subagents, _mcp, _pluginCount, _hooks;
     private bool _hasDependencyProblem;
     private bool _hasMcpProblem;
+    private bool _hasHookProblem;
 
     public ShellViewModel(IDashboardDataSource source, PluginInventoryReader plugins, IWorkspaceContext workspace)
     {
@@ -31,8 +33,10 @@ public sealed class ShellViewModel : ObservableObject
     public int Subagents { get => _subagents; private set => SetProperty(ref _subagents, value); }
     public int Mcp { get => _mcp; private set => SetProperty(ref _mcp, value); }
     public int Plugins { get => _pluginCount; private set => SetProperty(ref _pluginCount, value); }
+    public int Hooks { get => _hooks; private set => SetProperty(ref _hooks, value); }
     public bool HasDependencyProblem { get => _hasDependencyProblem; private set => SetProperty(ref _hasDependencyProblem, value); }
     public bool HasMcpProblem { get => _hasMcpProblem; private set => SetProperty(ref _hasMcpProblem, value); }
+    public bool HasHookProblem { get => _hasHookProblem; private set => SetProperty(ref _hasHookProblem, value); }
 
     public void Load()
     {
@@ -43,6 +47,10 @@ public sealed class ShellViewModel : ObservableObject
         Subagents = inputs.Artifacts.OfKind(ArtifactKind.Subagent).Count();
         Mcp = inputs.McpServers.Count;
         Plugins = SafePluginCount();
+
+        var hooks = HookRowsMapper.Map(inputs.Config, inputs.Dependencies);
+        Hooks = hooks.Total;
+        HasHookProblem = hooks.Missing > 0;
 
         var stat = DashboardComputer.Compute(inputs).Stats;
         HasDependencyProblem = stat.FirstOrDefault(s => s.Label == DashboardComputer.Dependencies)?.Badge is not null;

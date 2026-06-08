@@ -12,6 +12,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><path d="M5 7h14M5 12h9M5 17h6"/></svg>
         Effective Config
     </NavLink>
+    <NavLink class="nav" href="hooks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5v6a6 6 0 0 0 6 6h4"/><path d="m11 13 3 3-3 3"/></svg>
+        Hooks @if (Shell?.HasHookProblem == true) { <span class="count bad">1&#x2717;</span> } else { <span class="count">@Shell?.Hooks</span> }
+    </NavLink>
     <NavLink class="nav" href="dependencies">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
         Dependencies @if (Shell?.HasDependencyProblem == true) { <span class="count bad">1&#x2717;</span> }
