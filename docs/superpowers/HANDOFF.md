@@ -11,9 +11,9 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Current state (2026-06-07)
-- **Phases 1, 2, 3 & 4 are DONE, merged to `main`, and pushed** to `origin`
-  (`https://github.com/petarvucetin/claude-explorer.git`). `git log` tip ≈ `ce8e691`.
-- **`dotnet test` → 129 passing.** `.NET SDK 10.0.300` is installed. Solution file is
+- **Phases 1, 2, 3, 4 & 5 are DONE, merged to `main`, and pushed** to `origin`
+  (`https://github.com/petarvucetin/claude-explorer.git`). `git log` tip ≈ `2ea15ab`.
+- **`dotnet test` → 149 passing.** `.NET SDK 10.0.300` is installed. Solution file is
   `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via PowerShell (it is
   NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash fails with exit 127).
 - Library so far (`src/ClaudeExplorer.Core`):
@@ -37,7 +37,14 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
     (reads `~/.claude/plugins/marketplaces/*` via `IFileSystem`), `CatalogService` façade
     (`BuildInstalledCatalog` local + `FetchAddedSource` remote). **Metadata-only:** only a manifest
     GET ever hits the network; nothing is downloaded/run/installed (that's Phase 6).
-- Next up: **Phase 5 — Project-fit recommendations** (plan not yet written).
+  - **Recommendations** (`Recommendations/`) — pluggable `ISignalDetector`s (Language/Framework/
+    TestRunner/Database via marker files) → `SignalDetectionService` → `ProjectSignals` (each
+    `Signal` carries file `Evidence`); `InstalledPluginsReader` (plugin names from the cache);
+    `RecommendationMatcher` (token match name/tag/summary → confidence + Strong/Consider/
+    AlreadyCovered buckets; excludes installed; drops reason-less items); `RecommendationService`
+    façade (+ optional runtime/dep-health annotation). **Local-only:** reads the project tree, never
+    uploads it; no network in this namespace. Every recommendation carries why + linkable evidence.
+- Next up: **Phase 6 — Safe-mutation** (plan not yet written).
 
 ## Git
 - Work on `main` (normal repo, no worktrees). Remote `origin` = the GitHub URL above; `gh`
@@ -95,16 +102,18 @@ escalate to opus only if blocked. Each phase ≈ 1 plan + ~30–75 subagent tool
 - `.gitignore` already ignores `bin/`,`obj/`,`.playwright-mcp/`. A local static server for
   the prototypes may still be running on `localhost:8765` (harmless).
 
-## To resume: "continue to Phase 5"
+## To resume: "continue to Phase 6"
 1. Confirm Linear is on the **CLA** workspace (`list_teams` → "Claude Browser" / CLA).
-2. Author `docs/superpowers/plans/2026-06-07-05-recommendations.md` from the roadmap's
-   Phase 5 outline (full TDD detail). Pluggable `ISignalDetector`s over fixture project trees
-   → `ProjectSignals`; matcher (signal → catalog item w/ reason + evidence file refs +
-   confidence); exclude installed (Phase 2 artifacts); annotate with dep health (Phase 3);
-   `RecommendationService`. **Hard rules:** local-only analysis (never upload project
-   contents); every recommendation must carry why + linkable evidence. Reuses Phase 4 catalog.
-3. Create Phase-5 task issues under the "Phase 5 — Project-fit recommendations" project
-   (epic **CLA-29**), as children of the epic, status Todo.
-4. Run the playbook (branch `phase-5-…` → one implementer subagent (sonnet) → spec +
+2. Author `docs/superpowers/plans/2026-06-07-06-safe-mutation.md` from the roadmap's Phase 6
+   outline (full TDD detail). `ScopeTarget` resolution (edit winner vs override at Project/
+   Local); JSON-schema + frontmatter validation; diff generator; `IBackupStore` (timestamped
+   snapshots) + fake; scope-aware `ChangeLog`; `Mutator` — apply via direct file write (config)
+   or `claude` CLI via the Phase-3 `IProcessRunner` (installs); one-click undo/restore.
+   **Hard contract (all required):** scope-target picker, diff preview, schema validation, auto
+   backup, undo/restore, reviewable scope-aware change log. Core-only, TDD. This is the LAST
+   Core phase — Phases 7–8 are the Photino+Blazor UI (`src/ClaudeExplorer.App`, MVVM, Blueprint).
+3. Create Phase-6 task issues under the "Phase 6 — Safe-mutation" project (epic **CLA-30**),
+   as children of the epic, status Todo.
+4. Run the playbook (branch `phase-6-…` → one implementer subagent (sonnet) → spec +
    `feature-dev:code-reviewer` review → fix loop → ff-merge → push → close Linear).
-   Phase-4 reference: plan `…-04-catalog-sources.md`, issues CLA-28 + CLA-42…CLA-48.
+   Phase-5 reference: plan `…-05-recommendations.md`, issues CLA-29 + CLA-49…CLA-55.
