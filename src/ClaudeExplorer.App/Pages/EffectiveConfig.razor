@@ -1,0 +1,181 @@
+@page "/effective"
+@using ClaudeExplorer.App.Screens.EffectiveConfig
+@using ClaudeExplorer.Core.Model
+@inject EffectiveConfigViewModel Vm
+@inject RefreshService Refresh
+@inject ClaudeExplorer.Core.Io.IFileSystem Fs
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Configuration</div>
+        <h1>Effective Config</h1>
+    </div>
+    @if (Vm.View is not null)
+    {
+        <div class="scope">@Vm.View.Rows.Count SETTINGS · <b>@Vm.View.ConflictCount CONFLICTS</b></div>
+    }
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card">
+        <div class="sub" style="padding:18px">Loading…</div>
+    </CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel">
+        <div class="rowx">
+            <div class="glyph bad"></div>
+            <div class="body"><div class="ttl">Failed to load config</div><div class="meta">@Vm.ErrorMessage</div></div>
+        </div>
+    </CornerTickPanel>
+}
+else if (Vm.View is { } view)
+{
+    <CornerTickPanel Class="card">
+        <div class="matrix-wrap">
+            <table class="matrix">
+                <thead>
+                    <tr>
+                        <th>SETTING</th>
+                        <th>ENTERPRISE</th>
+                        <th>USER</th>
+                        <th>PROJECT</th>
+                        <th>LOCAL</th>
+                        <th class="arrow-col">→</th>
+                        <th>EFFECTIVE</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in view.Rows)
+                    {
+                        var rowKey = row.Key;
+                        var isExpanded = _expanded.Contains(rowKey);
+                        var isEditing = _editingKey == rowKey;
+
+                        <tr>
+                            <td>
+                                <div class="cell-key">@row.Key</div>
+                                <div class="merge-lbl">@row.MergeLabel</div>
+                                @if (row.HasConflict)
+                                {
+                                    <Pill Text="CONFLICT" Tone="ClaudeExplorer.App.Dashboard.BadgeTone.Bad" />
+                                }
+                            </td>
+                            @foreach (var scope in new[] { ScopeKind.Enterprise, ScopeKind.User, ScopeKind.Project, ScopeKind.Local })
+                            {
+                                var cell = row.Cells[scope];
+                                <td>
+                                    @if (cell.Present)
+                                    {
+                                        <span class="cell-val @(cell.IsWinner ? "cell-winner" : cell.IsOverridden ? "cell-overridden" : "")">
+                                            @cell.Display
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="cell-empty">—</span>
+                                    }
+                                </td>
+                            }
+                            <td class="arrow-col">→</td>
+                            <td><span class="cell-effective">@row.EffectiveDisplay</span></td>
+                            <td>
+                                <div style="display:flex;gap:6px">
+                                    <button class="btn-edit" @onclick="() => ToggleExpand(rowKey)">
+                                        @(isExpanded ? "▲ hide" : "▼ trace")
+                                    </button>
+                                    <button class="btn-edit" @onclick="() => ToggleEdit(row)">
+                                        @(isEditing ? "✕ close" : "✎ edit")
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        @if (isExpanded)
+                        {
+                            <tr class="trace-row">
+                                <td colspan="8">
+                                    <div class="trace">
+                                        <div style="font-family:var(--font-mono,monospace);font-size:10px;color:var(--ink-faint);margin-bottom:4px">PROVENANCE TRACE</div>
+                                        @foreach (var c in row.Trace)
+                                        {
+                                            <div class="trace-entry">
+                                                <ScopeTag Scope="c.Origin.Scope" />
+                                                <span class="tv">@EffectiveConfigMapper.Display(c.Value)</span>
+                                                <span class="tp">@c.Origin.FilePath : @c.Origin.JsonPath</span>
+                                            </div>
+                                        }
+                                        @if (row.Winner is not null && Fs.FileExists(row.Winner.FilePath))
+                                        {
+                                            <CodeViewer Title="@row.Winner.FilePath" Content="@Fs.ReadAllText(row.Winner.FilePath)" />
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                        @if (isEditing && _editVm is not null)
+                        {
+                            <tr>
+                                <td colspan="8">
+                                    <SafeEditPanel Vm="_editVm" OnClose="CloseEdit" />
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </CornerTickPanel>
+}
+
+@code {
+    private readonly HashSet<string> _expanded = new(StringComparer.Ordinal);
+    private string? _editingKey;
+    private SafeEditViewModel? _editVm;
+
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnRefreshRequested() => Vm.Load();
+
+    private void ToggleExpand(string key)
+    {
+        if (!_expanded.Remove(key)) _expanded.Add(key);
+    }
+
+    private void ToggleEdit(SettingRow row)
+    {
+        if (_editingKey == row.Key)
+        {
+            CloseEdit();
+            return;
+        }
+        _editingKey = row.Key;
+        _editVm = new SafeEditViewModel(Vm.Mutations, row.Winner, () => DateTime.UtcNow.ToString("o"));
+        _editVm.NewContent = row.EffectiveDisplay;
+    }
+
+    private void CloseEdit()
+    {
+        _editingKey = null;
+        _editVm = null;
+    }
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}
