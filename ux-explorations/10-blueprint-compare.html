@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Explorer — Environment Compare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F5; --grid:#D8DEE7; --grid-bold:#CAD2DD;
+    --panel:#FBFCFE; --edge:#C2CAD6; --edge-2:#1A2230;
+    --ink:#16202E; --ink-soft:#54616F; --ink-faint:#8893A1;
+    --blue:#1F47D6; --blue-soft:#3E63E0; --blue-wash:#E1E8FB;
+    --amber:#B5710C; --amber-wash:#F6ECD6; --red:#C2362B; --red-wash:#F6DDD9; --green:#2E7D4F; --green-wash:#DDEEE2;
+    --win:#1F47D6; --wsl:#0E7C66; --wsl-wash:#D7EEE8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:"Archivo",sans-serif;color:var(--ink);background:var(--paper);overflow:hidden;-webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),linear-gradient(var(--grid-bold) 1px,transparent 1px),linear-gradient(90deg,var(--grid-bold) 1px,transparent 1px);
+    background-size:24px 24px,24px 24px,120px 120px,120px 120px;}
+  .app{display:grid;grid-template-columns:230px 1fr;grid-template-rows:58px 1fr;height:100vh}
+  .topbar{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:2px solid var(--edge-2);background:var(--panel)}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:16px;letter-spacing:.4px;text-transform:uppercase}
+  .mark{width:26px;height:26px;border:2px solid var(--edge-2);border-radius:5px;position:relative;background:var(--blue-wash)}
+  .mark::before{content:"";position:absolute;inset:5px;border:2px solid var(--blue);border-radius:50%;border-bottom-color:transparent;transform:rotate(45deg)}
+  .mark::after{content:"";position:absolute;width:5px;height:5px;background:var(--blue);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .coord{font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+  .spacer{flex:1}
+  .envsel{display:flex;align-items:center;gap:8px}
+  .envchip{display:flex;align-items:center;gap:8px;padding:6px 11px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);
+    font-family:"Spline Sans Mono";font-size:12px;font-weight:600;cursor:pointer}
+  .envchip .dot{width:9px;height:9px;border:1px solid var(--edge-2)}
+  .envchip.win .dot{background:var(--win)} .envchip.wsl .dot{background:var(--wsl)}
+  .envchip.win{box-shadow:3px 3px 0 var(--blue-wash)} .envchip.wsl{box-shadow:3px 3px 0 var(--wsl-wash)}
+  .vs{font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint);font-weight:700}
+  .projchip{display:flex;align-items:center;gap:7px;padding:6px 11px;border:1.5px dashed var(--edge);border-radius:6px;background:var(--panel);
+    font-family:"Spline Sans Mono";font-size:12px;color:var(--ink-soft);cursor:pointer}
+  .iconbtn{width:34px;height:34px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);display:grid;place-items:center;cursor:pointer}
+
+  .rail{border-right:2px solid var(--edge-2);padding:18px 12px;display:flex;flex-direction:column;gap:3px;background:var(--panel)}
+  .rail .lbl{font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:8px 8px 7px;display:flex;align-items:center;gap:8px}
+  .rail .lbl::after{content:"";flex:1;height:1px;background:var(--edge)}
+  .nav{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:6px;color:var(--ink-soft);font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid transparent}
+  .nav svg{width:17px;height:17px;flex:none}
+  .nav:hover{background:var(--blue-wash)}
+  .nav.active{background:var(--panel);color:var(--ink);border-color:var(--edge-2);box-shadow:3px 3px 0 var(--blue)}
+  .nav.active svg{color:var(--blue)}
+  .nav .count{margin-left:auto;font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint)}
+  .rail .foot{margin-top:auto;font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);padding:9px;line-height:1.7;border:1px dashed var(--edge);border-radius:6px}
+
+  .content{overflow:auto;padding:24px 30px 40px;position:relative}
+  .pagehead{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+  .k{font-family:"Spline Sans Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .k::before{content:"";width:18px;height:2px;background:var(--blue)}
+  .pagehead h1{font-size:26px;font-weight:800;letter-spacing:-.3px;text-transform:uppercase}
+  .legend{font-family:"Spline Sans Mono";font-size:10.5px;color:var(--ink-soft);text-align:right;line-height:1.9}
+  .legend b{color:var(--ink)}
+
+  /* category tabs */
+  .cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .cat{font-family:"Spline Sans Mono";font-size:11px;font-weight:600;padding:7px 12px;border:1.5px solid var(--edge);border-radius:6px;background:var(--panel);cursor:pointer;color:var(--ink-soft);display:flex;align-items:center;gap:7px}
+  .cat .n{color:var(--ink-faint)}
+  .cat.active{border-color:var(--edge-2);color:var(--ink);box-shadow:3px 3px 0 var(--blue)}
+  .cat .warn{color:var(--amber);font-weight:700}
+
+  /* summary bar */
+  .summary{display:flex;gap:10px;margin-bottom:14px;font-family:"Spline Sans Mono";font-size:11px}
+  .scount{display:flex;align-items:center;gap:7px;padding:5px 10px;border:1.5px solid;border-radius:5px;font-weight:600}
+  .scount.same{color:var(--green);border-color:var(--green);background:var(--green-wash)}
+  .scount.diff{color:var(--amber);border-color:var(--amber);background:var(--amber-wash)}
+  .scount.win{color:var(--win);border-color:var(--win);background:var(--blue-wash)}
+  .scount.wsl{color:var(--wsl);border-color:var(--wsl);background:var(--wsl-wash)}
+
+  .panel{background:var(--panel);border:1.5px solid var(--edge-2);position:relative}
+  .panel::before,.panel::after{content:"";position:absolute;width:9px;height:9px;border:2px solid var(--blue);z-index:2}
+  .panel::before{left:-2px;top:-2px;border-right:none;border-bottom:none}
+  .panel::after{right:-2px;bottom:-2px;border-left:none;border-top:none}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.08em;text-transform:uppercase;text-align:left;color:#fff;background:var(--edge-2);padding:10px 14px;font-weight:600}
+  thead th.win{background:var(--win)} thead th.wsl{background:var(--wsl)}
+  tbody td{padding:11px 14px;border-top:1px solid var(--edge);vertical-align:top}
+  tbody tr:hover{background:var(--blue-wash)}
+  .item{font-weight:600}
+  .item .sub{font-family:"Spline Sans Mono";font-size:10px;color:var(--ink-faint);font-weight:500;margin-top:2px}
+  code{font-family:"Spline Sans Mono";font-size:11.5px;background:var(--paper);border:1px solid var(--edge);padding:1px 5px;border-radius:3px;color:var(--blue)}
+  .absent{color:var(--ink-faint);font-family:"Spline Sans Mono";font-size:11px}
+  td.diffval code{background:var(--amber-wash);border-color:var(--amber);color:var(--amber)}
+  .stat{font-family:"Spline Sans Mono";font-size:9.5px;font-weight:700;padding:2px 7px;border:1.5px solid;border-radius:4px;white-space:nowrap}
+  .stat.same{color:var(--green);border-color:var(--green);background:var(--green-wash)}
+  .stat.diff{color:var(--amber);border-color:var(--amber);background:var(--amber-wash)}
+  .stat.win{color:var(--win);border-color:var(--win);background:var(--blue-wash)}
+  .stat.wsl{color:var(--wsl);border-color:var(--wsl);background:var(--wsl-wash)}
+  .rowmark{border-left:3px solid transparent}
+  tr.r-diff td:first-child{border-left:3px solid var(--amber)}
+  tr.r-win td:first-child{border-left:3px solid var(--win)}
+  tr.r-wsl td:first-child{border-left:3px solid var(--wsl)}
+  .badge{font-family:"Spline Sans Mono";font-size:9px;font-weight:700;padding:1px 5px;border:1px solid var(--edge);border-radius:3px;color:var(--ink-soft);text-transform:uppercase;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="mark"></span> Claude&nbsp;Explorer</div>
+    <span class="coord">FIG.10 — ENVIRONMENT COMPARE</span>
+    <div class="spacer"></div>
+    <div class="envsel">
+      <div class="envchip win"><span class="dot"></span> Windows ▾</div>
+      <span class="vs">vs</span>
+      <div class="envchip wsl"><span class="dot"></span> WSL · Ubuntu ▾</div>
+    </div>
+    <div class="projchip">＋ add project</div>
+    <div class="iconbtn" title="Refresh"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
+  </header>
+
+  <aside class="rail">
+    <div class="lbl">Workspace</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Dashboard</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><path d="M5 7h14M5 12h9M5 17h6"/></svg>Effective Config</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg>Commands &amp; Skills</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>MCP &amp; Plugins</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>Dependencies</div>
+    <div class="lbl">Analyze</div>
+    <div class="nav active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/><path d="M11 12h2"/></svg>Compare</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Marketplace</div>
+    <div class="foot">ENVIRONMENTS: 2<br>● Windows · C:/Users/petar<br>● WSL · Ubuntu /home/petar<br>cli: detected ×2</div>
+  </aside>
+
+  <main class="content">
+    <div class="pagehead">
+      <div>
+        <div class="k">Analyze · Windows ⇄ WSL</div>
+        <h1>Environment Compare</h1>
+      </div>
+      <div class="legend">
+        <b>Windows</b> C:/Users/petar/.claude · no project<br>
+        <b>WSL · Ubuntu</b> //wsl.localhost/Ubuntu/home/petar/.claude · no project
+      </div>
+    </div>
+
+    <div class="cats">
+      <div class="cat active">Settings <span class="n">·</span> <span class="warn">3 differ</span></div>
+      <div class="cat">Commands <span class="n">42 / 39</span></div>
+      <div class="cat">Skills <span class="n">25 / 18</span></div>
+      <div class="cat">Agents <span class="n">6 / 6</span></div>
+      <div class="cat">MCP <span class="n">5 / 7</span></div>
+      <div class="cat">Plugins <span class="n">4 / 3</span></div>
+      <div class="cat">Dependencies <span class="n">14 / 11</span></div>
+    </div>
+
+    <div class="summary">
+      <div class="scount same">◆ 9 same</div>
+      <div class="scount diff">◆ 3 differ</div>
+      <div class="scount win">◆ 2 windows-only</div>
+      <div class="scount wsl">◆ 1 wsl-only</div>
+    </div>
+
+    <div class="panel">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30%">Setting</th>
+            <th class="win" style="width:30%">Windows</th>
+            <th class="wsl" style="width:30%">WSL · Ubuntu</th>
+            <th style="width:10%">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="r-diff">
+            <td class="item">model<div class="sub">scalar · last-wins</div></td>
+            <td class="diffval"><code>opus</code></td>
+            <td class="diffval"><code>sonnet</code></td>
+            <td><span class="stat diff">DIFFERS</span></td>
+          </tr>
+          <tr>
+            <td class="item">permissions.defaultMode<div class="sub">scalar · last-wins</div></td>
+            <td><code>acceptEdits</code></td>
+            <td><code>acceptEdits</code></td>
+            <td><span class="stat same">SAME</span></td>
+          </tr>
+          <tr class="r-diff">
+            <td class="item">permissions.allow<div class="sub">list · union</div></td>
+            <td class="diffval"><code>Bash(git*)</code> <code>Read(src/**)</code> <span class="badge">+1</span></td>
+            <td class="diffval"><code>Bash(git*)</code> <code>Bash(npm*)</code></td>
+            <td><span class="stat diff">DIFFERS</span></td>
+          </tr>
+          <tr class="r-diff">
+            <td class="item">env.UV_INDEX_URL<div class="sub">scalar · last-wins</div></td>
+            <td class="diffval"><code>https://pypi.org/…</code></td>
+            <td class="diffval"><code>https://mirror/…</code></td>
+            <td><span class="stat diff">DIFFERS</span></td>
+          </tr>
+          <tr class="r-win">
+            <td class="item">statusLine<div class="sub">scalar</div></td>
+            <td><code>ccusage</code></td>
+            <td class="absent">— not set —</td>
+            <td><span class="stat win">WIN ONLY</span></td>
+          </tr>
+          <tr class="r-win">
+            <td class="item">hooks.PreToolUse<div class="sub">array · concat</div></td>
+            <td><code>2 hooks</code></td>
+            <td class="absent">— not set —</td>
+            <td><span class="stat win">WIN ONLY</span></td>
+          </tr>
+          <tr class="r-wsl">
+            <td class="item">env.DOCKER_HOST<div class="sub">scalar</div></td>
+            <td class="absent">— not set —</td>
+            <td><code>unix:///var/run/…</code></td>
+            <td><span class="stat wsl">WSL ONLY</span></td>
+          </tr>
+          <tr>
+            <td class="item">outputStyle<div class="sub">scalar</div></td>
+            <td><code>concise</code></td>
+            <td><code>concise</code></td>
+            <td><span class="stat same">SAME</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>
