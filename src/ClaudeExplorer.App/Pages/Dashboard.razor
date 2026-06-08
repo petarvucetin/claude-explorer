@@ -1,0 +1,81 @@
+@page "/"
+@using ClaudeExplorer.App.ViewModels
+@inject DashboardViewModel Vm
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Environment Status</div>
+        <h1>Dashboard</h1>
+    </div>
+    @if (Vm.Data is not null)
+    {
+        <div class="scope">EFFECTIVE FOR <b>@Vm.Data.EffectiveForLabel</b><br>MERGE: @Vm.Data.MergeOrder</div>
+    }
+</div>
+
+@if (Vm.Data is { } data)
+{
+    <section class="hero">
+        <HealthGauge Score="data.Health" Caption="@data.HealthCaption" />
+        <div class="stats">
+            @foreach (var card in data.Stats)
+            {
+                <StatCardView Card="card" />
+            }
+        </div>
+    </section>
+
+    <section class="lower">
+        <CornerTickPanel Class="card">
+            <h2>Needs Attention <span class="tag">precedence-resolved</span></h2>
+            <div class="sub">// newest scope wins · click any node to trace source</div>
+            @if (data.Attention.Count == 0)
+            {
+                <div class="rowx"><div class="body"><div class="ttl">All clear — no blocking issues.</div></div></div>
+            }
+            @foreach (var a in data.Attention)
+            {
+                <div class="rowx">
+                    <div class="glyph @GlyphClass(a.Tone)"></div>
+                    <div class="body"><div class="ttl">@a.Title</div><div class="meta">@a.Detail</div></div>
+                </div>
+            }
+        </CornerTickPanel>
+
+        <CornerTickPanel Class="card">
+            <h2>Recent Changes <span class="tag">reversible</span></h2>
+            <div class="sub">// logged per scope · backup before every write</div>
+            @if (data.RecentChanges.Count == 0)
+            {
+                <div class="rowx"><div class="body"><div class="ttl">No changes yet.</div></div></div>
+            }
+            @foreach (var c in data.RecentChanges)
+            {
+                <div class="rowx">
+                    <div class="glyph info"></div>
+                    <div class="body"><div class="ttl">@c.Title</div><div class="meta">@c.Meta</div></div>
+                </div>
+            }
+        </CornerTickPanel>
+    </section>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    private static string GlyphClass(AttentionTone tone) => tone switch
+    {
+        AttentionTone.Bad => "bad",
+        AttentionTone.Warn => "warn",
+        _ => "info",
+    };
+
+    public void Dispose() => Vm.PropertyChanged -= OnVmChanged;
+}
