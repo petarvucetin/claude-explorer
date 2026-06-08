@@ -11,9 +11,10 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Current state (2026-06-07)
-- **Phases 1–7 are DONE, merged to `main`, and pushed** to `origin`
-  (`https://github.com/petarvucetin/claude-explorer.git`). `git log` tip ≈ `db1defe`.
-- **`dotnet test` → 229 passing** (205 Core + 24 App). `.NET SDK 10.0.300` is installed.
+- **ALL PHASES (1–8) ARE COMPLETE.** Phases 1–7 are merged to `main` and pushed.
+  Phase 8 is on branch `phase-8-per-screen-ui` (awaiting controller merge + push).
+  `git log` tip on `phase-8-per-screen-ui` ≈ `cb7a732` (Task 9 commit).
+- **`dotnet test` → 274 passing** (205 Core + 69 App). `.NET SDK 10.0.300` is installed.
   Solution file is `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via
   PowerShell (it is NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash
   fails with exit 127).
@@ -66,11 +67,37 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
     into `wwwroot/css/blueprint.css`; reusable components (`CornerTickPanel`, `Pill`, `HealthGauge`,
     `StatCardView`); app chrome (`TopBar`, `LeftRail`, `MainLayout`); Dashboard page (health gauge,
     stat cards, Needs Attention, Recent Changes) bound to `DashboardViewModel` → `DashboardComputer`
-    (pure derivation, fully tested) → `EngineDashboardDataSource` (real Core façades); route stubs
-    for all other screens. Plan: `2026-06-07-07-blueprint-ui-shell.md`.
+    (pure derivation, fully tested) → `EngineDashboardDataSource` (real Core façades). Plan:
+    `2026-06-07-07-blueprint-ui-shell.md`.
+  - **Per-screen UI** (`src/ClaudeExplorer.App/Screens/*`, `Pages/*`) — Phase 8 (branch
+    `phase-8-per-screen-ui`). Architecture: each screen has an `ObservableObject` ViewModel
+    (loads from Core via DI + `IWorkspaceContext`, exposes view-ready model), a pure static
+    mapper/computer (tested over Core records, no IO), and a logic-light Blazor view
+    (subscribes to `PropertyChanged` + `RefreshService.Requested`, `IDisposable`). Screens:
+    - **Effective Config** (`EffectiveConfigViewModel` + `EffectiveConfigMapper` + `EffectiveConfig.razor`)
+      — precedence matrix with provenance trace and safe-edit panel (`SafeEditViewModel` + `SafeEditPanel.razor`).
+    - **Commands & Skills** (`ArtifactBrowserViewModel` + `ArtifactBrowserMapper` + `CommandsSkills.razor`)
+      — source-grouped master/detail browser with kind filter + search.
+    - **Dependencies** (`DependencyViewModel` + `DependencyRowsMapper` + `Dependencies.razor`)
+      — config-driven health list (Found/Missing/Unverifiable).
+    - **Change Log** (`ChangeLogViewModel` + `ChangeLogPage.razor`) — scope-grouped reversible
+      change list with undo.
+    - **Marketplace** (`MarketplaceViewModel` + `MarketplaceMapper` + `Marketplace.razor`) —
+      Installed / Add-source tabs; fetches metadata-only via `CatalogService`; installs through
+      `SafeMutationService`. `FakeCatalogFetcher` added to App.Tests/Fakes.
+    - **Recommendations** (`RecommendationsViewModel` + `RecommendationsMapper` + `Recommendations.razor`)
+      — project-fit signals → Strong/Consider/AlreadyCovered buckets with evidence chips,
+      confidence bar (`MatchBar`), and runtime annotations.
+    Shared components: `TypeBadge`, `TrustBadge`, `ScopeTag`, `CodeViewer`, `MatchBar`, `RecCard`.
+    Blueprint CSS extended for all screens in `wwwroot/css/blueprint.css`.
     **Note:** Visual/runtime behavior verified by human via `/run` (Photino opens a native window
-    — not observable headless). `dotnet build` + ViewModel/computer tests are the automated gates.
-- **Next up: Phase 8 — Per-screen UI**.
+    — not observable headless). `dotnet build` + ViewModel/mapper tests are the automated gates.
+- **All phases complete (v1 feature set).**
+- **Deferrals (backlog):**
+  - **Multi-project compare** — requires `IWorkspaceContext` to carry multiple projects +
+    side-by-side layout; deferred to keep v1 single-project quality high.
+  - **Full MCP & Plugins screen** — only a stub page (`McpStub.razor` at `/mcp`) exists;
+    full screen (MCP server definitions, scope/enabled state, plugin management) is deferred.
 
 ## Git
 - Work on `main` (normal repo, no worktrees). Remote `origin` = the GitHub URL above; `gh`
@@ -128,18 +155,18 @@ escalate to opus only if blocked. Each phase ≈ 1 plan + ~30–75 subagent tool
 - `.gitignore` already ignores `bin/`,`obj/`,`.playwright-mcp/`. A local static server for
   the prototypes may still be running on `localhost:8765` (harmless).
 
-## To resume: "continue to Phase 8"
-1. Finish Phase 7: `finishing-a-development-branch` skill on `phase-7-ui-shell` →
-   fast-forward merge to `main` → push `origin main` → delete branch → close Linear issues
-   (epic **CLA-31** + task issues → Done, Project → Completed).
-   Visual verify: run `/run` to confirm Blueprint shell + Dashboard look matches `03-blueprint.html`.
-2. Confirm Linear is on the **CLA** workspace (`list_teams` → "Claude Browser" / CLA).
-3. Author `docs/superpowers/plans/2026-06-07-08-per-screen-ui.md` from the roadmap's Phase 8
-   outline (full TDD detail). Screens: Effective Config precedence matrix (`04-blueprint-…`),
-   Commands & Skills (`05`), Dependencies, Marketplace browse + add-source + install (`07`, `08`),
-   Recommended-for-project (`09`), Change Log, multi-project compare.
-   **Depends:** Phases 1–7 + per-screen Core engines.
-4. Create Phase-8 task issues under "Phase 8 — Per-screen UI" project (epic **CLA-32**).
-5. Run the playbook (branch `phase-8-…` → one implementer subagent (sonnet) → spec +
-   `feature-dev:code-reviewer` review → fix loop → ff-merge → push → close Linear).
-   Phase-7 reference: plan `…-07-blueprint-ui-shell.md`, issues CLA-31 + task issues.
+## To resume after Phase 8 branch merges
+
+All v1 phases are built. The next steps are:
+1. **Review + merge Phase 8**: spec-compliance + code-quality review on `phase-8-per-screen-ui`
+   → fast-forward merge to `main` → push `origin main` → delete branch → close Linear issues
+   (epic **CLA-32** + task issues → Done, Project → Completed).
+   Visual verify: run `/run` to confirm Marketplace, Recommendations, and remaining screens
+   render correctly in the Blueprint shell.
+2. **Backlog (nice-to-have v1.1+):**
+   - Multi-project compare (requires `IWorkspaceContext` multi-project + side-by-side layout).
+   - Full MCP & Plugins screen (definitions from `.mcp.json` / settings / `~/.claude.json`,
+     scope/enabled state, plugin management).
+   - Store publishing / code signing (architecture is ready; just build pipeline work).
+   - Async catalog fetch (current `ICatalogFetcher.FetchText` is sync-over-async; a proper
+     async interface + cancellation would improve UI responsiveness on slow networks).
