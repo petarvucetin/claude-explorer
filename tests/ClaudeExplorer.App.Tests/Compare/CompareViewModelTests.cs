@@ -13,7 +13,8 @@ public class CompareViewModelTests
     private static EnvironmentSnapshot Snap(string model) => new(
         new[] { new EffectiveSetting("model", MergeStrategy.ScalarLastWins, JsonValue.Create(model), null, Array.Empty<SettingContribution>(), false) },
         new ArtifactCatalog(Array.Empty<ResolvedArtifact>()),
-        Array.Empty<McpServer>(), Array.Empty<string>(), new DependencyReport(Array.Empty<DependencyResult>()));
+        Array.Empty<McpServer>(), Array.Empty<string>(), new DependencyReport(Array.Empty<DependencyResult>()),
+        new Dictionary<string, string>());
 
     private static EnvironmentService TwoEnvService(InMemoryFileSystem fs)
     {

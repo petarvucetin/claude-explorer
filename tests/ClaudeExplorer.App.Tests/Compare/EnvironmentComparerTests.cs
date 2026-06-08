@@ -25,7 +25,8 @@ public class EnvironmentComparerTests
             new ArtifactCatalog(artifacts ?? Array.Empty<ResolvedArtifact>()),
             mcp ?? Array.Empty<McpServer>(),
             plugins ?? Array.Empty<string>(),
-            new DependencyReport(deps ?? Array.Empty<DependencyResult>()));
+            new DependencyReport(deps ?? Array.Empty<DependencyResult>()),
+            new Dictionary<string, string>());
 
     private static CompareCategory Cat(EnvironmentComparison c, string name) => c.Categories.Single(x => x.Name == name);
 

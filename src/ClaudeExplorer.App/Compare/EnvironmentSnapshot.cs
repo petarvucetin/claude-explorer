@@ -10,4 +10,6 @@ public sealed record EnvironmentSnapshot(
     ArtifactCatalog Artifacts,
     IReadOnlyList<McpServer> Mcp,
     IReadOnlyList<string> Plugins,
-    DependencyReport Dependencies);
+    DependencyReport Dependencies,
+    // name (e.g. "CLAUDE.md") → content; empty when the file is absent.
+    IReadOnlyDictionary<string, string> Memory);

@@ -7,4 +7,5 @@ namespace ClaudeExplorer.App.Compare;
 public interface IEnvironmentCompareDataSource
 {
     EnvironmentSnapshot Snapshot(ClaudeEnvironment env);
+    EnvironmentSnapshot Snapshot(CompareEndpoint endpoint);
 }
