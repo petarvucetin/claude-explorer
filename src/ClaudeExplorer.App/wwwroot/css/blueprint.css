@@ -416,6 +416,7 @@ code {
 .scope-tag.s-project    { color: var(--green); border-color: var(--green); background: var(--green-wash); }
 .scope-tag.s-local      { color: var(--amber); border-color: var(--amber); background: var(--amber-wash); }
 .scope-tag.s-enterprise { color: var(--red);   border-color: var(--red);   background: var(--red-wash); }
+.scope-tag.s-plugin     { color: var(--ink-soft); border-color: var(--ink-faint); background: #E6E9EE; }
 
 /* Type / trust badges */
 .badge {

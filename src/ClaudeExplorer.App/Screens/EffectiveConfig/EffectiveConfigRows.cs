@@ -21,7 +21,7 @@ public static class EffectiveConfigMapper
 {
     private static readonly ScopeKind[] AllScopes =
     {
-        ScopeKind.Enterprise, ScopeKind.User, ScopeKind.Project, ScopeKind.Local
+        ScopeKind.Plugin, ScopeKind.Enterprise, ScopeKind.User, ScopeKind.Project, ScopeKind.Local
     };
 
     public static EffectiveConfigView Map(CoreEffectiveConfig config)

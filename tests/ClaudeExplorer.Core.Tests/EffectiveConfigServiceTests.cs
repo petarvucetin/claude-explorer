@@ -75,4 +75,51 @@ public class EffectiveConfigServiceTests
         var cfg = service.Compute("/home/me", "/repo");
         Assert.Empty(cfg.Settings);
     }
+
+    [Fact]
+    public void Folds_in_plugin_hooks_as_a_plugin_scoped_layer()
+    {
+        // A plugin ships a SessionStart hook; the user has no hooks at all.
+        var fs = new InMemoryFileSystem()
+            .AddFile("/home/me/.claude/settings.json", """{ "model": "opus" }""")
+            .AddFile("/home/me/.claude/plugins/cache/official/superpowers/5.1.0/hooks/hooks.json", """
+            {
+              "hooks": {
+                "SessionStart": [
+                  { "matcher": "startup", "hooks": [ { "type": "command", "command": "run-hook session-start" } ] }
+                ]
+              }
+            }
+            """);
+
+        var cfg = new EffectiveConfigService(fs).Compute(userDir: "/home/me", projectDir: "");
+
+        var hook = cfg.Find("hooks.SessionStart");
+        Assert.NotNull(hook);
+        var contribution = Assert.Single(hook!.Contributions);
+        Assert.Equal(ScopeKind.Plugin, contribution.Origin.Scope);
+        Assert.Equal("/home/me/.claude/plugins/cache/official/superpowers/5.1.0/hooks/hooks.json",
+            contribution.Origin.FilePath);
+        Assert.Single((JsonArray)hook.Value!);
+    }
+
+    [Fact]
+    public void Plugin_hooks_concat_after_settings_hooks_of_the_same_event()
+    {
+        var fs = new InMemoryFileSystem()
+            .AddFile("/home/me/.claude/settings.json", """
+            { "hooks": { "PreToolUse": [ { "matcher": "Bash" } ] } }
+            """)
+            .AddFile("/home/me/.claude/plugins/cache/official/p/1.0.0/hooks/hooks.json", """
+            { "hooks": { "PreToolUse": [ { "matcher": "Edit" } ] } }
+            """);
+
+        var cfg = new EffectiveConfigService(fs).Compute(userDir: "/home/me", projectDir: "");
+
+        var hook = cfg.Find("hooks.PreToolUse")!;
+        Assert.Equal(2, ((JsonArray)hook.Value!).Count);            // both contributions concatenated
+        Assert.Equal(2, hook.Contributions.Count);
+        Assert.Contains(hook.Contributions, c => c.Origin.Scope == ScopeKind.Plugin);
+        Assert.Contains(hook.Contributions, c => c.Origin.Scope == ScopeKind.User);
+    }
 }

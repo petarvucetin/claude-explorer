@@ -39,9 +39,11 @@ public sealed class SafeEditViewModel : ObservableObject
     public ChangeLogEntry? Applied { get => _applied; private set => SetProperty(ref _applied, value); }
     public string? Error { get => _error; private set => SetProperty(ref _error, value); }
 
-    /// <summary>True when editing the winning source, which may affect all projects using that scope.</summary>
+    /// <summary>True when editing the winning source, which may affect all projects using that scope.
+    /// Any winner that is not project-specific (Project/Local) is treated as global — this covers
+    /// User, Enterprise, and the Plugin base layer, and stays correct if more scopes are added.</summary>
     public bool IsGlobalEdit => Mode == EditMode.EditWinner &&
-        (_winner is null || _winner.Scope is Core.Model.ScopeKind.User or Core.Model.ScopeKind.Enterprise);
+        (_winner is null || _winner.Scope is not (ScopeKind.Project or ScopeKind.Local));
 
     public void DoPreview()
     {

@@ -42,6 +42,7 @@ else if (Vm.View is { } view)
                 <thead>
                     <tr>
                         <th>SETTING</th>
+                        <th>PLUGIN</th>
                         <th>ENTERPRISE</th>
                         <th>USER</th>
                         <th>PROJECT</th>
@@ -67,7 +68,7 @@ else if (Vm.View is { } view)
                                     <Pill Text="CONFLICT" Tone="ClaudeExplorer.App.Dashboard.BadgeTone.Bad" />
                                 }
                             </td>
-                            @foreach (var scope in new[] { ScopeKind.Enterprise, ScopeKind.User, ScopeKind.Project, ScopeKind.Local })
+                            @foreach (var scope in new[] { ScopeKind.Plugin, ScopeKind.Enterprise, ScopeKind.User, ScopeKind.Project, ScopeKind.Local })
                             {
                                 var cell = row.Cells[scope];
                                 <td>
@@ -100,7 +101,7 @@ else if (Vm.View is { } view)
                         @if (isExpanded)
                         {
                             <tr class="trace-row">
-                                <td colspan="8">
+                                <td colspan="9">
                                     <div class="trace">
                                         <div style="font-family:var(--font-mono,monospace);font-size:10px;color:var(--ink-faint);margin-bottom:4px">PROVENANCE TRACE</div>
                                         @foreach (var c in row.Trace)
@@ -123,7 +124,7 @@ else if (Vm.View is { } view)
                         @if (isEditing && _editVm is not null)
                         {
                             <tr>
-                                <td colspan="8">
+                                <td colspan="9">
                                     <SafeEditPanel Vm="_editVm" OnClose="CloseEdit" />
                                 </td>
                             </tr>

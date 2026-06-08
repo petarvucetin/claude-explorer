@@ -109,6 +109,32 @@ public class EffectiveConfigRowsTests
     }
 
     [Fact]
+    public void Plugin_sourced_hook_populates_the_plugin_cell()
+    {
+        // A hooks event contributed only by a plugin: the Plugin cell is present, the others are not.
+        var pluginContrib = new SettingContribution(
+            new SettingOrigin(ScopeKind.Plugin, "/home/.claude/plugins/cache/m/p/1.0.0/hooks/hooks.json", "hooks.SessionStart"),
+            JsonNode.Parse("""[ { "matcher": "startup" } ]"""));
+
+        var setting = new EffectiveSetting(
+            "hooks.SessionStart",
+            MergeStrategy.ArrayConcat,
+            JsonNode.Parse("""[ { "matcher": "startup" } ]"""),
+            Winner: null,
+            new[] { pluginContrib },
+            HasConflict: false);
+
+        var view = EffectiveConfigMapper.Map(new CoreEffectiveConfig(new[] { setting }));
+        var row = Assert.Single(view.Rows);
+
+        Assert.True(row.Cells[ScopeKind.Plugin].Present);
+        Assert.False(row.Cells[ScopeKind.User].Present);
+        Assert.False(row.Cells[ScopeKind.Project].Present);
+        Assert.False(row.Cells[ScopeKind.Local].Present);
+        Assert.False(row.Cells[ScopeKind.Enterprise].Present);
+    }
+
+    [Fact]
     public void Empty_config_returns_empty_view()
     {
         var view = EffectiveConfigMapper.Map(new CoreEffectiveConfig(Array.Empty<EffectiveSetting>()));

@@ -13,6 +13,13 @@ public class ScopeKindTests
     }
 
     [Fact]
+    public void Plugin_is_lowest_precedence_base_layer()
+    {
+        // Plugin-contributed config (e.g. plugin hooks) is the base layer the user overrides.
+        Assert.True((int)ScopeKind.Plugin < (int)ScopeKind.User);
+    }
+
+    [Fact]
     public void ConfigFile_carries_scope_and_path()
     {
         var f = new ConfigFile(ScopeKind.Project, "/repo/.claude/settings.json");

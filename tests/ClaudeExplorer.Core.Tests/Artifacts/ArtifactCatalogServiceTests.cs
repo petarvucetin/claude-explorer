@@ -40,4 +40,22 @@ public class ArtifactCatalogServiceTests
         var catalog = new ArtifactCatalogService(new InMemoryFileSystem()).Build("/home");
         Assert.Empty(catalog.Artifacts);
     }
+
+    [Fact]
+    public void Auto_discovers_installed_plugin_skills_when_no_explicit_plugins_passed()
+    {
+        // A plugin installed under the on-disk cache, plus one user skill.
+        var fs = new InMemoryFileSystem()
+            .AddFile("/home/.claude/skills/graphify/SKILL.md", "---\nname: graphify\ndescription: to graph\n---\nb")
+            .AddFile("/home/.claude/plugins/cache/official/superpowers/5.1.0/skills/tdd/SKILL.md",
+                "---\nname: tdd\ndescription: test first\n---\nb");
+
+        // No plugins argument → installed plugins are auto-discovered.
+        var catalog = new ArtifactCatalogService(fs).Build("/home");
+
+        var skills = catalog.OfKind(ArtifactKind.Skill).ToList();
+        Assert.Equal(2, skills.Count);
+        Assert.Contains(skills, s => s.Winner.Name == "graphify" && s.Winner.Source.Kind == ArtifactSourceKind.User);
+        Assert.Contains(skills, s => s.Winner.Name == "tdd" && s.Winner.Source.Label == "Plugin: superpowers");
+    }
 }

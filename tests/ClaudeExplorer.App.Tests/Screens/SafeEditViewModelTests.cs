@@ -29,6 +29,32 @@ public class SafeEditViewModelTests
         return new SafeEditViewModel(svc, winner, () => ts, ProjectDir);
     }
 
+    [Theory]
+    [InlineData(ScopeKind.User, true)]        // global scopes warn
+    [InlineData(ScopeKind.Enterprise, true)]
+    [InlineData(ScopeKind.Plugin, true)]      // plugin base layer is global too
+    [InlineData(ScopeKind.Project, false)]    // project-specific scopes do not
+    [InlineData(ScopeKind.Local, false)]
+    public void IsGlobalEdit_warns_for_every_non_project_scope_when_editing_the_winner(ScopeKind scope, bool expected)
+    {
+        var (svc, _) = BuildService();
+        var winner = new SettingOrigin(scope, $"/x/settings.json", "model");
+        var vm = BuildVm(svc, winner);
+        vm.Mode = EditMode.EditWinner;
+
+        Assert.Equal(expected, vm.IsGlobalEdit);
+    }
+
+    [Fact]
+    public void IsGlobalEdit_is_false_when_overriding_rather_than_editing_the_winner()
+    {
+        var (svc, _) = BuildService();
+        var vm = BuildVm(svc, new SettingOrigin(ScopeKind.User, "/x/settings.json", "model"));
+        vm.Mode = EditMode.OverrideAtProject;
+
+        Assert.False(vm.IsGlobalEdit);
+    }
+
     [Fact]
     public void Preview_with_valid_json_populates_diff_and_validates()
     {
