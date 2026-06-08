@@ -24,6 +24,9 @@ public sealed class RecommendationService
 
     /// <param name="runtimeAvailability">runtime name → is it present on this machine (from a Phase-3 check).</param>
     /// <param name="itemRuntimes">resolves the runtimes an item requires (default: none — see plan).</param>
+    /// <remarks>Runtime annotations are produced only when BOTH <paramref name="itemRuntimes"/> and
+    /// <paramref name="runtimeAvailability"/> are supplied; without availability data a runtime's
+    /// status is unknown, so no (potentially false "missing") annotation is emitted.</remarks>
     public RecommendationResult Recommend(
         string userDir,
         string projectDir,
@@ -35,12 +38,16 @@ public sealed class RecommendationService
         var installed = _installed.Read(userDir);
         var result = _matcher.Match(signals, catalog, installed);
 
-        return itemRuntimes is null ? result : Annotate(result, runtimeAvailability, itemRuntimes);
+        // Annotate only when BOTH the requirement resolver and availability data are present —
+        // without availability we cannot honestly claim a runtime is missing, so we skip annotation.
+        return itemRuntimes is null || runtimeAvailability is null
+            ? result
+            : Annotate(result, runtimeAvailability, itemRuntimes);
     }
 
     private static RecommendationResult Annotate(
         RecommendationResult result,
-        IReadOnlyDictionary<string, bool>? availability,
+        IReadOnlyDictionary<string, bool> availability,
         Func<CatalogItem, IReadOnlyList<string>> itemRuntimes)
     {
         var annotated = result.Recommendations.Select(r =>
@@ -48,8 +55,7 @@ public sealed class RecommendationService
             var needs = itemRuntimes(r.Item);
             if (needs.Count == 0) return r;
             var notes = needs
-                .Select(rt => new RuntimeAnnotation(
-                    rt, availability is not null && availability.TryGetValue(rt, out var ok) && ok))
+                .Select(rt => new RuntimeAnnotation(rt, availability.TryGetValue(rt, out var ok) && ok))
                 .ToList();
             return r with { Runtimes = notes };
         }).ToList();

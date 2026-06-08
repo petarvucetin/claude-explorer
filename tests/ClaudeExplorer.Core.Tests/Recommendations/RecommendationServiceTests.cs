@@ -73,4 +73,18 @@ public class RecommendationServiceTests
 
         Assert.Empty(Assert.Single(result.Recommendations).Runtimes);
     }
+
+    [Fact]
+    public void Runtime_resolver_without_availability_data_produces_no_annotations()
+    {
+        var fs = new InMemoryFileSystem().AddFile("/proj/tsconfig.json", "{}");
+        var catalog = new[] { Item("typescript-helper") };
+
+        // itemRuntimes supplied but runtimeAvailability omitted: we must NOT claim the runtime is
+        // missing (a false "needs X — missing" warning) — skip annotation instead.
+        var result = new RecommendationService(fs)
+            .Recommend("/home", "/proj", catalog, itemRuntimes: _ => new[] { "uvx" });
+
+        Assert.Empty(Assert.Single(result.Recommendations).Runtimes);
+    }
 }
