@@ -34,4 +34,14 @@ public class WorkspaceContextTests
         var ctx = new WorkspaceContext(@"C:\u", @"C:\");
         Assert.NotEmpty(ctx.ProjectLabel);
     }
+
+    [Fact]
+    public void No_project_reads_only_the_standard_claude_folder_and_labels_it()
+    {
+        var ctx = new WorkspaceContext("/home/u", projectDir: null);
+
+        Assert.Equal("/home/u", ctx.UserDir);
+        Assert.Equal("", ctx.ProjectDir); // no project overlay
+        Assert.Equal(WorkspaceContext.UserGlobalLabel, ctx.ProjectLabel);
+    }
 }

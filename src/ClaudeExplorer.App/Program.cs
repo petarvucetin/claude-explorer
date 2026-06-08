@@ -30,15 +30,19 @@ internal static class Program
         builder.Services.AddLogging();
         builder.Services.AddMudServices();
 
-        // Core seams (real machine impls).
-        builder.Services.AddSingleton<IFileSystem, PhysicalFileSystem>();
+        // Core seams (real machine impls). One PhysicalFileSystem instance is reused for both the
+        // DI seam and the startup workspace resolution below.
+        var fileSystem = new PhysicalFileSystem();
+        builder.Services.AddSingleton<IFileSystem>(fileSystem);
         builder.Services.AddSingleton<IFileWriter, PhysicalFileWriter>();
         builder.Services.AddSingleton<IPathResolver, PhysicalPathResolver>();
         builder.Services.AddSingleton<IProcessRunner>(_ => new PhysicalProcessRunner());
 
-        // Workspace: user home (holds ~/.claude) + current dir as the active project.
+        // Workspace: always read the standard user-global ~/.claude folder. Overlay a project only
+        // when launched from (or pointed at, via a command-line arg) a real Claude project — a dir
+        // with a .claude folder. Otherwise there is no project and the app shows just ~/.claude.
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var project = Directory.GetCurrentDirectory();
+        var project = WorkspaceResolver.ResolveProjectDir(args, Directory.GetCurrentDirectory(), fileSystem);
         builder.Services.AddSingleton<IWorkspaceContext>(new WorkspaceContext(home, project));
 
         // Core façades.
