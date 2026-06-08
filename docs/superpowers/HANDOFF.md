@@ -11,8 +11,9 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Current state (2026-06-07)
-- **ALL PHASES (1–8) ARE COMPLETE, merged to `main`, and pushed** to `origin`. `git log` tip ≈ `81b75eb`.
-- **`dotnet test` → 279 passing** (205 Core + 74 App). `.NET SDK 10.0.300` is installed.
+- **Phases 1–8 are merged and pushed to `main`** (`git log` tip ≈ `81b75eb`).
+- **Phase 9 (multi-environment + compare) is complete** on branch `phase-9-multi-environment` (pending merge/review). `git log` tip ≈ `413c600`.
+- **`dotnet test` → 308 passing** (205 Core + 103 App). `.NET SDK 10.0.300` is installed.
   Solution file is `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via
   PowerShell (it is NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash
   fails with exit 127).
@@ -90,10 +91,22 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
     Blueprint CSS extended for all screens in `wwwroot/css/blueprint.css`.
     **Note:** Visual/runtime behavior verified by human via `/run` (Photino opens a native window
     — not observable headless). `dotnet build` + ViewModel/mapper tests are the automated gates.
-- **All phases complete (v1 feature set).**
+- **Phase 9 architecture (multi-environment + compare):**
+  - `ClaudeEnvironment` / `EnvironmentKind` — model for Windows, WSL, and custom config roots.
+  - `IWslLocator` / `WslLocator` — process seam (shells `wsl.exe`); UTF-16LE sanitization helpers (`CleanLines` / `CleanPath`) are unit-tested.
+  - `EnvironmentDiscovery` — always includes a Windows env; adds WSL distros that have a `~/.claude` folder (UNC path via `wslpath -w "$HOME"`).
+  - `EnvironmentStore` — JSON persistence of active env id, custom envs, and per-env project map. Uses mutable class (not positional record) for STJ round-trip compatibility.
+  - `EnvironmentService` — observable singleton (singleton in DI; `Changed` event); composes discovery + custom; `SetActive`, `SetProject`, `AddCustom`, `Remove`, `Refresh`.
+  - `ActiveEnvironmentWorkspaceContext` — thin `IWorkspaceContext` adapter over `EnvironmentService.Active`; makes every existing screen env-aware with no per-screen change.
+  - `EnvironmentComparer` — pure static 7-category diff (Settings / Commands / Skills / Agents / MCP / Plugins / Dependencies); settings arrays compared as sorted sets; fully tested.
+  - `IEnvironmentCompareDataSource` / `EngineEnvironmentCompareDataSource` — snapshot seam (not unit-tested, mirrors `Physical*` pattern).
+  - `CompareViewModel` — default left = active env, right = first other; `SelectCategory`, `SetEnvironments`.
+  - `EnvironmentSelector.razor` — top-bar chip with dropdown, Add Custom dialog, Refresh.
+  - `Compare.razor` — `/compare` page; category tabs, summary bar, diff table with row accents + status chips.
+  - `blueprint.css` — extended with `--win`/`--wsl`/`--custom` tokens, `.envchip`, `.cats/.cat`, `.summary/.scount`, `.cmp-table`/`.cmp-stat`/row accents.
+  - `Program.cs` — old fixed `WorkspaceContext` registration replaced; `EnvironmentService` is singleton (loaded in factory); `WorkspaceResolver` retained for future "open project".
 - **Deferrals (backlog):**
-  - **Multi-project compare** — requires `IWorkspaceContext` to carry multiple projects +
-    side-by-side layout; deferred to keep v1 single-project quality high.
+  - **Phase 10 — Environment settings sync:** consume the Compare Settings rows (Differs / OnlyA / OnlyB) + the Phase-6 safe-mutation layer to let the user copy a setting from one environment to another. Blueprint mockup already covers the compare → sync flow; artifact/MCP/plugin file-sync remains deferred.
   - **Full MCP & Plugins screen** — only a stub page (`McpStub.razor` at `/mcp`) exists;
     full screen (MCP server definitions, scope/enabled state, plugin management) is deferred.
 
@@ -153,16 +166,18 @@ escalate to opus only if blocked. Each phase ≈ 1 plan + ~30–75 subagent tool
 - `.gitignore` already ignores `bin/`,`obj/`,`.playwright-mcp/`. A local static server for
   the prototypes may still be running on `localhost:8765` (harmless).
 
-## To resume after Phase 8 branch merges
+## To resume after Phase 9 branch merges
 
-All v1 phases are built. The next steps are:
-1. **Review + merge Phase 8**: spec-compliance + code-quality review on `phase-8-per-screen-ui`
-   → fast-forward merge to `main` → push `origin main` → delete branch → close Linear issues
-   (epic **CLA-32** + task issues → Done, Project → Completed).
-   Visual verify: run `/run` to confirm Marketplace, Recommendations, and remaining screens
-   render correctly in the Blueprint shell.
-2. **Backlog (nice-to-have v1.1+):**
-   - Multi-project compare (requires `IWorkspaceContext` multi-project + side-by-side layout).
+1. **Review + merge Phase 9**: spec-compliance + code-quality review on `phase-9-multi-environment`
+   → fast-forward merge to `main` → push `origin main` → delete branch.
+   Visual verify: run `/run` to confirm the environment selector (top-bar chip + dropdown),
+   Compare screen (category tabs, summary bar, diff table), and LeftRail "Analyze" section
+   render correctly. WSL environments appear only if the machine has a WSL distro with `~/.claude`.
+2. **Next: Phase 10 — Environment settings sync** — consume Compare Settings rows (Differs / OnlyA / OnlyB)
+   + Phase-6 safe-mutation layer to copy settings between environments. Plan: write
+   `docs/superpowers/plans/2026-06-07-10-env-settings-sync.md` using the writing-plans skill.
+3. **Backlog (nice-to-have v1.1+):**
+   - Artifact/MCP/plugin file-sync across environments (deferred from Phase 9/10).
    - Full MCP & Plugins screen (definitions from `.mcp.json` / settings / `~/.claude.json`,
      scope/enabled state, plugin management).
    - Store publishing / code signing (architecture is ready; just build pipeline work).
