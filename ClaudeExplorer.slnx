@@ -4,6 +4,7 @@
     <Project Path="src/ClaudeExplorer.Core/ClaudeExplorer.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/ClaudeExplorer.App.Tests/ClaudeExplorer.App.Tests.csproj" />
     <Project Path="tests/ClaudeExplorer.Core.Tests/ClaudeExplorer.Core.Tests.csproj" />
   </Folder>
 </Solution>
