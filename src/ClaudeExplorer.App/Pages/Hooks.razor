@@ -4,6 +4,9 @@
 @inject RefreshService Refresh
 @inject ClaudeExplorer.Core.Io.IFileSystem Fs
 @implements IDisposable
+@inject ClaudeExplorer.Core.Mutation.SafeMutationService Mutation
+@inject ClaudeExplorer.App.Services.IWorkspaceContext Workspace
+@inject Func<string> NowIso
 
 <div class="pagehead">
     <div><div class="k">Event Hooks</div><h1>Hooks</h1></div>
@@ -28,45 +31,122 @@ else if (Vm.View is { } view)
     {
         <CornerTickPanel Class="card"><div class="sub" style="padding:18px">No hooks configured in this environment (settings.json or plugins).</div></CornerTickPanel>
     }
-    @foreach (var group in view.Groups)
+    @foreach (var groupedItem in view.Groups.Select((g, i) => (Group: g, GI: i)))
     {
+        var groupIndex = groupedItem.GI;
+        var group = groupedItem.Group;
         <div class="grp-label"><span class="name">@group.Event</span><span class="cnt">@group.Rows.Count</span></div>
-        @foreach (var row in group.Rows)
+        @foreach (var rowedItem in group.Rows.Select((row, i) => (Row: row, RI: i)))
         {
-            var r = row;
-            <div class="mcprow @(Vm.Selected == row ? "sel" : "")" @onclick="() => Vm.Selected = r">
-                <span class="mcp-name">@row.Matcher</span>
-                <span class="mcp-ep">@row.Command</span>
-                <ScopeTag Scope="row.Source" />
-                <span class="pill @HookRowsMapper.Pill(row.Health)">@HookRowsMapper.HealthText(row)</span>
+            var r = rowedItem.Row;
+            var row = rowedItem.Row;
+            var ri = rowedItem.RI;
+            var rowKey = (groupIndex, ri);
+            var selected = SelectedKey == rowKey;
+            <div class="hookrow @(selected ? "sel" : "")" @onclick="() => Toggle(rowKey, r)">
+                <div class="l1">
+                    <div class="chips">
+                        @foreach (var chip in HookMatcher.Chips(row.Matcher))
+                        {
+                            <span class="tchip @(chip.IsAny ? "any" : "")">@chip.Text</span>
+                        }
+                    </div>
+                    <div class="right">
+                        <ScopeTag Scope="row.Source" />
+                        @if (!row.IsEditable) { <span class="ro-tag">read-only</span> }
+                        <span class="pill @HookRowsMapper.Pill(row.Health)">@HookRowsMapper.HealthText(row)</span>
+                    </div>
+                </div>
+                <div class="l2"><span class="typ">@(row.Type ?? "command")</span><span class="cmd">@row.Command</span></div>
             </div>
-        }
-    }
-
-    @if (Vm.Selected is { } sel)
-    {
-        <CornerTickPanel Class="card" style="margin-top:14px;padding:18px">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-                <h2 style="margin:0;font-size:18px">@sel.Event</h2>
-                <ScopeTag Scope="sel.Source" />
-                <span class="pill @HookRowsMapper.Pill(sel.Health)">@HookRowsMapper.HealthText(sel)</span>
-            </div>
-            <div class="kv">
-                <span class="kvk">matcher</span><span class="kvv">@sel.Matcher</span>
-                <span class="kvk">type</span><span class="kvv">@(sel.Type ?? "command")</span>
-                <span class="kvk">command</span><span class="kvv">@sel.Command</span>
-                @if (sel.Runtime is not null) { <span class="kvk">runtime</span><span class="kvv">@sel.Runtime — @HookRowsMapper.HealthText(sel)</span> }
-                <span class="kvk">source</span><span class="kvv">@sel.SourceFile</span>
-            </div>
-            @if (Fs.FileExists(sel.SourceFile))
+            @if (selected && _editor is not null)
             {
-                <div style="margin-top:12px"><CodeViewer Title="@sel.SourceFile" Content="@Fs.ReadAllText(sel.SourceFile)" /></div>
+                <div class="hookpanel">
+                    @if (_editor.IsEditable && _editor.IsGlobalEdit)
+                    {
+                        <div class="ed-warn">⚠ Global (@row.Source) source — changes affect every project.</div>
+                    }
+                    else if (!_editor.IsEditable)
+                    {
+                        <div class="ed-warn ro">This hook is provided by @row.Source and is read-only.</div>
+                    }
+
+                    <div class="seg-head"><span class="t">Hook</span><span class="lang">JSON@(_editor.IsEditable ? " · editable" : " · read-only")</span><span class="path">@row.SourceFile</span></div>
+                    @if (_editor.IsEditable)
+                    {
+                        <textarea class="json-edit" spellcheck="false" @bind="_editor.BlockText" @bind:event="oninput"></textarea>
+                    }
+                    else
+                    {
+                        <CodeViewer Title="" Content="@_editor.BlockText" Language="json" Capped="true" />
+                    }
+
+                    @{ var script = ResolveScript(row); }
+                    @if (script is not null && script.Exists)
+                    {
+                        <div class="seg-head"><span class="t">Runs file</span><span class="lang ro">@script.Language · read-only</span><span class="path">@script.Path</span></div>
+                        <CodeViewer Title="" Content="@Fs.ReadAllText(script.Path)" Language="@script.Language" Capped="true" />
+                    }
+                    else
+                    {
+                        <div class="ed-note">@(script is null ? "Runs an inline command — no script file to display." : $"Script not found on disk: {script.Path}")</div>
+                    }
+
+                    @if (_editor.Error is { } err) { <div class="ed-err">@err</div> }
+                    @if (_editor.Applied is { } applied)
+                    {
+                        <div class="ed-bar"><span class="log ok">✓ Saved · logged to Change Log (@applied.Scope)</span>
+                            <button class="btn ghost" @onclick="() => _editor.Undo()" disabled="@applied.IsUndone">Undo</button></div>
+                    }
+                    else if (_editor.IsEditable)
+                    {
+                        <div class="ed-bar">
+                            <span class="log">↻ Save logs to Change Log · timestamped backup · one-click undo</span>
+                            <button class="btn ghost" @onclick="() => _editor!.DoPreview()">Preview diff</button>
+                            <button class="btn ghost" @onclick="() => Toggle((groupIndex, ri), r)">Cancel</button>
+                            <button class="btn primary" @onclick="() => _editor!.Save()">Save</button>
+                        </div>
+                        @if (_editor.Preview is { } pv && pv.Diff.HasChanges)
+                        {
+                            <CodeViewer Title="diff preview" Content="@DiffText(pv.Diff)" Capped="true" />
+                        }
+                    }
+                </div>
             }
-        </CornerTickPanel>
+        }
     }
 }
 
 @code {
+    private (int, int)? _selectedKey;
+    private HookEditViewModel? _editor;
+
+    public (int, int)? SelectedKey => _selectedKey;
+
+    private void Toggle((int, int) key, HookRow row)
+    {
+        if (_selectedKey == key) { _selectedKey = null; _editor = null; return; }
+        _selectedKey = key;
+        _editor = new HookEditViewModel(Mutation, Fs, row, NowIso, Workspace.ProjectDir ?? "");
+    }
+
+    private ClaudeExplorer.Core.Hooks.ScriptRef? ResolveScript(HookRow row)
+    {
+        var dir = row.SourceFile.Replace('\\', '/');
+        var slash = dir.LastIndexOf('/');
+        var srcDir = slash >= 0 ? dir[..slash] : "";
+        return ClaudeExplorer.Core.Hooks.HookScriptResolver.Resolve(
+            Fs, row.Command, srcDir, Workspace.ProjectDir ?? "", Workspace.UserDir ?? "");
+    }
+
+    private static string DiffText(ClaudeExplorer.Core.Mutation.Diff diff)
+        => string.Join("\n", diff.Lines.Select(l => l.Kind switch
+        {
+            ClaudeExplorer.Core.Mutation.DiffKind.Added => "+ " + l.Text,
+            ClaudeExplorer.Core.Mutation.DiffKind.Removed => "- " + l.Text,
+            _ => "  " + l.Text,
+        }));
+
     protected override void OnInitialized()
     {
         Vm.PropertyChanged += OnVmChanged;
