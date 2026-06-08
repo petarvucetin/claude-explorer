@@ -1,0 +1,160 @@
+@page "/marketplace"
+@using ClaudeExplorer.App.Screens.Marketplace
+@using ClaudeExplorer.Core.Catalog
+@using ClaudeExplorer.Core.Model
+@inject MarketplaceViewModel Vm
+@inject RefreshService Refresh
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Discover</div>
+        <h1>Marketplace</h1>
+    </div>
+</div>
+
+@if (Vm.Error is not null)
+{
+    <div class="err-banner" style="margin-bottom:14px">@Vm.Error</div>
+}
+
+@if (Vm.LastInstall is { IsUndone: false } install)
+{
+    <div class="applied-banner" style="margin-bottom:14px">
+        <span>Installed: <strong>@install.FilePath</strong></span>
+        <button class="btn-undo" @onclick="Vm.UndoLastInstall">UNDO</button>
+    </div>
+}
+
+<!-- Tab bar -->
+<div class="mkt-tabs" style="margin-bottom:18px">
+    <button class="mkt-tab @(_tab == 0 ? "active" : "")" @onclick='() => SetTab(0)'>INSTALLED</button>
+    <button class="mkt-tab @(_tab == 1 ? "active" : "")" @onclick='() => SetTab(1)'>ADD SOURCE</button>
+</div>
+
+@if (_tab == 0)
+{
+    <!-- Installed tab -->
+    @if (Vm.IsLoading)
+    {
+        <CornerTickPanel Class="card">
+            <div class="sub" style="padding:18px">Loading installed catalog…</div>
+        </CornerTickPanel>
+    }
+    else
+    {
+        <CornerTickPanel Class="card">
+            @if (!Vm.Items.Any())
+            {
+                <div class="sub" style="padding:18px">No installed marketplaces found in <code>~/.claude/plugins/marketplaces/</code>.</div>
+            }
+            @foreach (var item in Vm.Items)
+            {
+                var capturedItem = item;
+                <div class="mkt-item">
+                    <div class="mkt-item-meta">
+                        <TypeBadge Text="@MarketplaceMapper.TypeLabel(item.Type)" />
+                        <TrustBadge Trust="item.Trust" />
+                        <span class="mkt-source">@item.SourceName</span>
+                    </div>
+                    <div class="mkt-item-name">@item.Name</div>
+                    @if (!string.IsNullOrEmpty(item.Summary))
+                    {
+                        <div class="mkt-item-summary">@item.Summary</div>
+                    }
+                    @if (!string.IsNullOrEmpty(item.Author))
+                    {
+                        <div class="mkt-item-author">by @item.Author</div>
+                    }
+                    <div class="mkt-item-actions">
+                        <button class="btn-primary" @onclick="() => Vm.Install(capturedItem)">INSTALL</button>
+                    </div>
+                </div>
+            }
+        </CornerTickPanel>
+    }
+}
+else
+{
+    <!-- Add Source tab -->
+    <CornerTickPanel Class="card">
+        <div class="mkt-addsource-form">
+            <div class="mkt-addsource-label">Enter a GitHub repo (<code>owner/repo</code>), a GitHub URL, or a manifest URL:</div>
+            <div class="mkt-addsource-row">
+                <input class="search-box" placeholder="e.g. anthropics/claude-plugins or https://…"
+                       @bind="Vm.AddSourceInput" @bind:event="oninput" />
+                <button class="btn-primary" disabled="@Vm.IsLoading"
+                        @onclick='() => Vm.AddSource(Vm.AddSourceInput)'>FETCH</button>
+            </div>
+        </div>
+
+        @if (Vm.ShowTrustWarning)
+        {
+            <div class="warn-callout" style="margin:0 18px 14px">
+                COMMUNITY SOURCE — review items carefully before installing. Metadata only has been fetched; nothing is downloaded until you install.
+            </div>
+        }
+
+        @if (Vm.IsLoading)
+        {
+            <div class="sub" style="padding:18px">Fetching…</div>
+        }
+        else if (Vm.AddedItems.Any())
+        {
+            @foreach (var item in Vm.AddedItems)
+            {
+                var capturedItem = item;
+                <div class="mkt-item">
+                    <div class="mkt-item-meta">
+                        <TypeBadge Text="@MarketplaceMapper.TypeLabel(item.Type)" />
+                        <TrustBadge Trust="item.Trust" />
+                    </div>
+                    <div class="mkt-item-name">@item.Name</div>
+                    @if (!string.IsNullOrEmpty(item.Summary))
+                    {
+                        <div class="mkt-item-summary">@item.Summary</div>
+                    }
+                    @if (!string.IsNullOrEmpty(item.Author))
+                    {
+                        <div class="mkt-item-author">by @item.Author</div>
+                    }
+                    <div class="mkt-item-actions">
+                        <button class="btn-primary" @onclick="() => Vm.Install(capturedItem)">INSTALL</button>
+                    </div>
+                </div>
+            }
+        }
+        else if (Vm.ShowTrustWarning == false && !string.IsNullOrEmpty(Vm.AddSourceInput))
+        {
+            <div class="sub" style="padding:18px">No items found — check the source URL/repo.</div>
+        }
+    </CornerTickPanel>
+}
+
+@code {
+    private int _tab;
+
+    private void SetTab(int t)
+    {
+        _tab = t;
+        if (t == 0) Vm.LoadInstalled();
+    }
+
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefresh;
+        Vm.LoadInstalled();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnRefresh() => Vm.LoadInstalled();
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefresh;
+    }
+}
