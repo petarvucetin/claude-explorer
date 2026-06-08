@@ -37,7 +37,8 @@ public sealed class ArtifactDiscoverer
             if (!TryRead(file, out var text)) continue;
             var fm = Frontmatter.Parse(text);
             var name = NameFrom(fm, FileNameWithoutExtension(file));
-            yield return new DiscoveredArtifact(ArtifactKind.Command, name, ArtifactSummary.Extract(fm), source, file);
+            yield return new DiscoveredArtifact(
+                ArtifactKind.Command, name, ArtifactSummary.Extract(fm), source, file, fm.Fields);
         }
     }
 
@@ -48,7 +49,8 @@ public sealed class ArtifactDiscoverer
             if (!TryRead(file, out var text)) continue;
             var fm = Frontmatter.Parse(text);
             var name = NameFrom(fm, FileNameWithoutExtension(file));
-            yield return new DiscoveredArtifact(ArtifactKind.Subagent, name, ArtifactSummary.Extract(fm), source, file);
+            yield return new DiscoveredArtifact(
+                ArtifactKind.Subagent, name, ArtifactSummary.Extract(fm), source, file, fm.Fields);
         }
     }
 
@@ -61,7 +63,10 @@ public sealed class ArtifactDiscoverer
             if (!TryRead(skillFile, out var skillText)) continue;
             var fm = Frontmatter.Parse(skillText);
             var name = NameFrom(fm, LastSegment(sub));
-            yield return new DiscoveredArtifact(ArtifactKind.Skill, name, ArtifactSummary.Extract(fm), source, skillFile);
+            // Count sibling files bundled with the skill (references/, scripts/, assets/, …).
+            var extras = _fs.GetFiles(sub, "*", recurse: true).Count(f => !f.EndsWith("/SKILL.md", StringComparison.Ordinal));
+            yield return new DiscoveredArtifact(
+                ArtifactKind.Skill, name, ArtifactSummary.Extract(fm), source, skillFile, fm.Fields, extras);
         }
     }
 

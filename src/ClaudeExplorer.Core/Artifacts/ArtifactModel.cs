@@ -22,7 +22,18 @@ public sealed record DiscoveredArtifact(
     string Name,
     string? Summary,
     ArtifactSource Source,
-    string FilePath);
+    string FilePath,
+    IReadOnlyDictionary<string, string>? Frontmatter = null,
+    int ExtraFileCount = 0)
+{
+    private static readonly IReadOnlyDictionary<string, string> EmptyFm =
+        new Dictionary<string, string>();
+
+    /// <summary>Parsed frontmatter fields (case-insensitive keys); never null. Bespoke detail panes
+    /// read type-specific fields from here (commands: <c>argument-hint</c>; subagents: <c>tools</c>,
+    /// <c>model</c>; etc.).</summary>
+    public IReadOnlyDictionary<string, string> Fm => Frontmatter ?? EmptyFm;
+}
 
 public sealed record ResolvedArtifact(DiscoveredArtifact Winner, IReadOnlyList<DiscoveredArtifact> Shadowed)
 {
