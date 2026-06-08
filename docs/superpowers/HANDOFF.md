@@ -11,10 +11,8 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Current state (2026-06-07)
-- **ALL PHASES (1–8) ARE COMPLETE.** Phases 1–7 are merged to `main` and pushed.
-  Phase 8 is on branch `phase-8-per-screen-ui` (awaiting controller merge + push).
-  `git log` tip on `phase-8-per-screen-ui` ≈ `cb7a732` (Task 9 commit).
-- **`dotnet test` → 274 passing** (205 Core + 69 App). `.NET SDK 10.0.300` is installed.
+- **ALL PHASES (1–8) ARE COMPLETE, merged to `main`, and pushed** to `origin`. `git log` tip ≈ `81b75eb`.
+- **`dotnet test` → 279 passing** (205 Core + 74 App). `.NET SDK 10.0.300` is installed.
   Solution file is `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via
   PowerShell (it is NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash
   fails with exit 127).
