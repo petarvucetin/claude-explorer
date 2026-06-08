@@ -10,10 +10,27 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 `ux-explorations/` (`03-blueprint.html` is the chosen look; `04`–`09` are the per-screen
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
+## Latest (2026-06-08)
+- **Hooks inline editor shipped to `main`** (tip `41287c5`): Hooks rows redesigned (matcher → fully
+  visible tool chips, scope/health top-right, command on its own line); clicking a row opens an inline
+  accordion with the hook's matcher-group as **editable, pretty-printed JSON** (spliced back into the
+  source `settings.json` via the existing safe-mutation flow — diff/backup/validate/change-log/undo)
+  plus the **referenced script file rendered read-only with syntax highlighting**. New Core helpers
+  `HookBlockEditor` + `HookScriptResolver` (`src/ClaudeExplorer.Core/Hooks/`); App `HookEditViewModel`
+  + `HookMatcher`; `CodeViewer` upgraded with `Language`/`Capped` params backed by **bundled
+  highlight.js** (`wwwroot/lib/highlight/`, read-only views only). Plugin/enterprise hooks are
+  read-only. Spec/plan: `docs/superpowers/specs/2026-06-08-hooks-inline-editor-design.md`,
+  `docs/superpowers/plans/2026-06-08-12-hooks-inline-editor.md`.
+- Also note: a `.grp-label` section-header restyle (blue tick + dark name + count chip) shipped earlier
+  the same day (`089dc2e`).
+- **`dotnet test` → 391 passing** (237 Core + 154 App). `.NET SDK 10.0.300`+.
+- **The phase-by-phase prose below is from 2026-06-07 and is behind `main`** — Phases 10–11 (env
+  settings sync, artifact-split/real MCP+Plugins screens) and the work above are not reflected in it.
+
 ## Current state (2026-06-07)
 - **Phases 1–9 are merged and pushed to `main`** (`git log` tip ≈ `d74a58a`). **Next: Phase 10 —
   environment settings sync** (settings.json attribute + whole-config sync via safe-mutation; epic CLA-97).
-- **`dotnet test` → 309 passing** (205 Core + 104 App). `.NET SDK 10.0.300` is installed.
+- **`dotnet test` → 309 passing** (205 Core + 104 App) *(superseded — see Latest above)*. `.NET SDK 10.0.300` is installed.
   Solution file is `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via
   PowerShell (it is NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash
   fails with exit 127).
