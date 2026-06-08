@@ -3,7 +3,7 @@ using ClaudeExplorer.Core.Io;
 namespace ClaudeExplorer.Core.Tests.Fakes;
 
 /// <summary>Deterministic in-memory file system. Paths use forward slashes.</summary>
-public sealed class InMemoryFileSystem : IFileSystem
+public sealed class InMemoryFileSystem : IFileSystem, IFileWriter
 {
     private readonly Dictionary<string, string> _files = new(StringComparer.Ordinal);
 
@@ -12,6 +12,10 @@ public sealed class InMemoryFileSystem : IFileSystem
         _files[Normalize(path)] = content;
         return this;
     }
+
+    public void WriteAllText(string path, string content) => _files[Normalize(path)] = content;
+
+    public void Delete(string path) => _files.Remove(Normalize(path));
 
     public bool FileExists(string path) => _files.ContainsKey(Normalize(path));
 
