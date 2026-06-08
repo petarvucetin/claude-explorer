@@ -1,4 +1,8 @@
 using ClaudeExplorer.App.Dashboard;
+using ClaudeExplorer.App.Screens.Artifacts;
+using ClaudeExplorer.App.Screens.ChangeLog;
+using ClaudeExplorer.App.Screens.Dependencies;
+using ClaudeExplorer.App.Screens.EffectiveConfig;
 using ClaudeExplorer.App.Services;
 using ClaudeExplorer.App.ViewModels;
 using ClaudeExplorer.Core;
@@ -49,10 +53,23 @@ internal static class Program
         // App-wide services.
         builder.Services.AddSingleton<RefreshService>();
 
+        // Clock seam: injectable timestamp factory (tests pass a fixed value instead).
+        builder.Services.AddSingleton<Func<string>>(_ => () => DateTime.UtcNow.ToString("o"));
+
         // Dashboard data + view models.
         builder.Services.AddSingleton<IDashboardDataSource, EngineDashboardDataSource>();
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<ShellViewModel>();
+
+        // Batch-A screen ViewModels (transient; each page owns its own instance).
+        builder.Services.AddTransient<EffectiveConfigViewModel>();
+        builder.Services.AddTransient<SafeEditViewModel>(sp => new SafeEditViewModel(
+            sp.GetRequiredService<SafeMutationService>(),
+            winner: null,
+            sp.GetRequiredService<Func<string>>()));
+        builder.Services.AddTransient<ArtifactBrowserViewModel>();
+        builder.Services.AddTransient<DependencyViewModel>();
+        builder.Services.AddTransient<ChangeLogViewModel>();
 
         builder.RootComponents.Add<App>("app");
 
