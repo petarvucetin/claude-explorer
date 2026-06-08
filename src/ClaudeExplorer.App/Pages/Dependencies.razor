@@ -1,0 +1,107 @@
+@page "/dependencies"
+@using ClaudeExplorer.App.Screens.Dependencies
+@inject DependencyViewModel Vm
+@inject RefreshService Refresh
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Health</div>
+        <h1>Dependencies</h1>
+    </div>
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card">
+        <div class="sub" style="padding:18px">Checking dependencies…</div>
+    </CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel">
+        <div class="rowx">
+            <div class="glyph bad"></div>
+            <div class="body"><div class="ttl">Failed to check dependencies</div><div class="meta">@Vm.ErrorMessage</div></div>
+        </div>
+    </CornerTickPanel>
+}
+else if (Vm.View is { } view)
+{
+    <CornerTickPanel Class="card">
+        <div class="dep-counts">
+            <Pill Text="@($"{view.Found} FOUND")" Tone="ClaudeExplorer.App.Dashboard.BadgeTone.Ok" />
+            <Pill Text="@($"{view.Missing} MISSING")" Tone="ClaudeExplorer.App.Dashboard.BadgeTone.Bad" />
+            <Pill Text="@($"{view.Unverifiable} UNVERIFIABLE")" Tone="ClaudeExplorer.App.Dashboard.BadgeTone.Warn" />
+        </div>
+        <div class="dep-list">
+            @foreach (var dep in view.Rows)
+            {
+                <div class="dep-row">
+                    <div class="glyph @ToneClass(dep.Tone)"></div>
+                    <div style="flex:1;min-width:0">
+                        <div class="dep-name">@dep.Name</div>
+                        @if (!string.IsNullOrEmpty(dep.Version))
+                        {
+                            <div class="dep-version">v@dep.Version</div>
+                        }
+                        @if (!string.IsNullOrEmpty(dep.Path))
+                        {
+                            <div class="dep-path">@dep.Path</div>
+                        }
+                        @if (!string.IsNullOrEmpty(dep.ReferencedBy))
+                        {
+                            <div class="dep-refs">Referenced by: @dep.ReferencedBy</div>
+                        }
+                    </div>
+                    <Pill Text="@StatusLabel(dep.Tone)" Tone="PillTone(dep.Tone)" />
+                </div>
+            }
+            @if (!view.Rows.Any())
+            {
+                <div class="sub" style="padding:18px">No dependencies discovered from config.</div>
+            }
+        </div>
+    </CornerTickPanel>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnRefreshRequested() => Vm.Load();
+
+    private static string ToneClass(DepTone t) => t switch
+    {
+        DepTone.Ok => "ok",
+        DepTone.Bad => "bad",
+        _ => "warn",
+    };
+
+    private static string StatusLabel(DepTone t) => t switch
+    {
+        DepTone.Ok => "FOUND",
+        DepTone.Bad => "MISSING",
+        _ => "UNVERIFIABLE",
+    };
+
+    private static ClaudeExplorer.App.Dashboard.BadgeTone PillTone(DepTone t) => t switch
+    {
+        DepTone.Ok => ClaudeExplorer.App.Dashboard.BadgeTone.Ok,
+        DepTone.Bad => ClaudeExplorer.App.Dashboard.BadgeTone.Bad,
+        _ => ClaudeExplorer.App.Dashboard.BadgeTone.Warn,
+    };
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}
