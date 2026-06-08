@@ -23,6 +23,11 @@ public sealed class ArtifactDiscoverer
         return result;
     }
 
+    /// <summary>Discover only the artifacts a single plugin provides (no user/project scan). Used to
+    /// count a plugin's "provides" without accidentally scanning any <c>/.claude</c> on the machine.</summary>
+    public IReadOnlyList<DiscoveredArtifact> DiscoverPlugin(PluginLocation plugin)
+        => DiscoverScope(plugin.RootPath, new ArtifactSource(ArtifactSourceKind.Plugin, plugin.Name)).ToList();
+
     private IEnumerable<DiscoveredArtifact> DiscoverScope(string root, ArtifactSource source)
     {
         foreach (var a in DiscoverCommands($"{root}/commands", source)) yield return a;

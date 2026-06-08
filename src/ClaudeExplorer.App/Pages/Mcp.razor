@@ -88,7 +88,7 @@ else if (Vm.View is { } view)
         McpHealth.Ok => $"{r.Runtime} ✓ found",
         McpHealth.Missing => $"{r.Runtime} ✗ missing",
         McpHealth.Na => "remote · n/a",
-        _ => $"{r.Runtime} · present",
+        _ => r.Runtime is not null ? $"{r.Runtime} · present" : "no command",
     };
 
     public void Dispose()

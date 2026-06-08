@@ -72,7 +72,7 @@ public sealed class PluginInventoryReader
 
     private ProvidesCounts CountProvides(string name, string installPath)
     {
-        var artifacts = _artifacts.Discover("", null, new[] { new PluginLocation(name, installPath) });
+        var artifacts = _artifacts.DiscoverPlugin(new PluginLocation(name, installPath));
         var hooks = CountHookEvents($"{installPath}/hooks/hooks.json");
         var mcp = CountMcpServers($"{installPath}/.mcp.json");
         return new ProvidesCounts(

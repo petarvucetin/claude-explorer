@@ -92,4 +92,16 @@ public class PluginInventoryReaderTests
         Assert.Empty(inv.Plugins);
         Assert.Empty(inv.Marketplaces);
     }
+
+    [Fact]
+    public void Provides_counts_only_the_plugin_own_artifacts_not_a_stray_root_claude()
+    {
+        var fs = Machine()
+            // A user-scope skill that must NOT be attributed to any plugin's provides count.
+            .AddFile("/.claude/skills/stray/SKILL.md", "---\nname: stray\ndescription: x\n---\nb");
+
+        var sp = new PluginInventoryReader(fs).Read("/home").Plugins.Single(p => p.Name == "superpowers");
+
+        Assert.Equal(1, sp.Provides.Skills);   // its own brainstorming skill only, not the stray one
+    }
 }
