@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Explorer — Artifact Split (Blueprint)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F5; --grid:#D8DEE7; --grid-bold:#CAD2DD;
+    --panel:#FBFCFE; --edge:#C2CAD6; --edge-2:#1A2230;
+    --ink:#16202E; --ink-soft:#54616F; --ink-faint:#8893A1;
+    --blue:#1F47D6; --blue-soft:#3E63E0; --blue-wash:#E1E8FB;
+    --amber:#B5710C; --amber-wash:#F6ECD6; --red:#C2362B; --red-wash:#F6DDD9;
+    --green:#2E7D4F; --green-wash:#DDEEE2; --violet:#6B3FB0; --violet-wash:#ECE3F8; --dim:#A7B0BC;
+    --ink2:#0E1620;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Archivo",sans-serif;color:var(--ink);background:var(--paper);overflow:hidden;-webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+      linear-gradient(var(--grid-bold) 1px,transparent 1px),linear-gradient(90deg,var(--grid-bold) 1px,transparent 1px);
+    background-size:24px 24px,24px 24px,120px 120px,120px 120px;
+  }
+  .app{display:grid;grid-template-columns:238px 1fr;grid-template-rows:58px 1fr;height:100vh}
+  .topbar{grid-column:1/3;display:flex;align-items:center;gap:16px;padding:0 20px;border-bottom:2px solid var(--edge-2);background:var(--panel)}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:16px;letter-spacing:.4px;text-transform:uppercase}
+  .mark{width:26px;height:26px;border:2px solid var(--edge-2);border-radius:5px;position:relative;background:var(--blue-wash)}
+  .mark::before{content:"";position:absolute;inset:5px;border:2px solid var(--blue);border-radius:50%;border-bottom-color:transparent;transform:rotate(45deg)}
+  .coord{font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+  .spacer{flex:1}
+  .proj{display:flex;align-items:center;gap:9px;padding:6px 12px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);cursor:pointer;font-family:"Spline Sans Mono";font-size:12px;font-weight:600;box-shadow:3px 3px 0 var(--blue-wash)}
+  .proj .dot{width:8px;height:8px;background:var(--green);border:1px solid var(--edge-2);border-radius:50%}
+  .iconbtn{width:34px;height:34px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+
+  /* rail */
+  .rail{border-right:2px solid var(--edge-2);padding:16px 12px;display:flex;flex-direction:column;gap:2px;background:var(--panel);overflow:auto}
+  .rail .lbl{font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:10px 8px 6px;display:flex;align-items:center;gap:8px}
+  .rail .lbl::after{content:"";flex:1;height:1px;background:var(--edge)}
+  .nav{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:6px;color:var(--ink-soft);font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid transparent}
+  .nav svg{width:17px;height:17px;flex:none}
+  .nav:hover{background:var(--blue-wash)}
+  .nav.active{background:var(--panel);color:var(--ink);border-color:var(--edge-2);box-shadow:3px 3px 0 var(--blue)}
+  .nav.active svg{color:var(--blue)}
+  .nav .count{margin-left:auto;font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-faint);font-weight:500}
+  .nav .count.bad{color:var(--red);font-weight:700}
+
+  .content{overflow:auto;padding:20px 26px 30px;display:flex;flex-direction:column}
+  .pagehead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+  .k{font-family:"Spline Sans Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+  .k::before{content:"";width:18px;height:2px;background:var(--blue)}
+  .pagehead h1{font-size:25px;font-weight:800;letter-spacing:-.3px;text-transform:uppercase}
+  .summary{font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-soft);text-align:right;line-height:1.7}
+  .summary b{color:var(--ink)} .summary .u{color:var(--blue)} .summary .p{color:var(--violet)}
+
+  .view{display:none}
+  .view.active{display:block}
+
+  /* shared bits */
+  .badge{font-family:"Spline Sans Mono";font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border:1.5px solid;border-radius:3px;white-space:nowrap}
+  .b-user{color:var(--blue);border-color:var(--blue);background:var(--blue-wash)}
+  .b-plugin{color:var(--ink-soft);border-color:var(--ink-faint);background:#E6E9EE}
+  .b-verified{color:var(--green);border-color:var(--green);background:var(--green-wash)}
+  .b-community{color:var(--amber);border-color:var(--amber);background:var(--amber-wash)}
+  .b-http{color:var(--violet);border-color:var(--violet);background:var(--violet-wash)}
+  .b-stdio{color:var(--blue);border-color:var(--blue);background:var(--blue-wash)}
+  .mono{font-family:"Spline Sans Mono"}
+  .grp{font-family:"Spline Sans Mono";font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:16px 2px 8px;display:flex;align-items:center;gap:8px}
+  .grp::after{content:"";flex:1;height:1px;background:var(--edge)}
+
+  /* master/detail split */
+  .split{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
+  .list{display:flex;flex-direction:column;gap:6px}
+  .item{border:1.5px solid var(--edge);border-radius:7px;background:var(--panel);padding:9px 11px;cursor:pointer}
+  .item.sel{border-color:var(--edge-2);box-shadow:3px 3px 0 var(--blue-wash)}
+  .item .nm{font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+  .item .ds{font-size:11px;color:var(--ink-soft);margin-top:3px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .item.cmd .nm{font-family:"Spline Sans Mono";color:var(--blue)}
+
+  /* corner-tick panel */
+  .panel{position:relative;border:1.5px solid var(--edge-2);border-radius:9px;background:var(--panel);padding:16px 18px}
+  .panel::before,.panel::after{content:"";position:absolute;width:9px;height:9px;border:2px solid var(--blue)}
+  .panel::before{left:-2px;top:-2px;border-right:0;border-bottom:0}
+  .panel::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
+  .detail .dh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .detail .dh .t{font-size:19px;font-weight:800}
+  .detail .dh .t.mono{font-family:"Spline Sans Mono";color:var(--blue);font-size:17px}
+  .detail .dd{font-size:13px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px}
+  .meta{display:grid;grid-template-columns:108px 1fr;gap:5px 12px;font-family:"Spline Sans Mono";font-size:11.5px;margin-bottom:12px}
+  .meta .mk{color:var(--ink-faint);text-transform:uppercase;letter-spacing:.04em}
+  .meta .mv{color:var(--ink)}
+  .code{background:var(--ink2);border-radius:7px;padding:12px 14px;font-family:"Spline Sans Mono";font-size:11.5px;color:#C9D4E3;line-height:1.6;white-space:pre-wrap;overflow:auto;max-height:240px}
+  .code .c{color:#6E7F94}.code .kw{color:#7FB0FF}.code .st{color:#9BD19B}
+  .chiprow{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 12px}
+  .chip{font-family:"Spline Sans Mono";font-size:10.5px;padding:3px 8px;border:1.5px solid var(--edge);border-radius:5px;background:var(--paper);color:var(--ink-soft)}
+  .chip.on{border-color:var(--blue);color:var(--blue);background:var(--blue-wash)}
+  .actions{display:flex;gap:8px;margin-top:6px}
+  .btn{font-family:"Spline Sans Mono";font-size:11px;font-weight:600;padding:6px 12px;border:1.5px solid var(--edge-2);border-radius:6px;background:var(--panel);cursor:pointer}
+  .btn.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+  /* MCP cards */
+  .mcprow{display:flex;align-items:center;gap:14px;border:1.5px solid var(--edge);border-radius:8px;background:var(--panel);padding:12px 14px;margin-bottom:8px}
+  .mcprow .nm{font-weight:700;font-size:15px;min-width:130px}
+  .mcprow .ep{font-family:"Spline Sans Mono";font-size:12px;color:var(--ink-soft);flex:1}
+  .pill{font-family:"Spline Sans Mono";font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;border:1.5px solid}
+  .pill.ok{color:var(--green);border-color:var(--green);background:var(--green-wash)}
+  .pill.miss{color:var(--red);border-color:var(--red);background:var(--red-wash)}
+  .pill.na{color:var(--ink-faint);border-color:var(--edge);background:var(--paper)}
+
+  /* Plugins grid */
+  .mkstrip{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .mkcard{border:1.5px solid var(--edge);border-radius:8px;background:var(--panel);padding:10px 13px;min-width:200px}
+  .mkcard .mn{font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .mkcard .ms{font-family:"Spline Sans Mono";font-size:10.5px;color:var(--ink-faint);margin-top:4px}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:10px}
+  .pcard{border:1.5px solid var(--edge);border-radius:8px;background:var(--panel);padding:12px 14px;position:relative}
+  .pcard .ph{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .pcard .pn{font-weight:800;font-size:14px}
+  .pcard .pv{font-family:"Spline Sans Mono";font-size:10.5px;color:var(--ink-faint);margin-top:2px}
+  .pcard .prov{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .prov .pp{font-family:"Spline Sans Mono";font-size:10px;padding:2px 7px;border-radius:5px;background:var(--paper);border:1px solid var(--edge);color:var(--ink-soft)}
+  .tog{font-family:"Spline Sans Mono";font-size:9.5px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:5px}
+  .tog .sw{width:24px;height:13px;border-radius:8px;background:var(--green);position:relative}
+  .tog .sw::after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:#fff;right:2px;top:2px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="mark"></span> Claude&nbsp;Explorer</div>
+    <span class="coord">FIG.11 — ARTIFACT SPLIT</span>
+    <div class="spacer"></div>
+    <div class="proj"><span class="dot"></span> Windows · ~/.claude ▾</div>
+    <div class="iconbtn">⟳</div>
+  </header>
+
+  <aside class="rail">
+    <div class="lbl">Workspace</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> Dashboard</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><path d="M5 7h14M5 12h9M5 17h6"/></svg> Effective Config</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/></svg> Dependencies <span class="count bad">1✗</span></div>
+
+    <div class="lbl">Config Artifacts</div>
+    <div class="nav active" data-nav="commands"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg> Commands <span class="count">2</span></div>
+    <div class="nav" data-nav="skills"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 17.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg> Skills <span class="count">22</span></div>
+    <div class="nav" data-nav="subagents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Subagents <span class="count">4</span></div>
+
+    <div class="lbl">Extensions</div>
+    <div class="nav" data-nav="mcp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg> MCP <span class="count bad">1✗</span></div>
+    <div class="nav" data-nav="plugins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v4H6a2 2 0 0 0-2 2v3h2.5a2.5 2.5 0 1 1 0 5H4v3a2 2 0 0 0 2 2h3v-2.5a2.5 2.5 0 1 1 5 0V22h3a2 2 0 0 0 2-2v-4h-4"/></svg> Plugins <span class="count">10</span></div>
+
+    <div class="lbl">Analyze · Discover</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg> Compare</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg> Marketplace</div>
+  </aside>
+
+  <main class="content">
+
+    <!-- ================= COMMANDS ================= -->
+    <section class="view active" id="v-commands">
+      <div class="pagehead">
+        <div><div class="k">Slash Commands</div><h1>Commands</h1></div>
+        <div class="summary"><b>2</b> commands · <span class="p">2 plugin</span> · 0 user · 0 project</div>
+      </div>
+      <div class="split">
+        <div class="list">
+          <div class="grp">Plugin: code-review</div>
+          <div class="item cmd sel"><div class="nm">/code-review <span class="badge b-plugin">plugin</span></div><div class="ds">Multi-agent cloud review of the current branch or a GitHub PR.</div></div>
+          <div class="grp">Plugin: feature-dev</div>
+          <div class="item cmd"><div class="nm">/feature-dev <span class="badge b-plugin">plugin</span></div><div class="ds">Drive a feature end-to-end: explore → architect → implement → review.</div></div>
+        </div>
+        <div class="panel detail">
+          <div class="dh"><span class="t mono">/code-review</span> <span class="badge b-plugin">plugin: code-review</span></div>
+          <div class="dd">Launches a multi-agent cloud review of the current branch (or a GitHub PR). Billed; user-triggered.</div>
+          <div class="meta">
+            <span class="mk">invoke</span><span class="mv">/code-review [ultra] [PR#]</span>
+            <span class="mk">argument-hint</span><span class="mv">[scope]</span>
+            <span class="mk">source</span><span class="mv">code-review @ claude-plugins-official</span>
+            <span class="mk">file</span><span class="mv">…/plugins/cache/…/code-review/commands/code-review.md</span>
+          </div>
+          <div class="code"><span class="c">--- frontmatter ---</span>
+<span class="kw">description:</span> <span class="st">Multi-agent code review of the current branch</span>
+<span class="kw">argument-hint:</span> <span class="st">[scope]</span>
+<span class="c"># Code Review</span>
+Review the current branch's diff across correctness, security…</div>
+          <div class="actions"><button class="btn pri">Open file</button><button class="btn">Reveal</button><button class="btn">Copy path</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SKILLS ================= -->
+    <section class="view" id="v-skills">
+      <div class="pagehead">
+        <div><div class="k">Agent Skills</div><h1>Skills</h1></div>
+        <div class="summary"><b>22</b> skills · <span class="u">2 user</span> · <span class="p">20 plugin</span></div>
+      </div>
+      <div class="split">
+        <div class="list" style="max-height:560px;overflow:auto">
+          <div class="grp">User · ~/.claude/skills</div>
+          <div class="item sel"><div class="nm">graphify <span class="badge b-user">user</span> <span class="badge" style="color:var(--violet);border-color:var(--violet);background:var(--violet-wash)">/invocable</span></div><div class="ds">Turn any input into a knowledge graph.</div></div>
+          <div class="item"><div class="nm">grill-me <span class="badge b-user">user</span></div><div class="ds">Adversarial questioning to pressure-test an idea before building.</div></div>
+          <div class="grp">Plugin: superpowers · 14</div>
+          <div class="item"><div class="nm">brainstorming <span class="badge b-plugin">plugin</span></div><div class="ds">Turn ideas into designs & specs through collaborative dialogue.</div></div>
+          <div class="item"><div class="nm">writing-plans <span class="badge b-plugin">plugin</span></div><div class="ds">Write comprehensive bite-sized TDD implementation plans.</div></div>
+          <div class="item"><div class="nm">test-driven-development <span class="badge b-plugin">plugin</span></div><div class="ds">Red-green-refactor discipline for every change.</div></div>
+          <div class="item"><div class="nm">systematic-debugging <span class="badge b-plugin">plugin</span></div><div class="ds">Structured root-cause hunt instead of guess-and-check.</div></div>
+          <div class="item" style="opacity:.6"><div class="nm">+ 10 more superpowers skills…</div></div>
+          <div class="grp">Plugin: unifi-network · 5</div>
+          <div class="item"><div class="nm">firewall-auditor <span class="badge b-plugin">plugin</span></div><div class="ds">Audit UniFi firewall rules for risky exposure.</div></div>
+          <div class="item"><div class="nm">network-health-check <span class="badge b-plugin">plugin</span></div><div class="ds">Probe a UniFi network's health and surface issues.</div></div>
+        </div>
+        <div class="panel detail">
+          <div class="dh"><span class="t">graphify</span> <span class="badge b-user">user</span> <span class="badge" style="color:var(--violet);border-color:var(--violet);background:var(--violet-wash)">/invocable</span></div>
+          <div class="dd">Any input to knowledge graph. Trigger: <span class="mono">/graphify</span>.</div>
+          <div class="meta">
+            <span class="mk">trigger</span><span class="mv">description-matched + /graphify</span>
+            <span class="mk">source</span><span class="mv">user · ~/.claude/skills/graphify</span>
+            <span class="mk">file</span><span class="mv">~/.claude/skills/graphify/SKILL.md</span>
+            <span class="mk">extra files</span><span class="mv">2 (references/, assets/)</span>
+          </div>
+          <div class="code"><span class="c">--- SKILL.md ---</span>
+<span class="kw">name:</span> graphify
+<span class="kw">description:</span> <span class="st">Use when the user wants any input turned
+  into a knowledge graph…</span>
+<span class="c"># Graphify</span>
+When the user types /graphify, build nodes and edges from…</div>
+          <div class="actions"><button class="btn pri">Open SKILL.md</button><button class="btn">Reveal folder</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SUBAGENTS ================= -->
+    <section class="view" id="v-subagents">
+      <div class="pagehead">
+        <div><div class="k">Subagents</div><h1>Subagents</h1></div>
+        <div class="summary"><b>4</b> subagents · <span class="p">4 plugin</span><br>tools & model shown per agent</div>
+      </div>
+      <div class="split">
+        <div class="list">
+          <div class="grp">Plugin: feature-dev · 3</div>
+          <div class="item sel"><div class="nm">code-reviewer <span class="badge b-plugin">plugin</span></div><div class="ds">Reviews code for bugs, security, and convention adherence.</div></div>
+          <div class="item"><div class="nm">code-architect <span class="badge b-plugin">plugin</span></div><div class="ds">Designs feature architecture from existing patterns.</div></div>
+          <div class="item"><div class="nm">code-explorer <span class="badge b-plugin">plugin</span></div><div class="ds">Traces execution paths & maps architecture layers.</div></div>
+          <div class="grp">Plugin: code-simplifier · 1</div>
+          <div class="item"><div class="nm">code-simplifier <span class="badge b-plugin">plugin</span></div><div class="ds">Simplifies code for clarity while preserving behavior.</div></div>
+        </div>
+        <div class="panel detail">
+          <div class="dh"><span class="t">code-reviewer</span> <span class="badge b-plugin">plugin: feature-dev</span></div>
+          <div class="dd">Reviews code for bugs, logic errors, security vulnerabilities and convention adherence; reports only high-confidence issues.</div>
+          <div class="meta">
+            <span class="mk">model</span><span class="mv">inherit</span>
+            <span class="mk">source</span><span class="mv">feature-dev @ claude-plugins-official</span>
+            <span class="mk">file</span><span class="mv">…/feature-dev/agents/code-reviewer.md</span>
+          </div>
+          <div style="font-family:'Spline Sans Mono';font-size:10px;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:4px">Tools — 8 allowed</div>
+          <div class="chiprow">
+            <span class="chip on">Glob</span><span class="chip on">Grep</span><span class="chip on">LS</span><span class="chip on">Read</span><span class="chip on">NotebookRead</span><span class="chip on">WebFetch</span><span class="chip on">WebSearch</span><span class="chip on">TodoWrite</span>
+            <span class="chip">Edit ✕</span><span class="chip">Write ✕</span><span class="chip">Bash ✕</span>
+          </div>
+          <div class="code"><span class="c"># System prompt</span>
+You are a meticulous code reviewer. Use confidence-based
+filtering to report only issues that truly matter…</div>
+          <div class="actions"><button class="btn pri">Open file</button><button class="btn">Reveal</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MCP ================= -->
+    <section class="view" id="v-mcp">
+      <div class="pagehead">
+        <div><div class="k">Model Context Protocol</div><h1>MCP Servers</h1></div>
+        <div class="summary"><b>3</b> servers · <span class="p">3 plugin</span><br>local config only · remote connectors not shown</div>
+      </div>
+      <div class="mcprow">
+        <span class="nm">linear</span>
+        <span class="badge b-http">http</span>
+        <span class="ep">https://mcp.linear.app/mcp</span>
+        <span class="badge b-plugin">plugin: linear</span>
+        <span class="pill na">remote · n/a</span>
+      </div>
+      <div class="mcprow" style="border-color:var(--edge-2);box-shadow:3px 3px 0 var(--blue-wash)">
+        <span class="nm">playwright</span>
+        <span class="badge b-stdio">stdio</span>
+        <span class="ep">npx @playwright/mcp@latest</span>
+        <span class="badge b-plugin">plugin: playwright</span>
+        <span class="pill ok">npx ✓ found</span>
+      </div>
+      <div class="mcprow">
+        <span class="nm">unifi-network</span>
+        <span class="badge b-stdio">stdio</span>
+        <span class="ep">uvx unifi-network-mcp</span>
+        <span class="badge b-plugin">plugin: unifi-network</span>
+        <span class="pill miss">uvx ✗ missing</span>
+      </div>
+      <div class="panel detail" style="margin-top:14px">
+        <div class="dh"><span class="t">playwright</span> <span class="badge b-stdio">stdio</span> <span class="badge b-plugin">plugin: playwright</span></div>
+        <div class="meta">
+          <span class="mk">command</span><span class="mv">npx</span>
+          <span class="mk">args</span><span class="mv">["@playwright/mcp@latest"]</span>
+          <span class="mk">runtime</span><span class="mv">npx → C:\Program Files\nodejs\npx.cmd ✓</span>
+          <span class="mk">source</span><span class="mv">…/plugins/cache/…/playwright/.mcp.json</span>
+        </div>
+        <div class="code">{
+  <span class="kw">"playwright"</span>: {
+    <span class="kw">"command"</span>: <span class="st">"npx"</span>,
+    <span class="kw">"args"</span>: [<span class="st">"@playwright/mcp@latest"</span>]
+  }
+}</div>
+        <div class="actions"><button class="btn pri">Open .mcp.json</button><button class="btn">Re-check health</button></div>
+      </div>
+    </section>
+
+    <!-- ================= PLUGINS ================= -->
+    <section class="view" id="v-plugins">
+      <div class="pagehead">
+        <div><div class="k">Plugins & Marketplaces</div><h1>Plugins</h1></div>
+        <div class="summary"><b>10</b> installed · 3 marketplaces<br><span class="u">2 verified</span> · <span class="p">1 community</span> source</div>
+      </div>
+      <div class="grp">Marketplaces · 3</div>
+      <div class="mkstrip">
+        <div class="mkcard"><div class="mn">claude-plugins-official <span class="badge b-verified">verified</span></div><div class="ms">github · anthropics/claude-plugins-official · 8 plugins</div></div>
+        <div class="mkcard"><div class="mn">unifi-plugins <span class="badge b-community">community</span></div><div class="ms">github · …/unifi-plugins · 1 plugin</div></div>
+        <div class="mkcard"><div class="mn">context-mode <span class="badge b-community">community</span></div><div class="ms">github · mksglu/context-mode · 0 installed</div></div>
+      </div>
+      <div class="grp">Installed plugins · 10</div>
+      <div class="pgrid">
+        <div class="pcard" style="border-color:var(--edge-2);box-shadow:3px 3px 0 var(--blue-wash)">
+          <div class="ph"><div><div class="pn">superpowers</div><div class="pv">v5.1.0 · claude-plugins-official</div></div><div class="tog"><span class="sw"></span>ON</div></div>
+          <div style="margin-top:7px"><span class="badge b-verified">verified</span> <span class="badge b-user">user</span></div>
+          <div class="prov"><span class="pp">14 skills</span><span class="pp">4 hooks</span></div>
+        </div>
+        <div class="pcard">
+          <div class="ph"><div><div class="pn">feature-dev</div><div class="pv">claude-plugins-official</div></div><div class="tog"><span class="sw"></span>ON</div></div>
+          <div style="margin-top:7px"><span class="badge b-verified">verified</span></div>
+          <div class="prov"><span class="pp">1 command</span><span class="pp">3 subagents</span></div>
+        </div>
+        <div class="pcard">
+          <div class="ph"><div><div class="pn">playwright</div><div class="pv">claude-plugins-official</div></div><div class="tog"><span class="sw"></span>ON</div></div>
+          <div style="margin-top:7px"><span class="badge b-verified">verified</span></div>
+          <div class="prov"><span class="pp">1 mcp</span></div>
+        </div>
+        <div class="pcard">
+          <div class="ph"><div><div class="pn">linear</div><div class="pv">claude-plugins-official</div></div><div class="tog"><span class="sw"></span>ON</div></div>
+          <div style="margin-top:7px"><span class="badge b-verified">verified</span></div>
+          <div class="prov"><span class="pp">1 mcp</span></div>
+        </div>
+        <div class="pcard">
+          <div class="ph"><div><div class="pn">unifi-network</div><div class="pv">v0.17.3 · unifi-plugins</div></div><div class="tog"><span class="sw"></span>ON</div></div>
+          <div style="margin-top:7px"><span class="badge b-community">community</span></div>
+          <div class="prov"><span class="pp">5 skills</span><span class="pp">1 mcp</span></div>
+        </div>
+        <div class="pcard">
+          <div class="ph"><div><div class="pn">code-review</div><div class="pv">claude-plugins-official</div></div><div class="tog"><span class="sw"></span>ON</div></div>
+          <div style="margin-top:7px"><span class="badge b-verified">verified</span></div>
+          <div class="prov"><span class="pp">1 command</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+<script>
+  document.querySelectorAll('.nav[data-nav]').forEach(n=>{
+    n.addEventListener('click',()=>{
+      document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));
+      n.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('v-'+n.dataset.nav).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
