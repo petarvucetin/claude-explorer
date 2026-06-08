@@ -32,9 +32,11 @@ public sealed class DependencyChecker
         // Allowlisted + present: the only case where we execute anything, and only `--version`.
         // Probe the resolved path (not the bare name) so the captured version reflects exactly the
         // binary we resolved, with no second PATH lookup (closes a resolve→exec TOCTOU window).
+        // It's resolved on PATH, so it's Found; if the probe couldn't run, just leave the version
+        // blank rather than reporting the error text as a version.
         var probe = _runner.Run(path, RuntimeAllowlist.ProbeArguments);
         return new DependencyResult(dep,
-            new DependencyStatus(DependencyStatusKind.Found, ParseVersion(probe), path));
+            new DependencyStatus(DependencyStatusKind.Found, probe.Success ? ParseVersion(probe) : null, path));
     }
 
     private static string? ParseVersion(ProcessResult probe)

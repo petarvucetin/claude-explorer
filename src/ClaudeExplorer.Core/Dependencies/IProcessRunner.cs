@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace ClaudeExplorer.Core.Dependencies;
@@ -26,6 +27,7 @@ public interface IProcessRunner
 public sealed class PhysicalProcessRunner : IProcessRunner
 {
     private const int TimedOutExitCode = -1;
+    private const int FailedToStartExitCode = -2;
     private readonly int _timeoutMs;
 
     public PhysicalProcessRunner(int timeoutMs = 5000) => _timeoutMs = timeoutMs;
@@ -42,23 +44,36 @@ public sealed class PhysicalProcessRunner : IProcessRunner
         };
         foreach (var arg in arguments) psi.ArgumentList.Add(arg);
 
-        using var process = new Process { StartInfo = psi };
-        process.Start();
-
-        var stdoutTask = process.StandardOutput.ReadToEndAsync();
-        var stderrTask = process.StandardError.ReadToEndAsync();
-
-        if (!process.WaitForExit(_timeoutMs))
+        Process process;
+        try
         {
-            try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
-            // Let the readers observe the now-closed pipe before we dispose the Process, so we
-            // don't abandon tasks bound to a disposed handle. Best-effort, bounded by the timeout.
-            try { Task.WaitAll(new[] { stdoutTask, stderrTask }, _timeoutMs); } catch { /* best effort */ }
-            return new ProcessResult(TimedOutExitCode, "", "");
+            process = Process.Start(psi)!;
+        }
+        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException)
+        {
+            // The resolved path isn't a launchable executable on this OS (e.g. an extensionless Unix
+            // shim on Windows), or otherwise can't be started. A probe failure must never crash the
+            // caller — report it as a non-result instead of throwing.
+            return new ProcessResult(FailedToStartExitCode, "", ex.Message);
         }
 
-        return new ProcessResult(process.ExitCode,
-            stdoutTask.GetAwaiter().GetResult(),
-            stderrTask.GetAwaiter().GetResult());
+        using (process)
+        {
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
+
+            if (!process.WaitForExit(_timeoutMs))
+            {
+                try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
+                // Let the readers observe the now-closed pipe before we dispose the Process, so we
+                // don't abandon tasks bound to a disposed handle. Best-effort, bounded by the timeout.
+                try { Task.WaitAll(new[] { stdoutTask, stderrTask }, _timeoutMs); } catch { /* best effort */ }
+                return new ProcessResult(TimedOutExitCode, "", "");
+            }
+
+            return new ProcessResult(process.ExitCode,
+                stdoutTask.GetAwaiter().GetResult(),
+                stderrTask.GetAwaiter().GetResult());
+        }
     }
 }

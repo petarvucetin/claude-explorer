@@ -44,8 +44,10 @@ public sealed class PhysicalPathResolver : IPathResolver
 
         var pathext = Environment.GetEnvironmentVariable("PATHEXT") ?? ".EXE;.CMD;.BAT;.COM";
         var exts = pathext.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        // Include "" first so an already-qualified name (e.g. "node.exe") still resolves.
-        return new[] { "" }.Concat(exts).ToArray();
+        // PATHEXT variants FIRST: on Windows the launchable file is e.g. `npx.cmd`, not the
+        // extensionless Unix shim `npx` that also ships in the same dir. "" goes last so an
+        // already-qualified name (e.g. "node.exe") still resolves.
+        return exts.Concat(new[] { "" }).ToArray();
     }
 
     private static string Normalize(string p) => p.Replace('\\', '/');
