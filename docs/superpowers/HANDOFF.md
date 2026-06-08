@@ -13,7 +13,9 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
 ## Current state (2026-06-07)
 - **Phases 1, 2, 3, 4 & 5 are DONE, merged to `main`, and pushed** to `origin`
   (`https://github.com/petarvucetin/claude-explorer.git`). `git log` tip ≈ `2ea15ab`.
-- **`dotnet test` → 149 passing.** `.NET SDK 10.0.300` is installed. Solution file is
+- **Phase 6 is DONE** on branch `phase-6-safe-mutation` (9 commits, `e23d042`…`19558bd`);
+  awaiting merge/push.
+- **`dotnet test` → 203 passing.** `.NET SDK 10.0.300` is installed. Solution file is
   `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via PowerShell (it is
   NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash fails with exit 127).
 - Library so far (`src/ClaudeExplorer.Core`):
@@ -44,7 +46,21 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
     AlreadyCovered buckets; excludes installed; drops reason-less items); `RecommendationService`
     façade (+ optional runtime/dep-health annotation). **Local-only:** reads the project tree, never
     uploads it; no network in this namespace. Every recommendation carries why + linkable evidence.
-- Next up: **Phase 6 — Safe-mutation** (plan not yet written).
+  - **Safe-mutation** (`Mutation/`) — `IFileWriter` write seam (+ `PhysicalFileWriter` impl;
+    `InMemoryFileSystem` extended to also implement `IFileWriter` for test isolation);
+    `ScopeTargetResolver` (resolves `EditMode` — EditWinner / OverrideAtProject / OverrideAtLocal —
+    to a concrete `ResolvedTarget` file path); `SettingsValidator` (structural JSON validation:
+    tolerates comments + trailing commas, checks model/outputStyle/env/permissions/hooks shapes,
+    collects all errors); `FrontmatterValidator` (validates `---` frontmatter presence + required
+    fields, reusing the Phase-2 `Frontmatter` parser); `DiffGenerator` (LCS-based line diff →
+    `Diff`/`DiffLine`/`DiffKind` model with 1-based line numbers); `FileBackupStore` (implements
+    `IBackupStore` — timestamped, counter-disambiguated `.bak` snapshots using `IFileSystem` +
+    `IFileWriter` seams); `ChangeLog` (scope-aware in-memory record — sequential ids, `MarkUndone`,
+    `ByScope` grouped in precedence order); `Mutator` (validate → backup → write → record for
+    config edits; `IProcessRunner` + `claude` CLI delegation for installs; `Undo` restores/deletes
+    or runs uninstall command); `SafeMutationService` façade (wires resolver + mutator; owns the
+    session `ChangeLog`; single entry point for the UI). Plan: `2026-06-07-06-safe-mutation.md`.
+- Next up: **Phase 7 — Blueprint UI shell + Dashboard**.
 
 ## Git
 - Work on `main` (normal repo, no worktrees). Remote `origin` = the GitHub URL above; `gh`
@@ -102,18 +118,17 @@ escalate to opus only if blocked. Each phase ≈ 1 plan + ~30–75 subagent tool
 - `.gitignore` already ignores `bin/`,`obj/`,`.playwright-mcp/`. A local static server for
   the prototypes may still be running on `localhost:8765` (harmless).
 
-## To resume: "continue to Phase 6"
-1. Confirm Linear is on the **CLA** workspace (`list_teams` → "Claude Browser" / CLA).
-2. Author `docs/superpowers/plans/2026-06-07-06-safe-mutation.md` from the roadmap's Phase 6
-   outline (full TDD detail). `ScopeTarget` resolution (edit winner vs override at Project/
-   Local); JSON-schema + frontmatter validation; diff generator; `IBackupStore` (timestamped
-   snapshots) + fake; scope-aware `ChangeLog`; `Mutator` — apply via direct file write (config)
-   or `claude` CLI via the Phase-3 `IProcessRunner` (installs); one-click undo/restore.
-   **Hard contract (all required):** scope-target picker, diff preview, schema validation, auto
-   backup, undo/restore, reviewable scope-aware change log. Core-only, TDD. This is the LAST
-   Core phase — Phases 7–8 are the Photino+Blazor UI (`src/ClaudeExplorer.App`, MVVM, Blueprint).
-3. Create Phase-6 task issues under the "Phase 6 — Safe-mutation" project (epic **CLA-30**),
-   as children of the epic, status Todo.
-4. Run the playbook (branch `phase-6-…` → one implementer subagent (sonnet) → spec +
+## To resume: "continue to Phase 7"
+1. Finish Phase 6: `finishing-a-development-branch` skill on `phase-6-safe-mutation` →
+   fast-forward merge to `main` → push `origin main` → delete branch → close Linear issues.
+2. Confirm Linear is on the **CLA** workspace (`list_teams` → "Claude Browser" / CLA).
+3. Author `docs/superpowers/plans/2026-06-07-07-blueprint-ui-shell.md` from the roadmap's
+   Phase 7 outline (full TDD detail). `src/ClaudeExplorer.App` (Photino.Blazor), MVVM
+   (observable ViewModels + logic-light Blazor views, DI to Core), Blueprint theme/tokens,
+   reusable component library, app chrome (left rail, top bar), and the Dashboard screen.
+   **Depends:** Phases 1–6 (Phases 2, 3 for dashboard counts).
+4. Create Phase-7 task issues under the "Phase 7 — Blueprint UI shell + Dashboard" project
+   (epic **CLA-31**), as children of the epic, status Todo.
+5. Run the playbook (branch `phase-7-…` → one implementer subagent (sonnet) → spec +
    `feature-dev:code-reviewer` review → fix loop → ff-merge → push → close Linear).
-   Phase-5 reference: plan `…-05-recommendations.md`, issues CLA-29 + CLA-49…CLA-55.
+   Phase-6 reference: plan `…-06-safe-mutation.md`, issues CLA-30 + task issues.
