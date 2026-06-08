@@ -72,5 +72,5 @@ public static class EffectiveConfigMapper
     };
 
     public static string Display(System.Text.Json.Nodes.JsonNode? node)
-        => node is null ? "" : node.ToJsonString();
+        => ClaudeExplorer.App.Util.JsonFormat.Pretty(node);
 }

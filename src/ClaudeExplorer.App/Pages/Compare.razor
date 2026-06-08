@@ -114,7 +114,7 @@ else if (Vm.Comparison is { } cmp)
                                 <td class="@(row.Status == DiffStatus.Differs ? "diffval" : "")">
                                     @if (row.ValueA is not null)
                                     {
-                                        <code>@row.ValueA</code>
+                                        <code class="json-pretty">@JsonFormat.TryPretty(row.ValueA)</code>
                                     }
                                     else
                                     {
@@ -124,7 +124,7 @@ else if (Vm.Comparison is { } cmp)
                                 <td class="@(row.Status == DiffStatus.Differs ? "diffval" : "")">
                                     @if (row.ValueB is not null)
                                     {
-                                        <code>@row.ValueB</code>
+                                        <code class="json-pretty">@JsonFormat.TryPretty(row.ValueB)</code>
                                     }
                                     else
                                     {

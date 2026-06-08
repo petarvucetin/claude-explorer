@@ -575,18 +575,22 @@ code {
   font-size: 11px;
   color: var(--ink);
   word-break: break-all;
+  white-space: pre-wrap;
 }
 .matrix .cell-winner { color: var(--blue); font-weight: 700; }
 .matrix .cell-overridden { text-decoration: line-through; color: var(--ink-faint); }
 .matrix .cell-empty { color: var(--ink-faint); font-family: "Spline Sans Mono", monospace; font-size: 10px; }
-.matrix .cell-effective { font-family: "Spline Sans Mono", monospace; font-size: 11px; font-weight: 700; color: var(--ink); }
+.matrix .cell-effective { font-family: "Spline Sans Mono", monospace; font-size: 11px; font-weight: 700; color: var(--ink); white-space: pre-wrap; word-break: break-all; }
 .arrow-col { color: var(--blue); font-weight: 900; font-size: 16px; text-align: center !important; }
 
 /* Provenance trace */
 .trace-row td { background: #F4F6FA; }
 .trace { padding: 12px 18px 16px; display: flex; flex-direction: column; gap: 8px; }
-.trace-entry { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.trace-entry .tv { font-family: "Spline Sans Mono", monospace; font-size: 11px; color: var(--ink); }
+.trace-entry { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; }
+.trace-entry .tv { font-family: "Spline Sans Mono", monospace; font-size: 11px; color: var(--ink); white-space: pre-wrap; word-break: break-all; }
+
+/* Pretty-printed JSON value (e.g. Compare cells) — preserve the newlines from JsonFormat. */
+.json-pretty { white-space: pre-wrap; word-break: break-word; }
 .trace-entry .tp { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--ink-faint); }
 
 /* Edit action */

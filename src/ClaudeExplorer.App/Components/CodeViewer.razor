@@ -11,5 +11,5 @@
     private string[] _lines = Array.Empty<string>();
 
     protected override void OnParametersSet()
-        => _lines = (Content ?? "").Replace("\r\n", "\n").Split('\n');
+        => _lines = ClaudeExplorer.App.Util.JsonFormat.TryPretty(Content).Replace("\r\n", "\n").Split('\n');
 }
