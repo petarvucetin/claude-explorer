@@ -1,8 +1,13 @@
-<div class="panel @Class">
+<div class="panel @Class" @attributes="Attributes">
     @ChildContent
 </div>
 
 @code {
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public string? Class { get; set; }
+
+    // Forward any extra HTML attributes (style, title, data-*, …) onto the root div so callers can
+    // pass `style="…"` etc. without each one needing a dedicated parameter.
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object>? Attributes { get; set; }
 }
