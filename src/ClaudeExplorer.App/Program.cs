@@ -3,13 +3,17 @@ using ClaudeExplorer.App.Screens.Artifacts;
 using ClaudeExplorer.App.Screens.ChangeLog;
 using ClaudeExplorer.App.Screens.Dependencies;
 using ClaudeExplorer.App.Screens.EffectiveConfig;
+using ClaudeExplorer.App.Screens.Marketplace;
+using ClaudeExplorer.App.Screens.Recommendations;
 using ClaudeExplorer.App.Services;
 using ClaudeExplorer.App.ViewModels;
 using ClaudeExplorer.Core;
 using ClaudeExplorer.Core.Artifacts;
+using ClaudeExplorer.Core.Catalog;
 using ClaudeExplorer.Core.Dependencies;
 using ClaudeExplorer.Core.Io;
 using ClaudeExplorer.Core.Mutation;
+using ClaudeExplorer.Core.Recommendations;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
 using Photino.Blazor;
@@ -61,6 +65,12 @@ internal static class Program
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<ShellViewModel>();
 
+        // Catalog + Recommendations façades.
+        builder.Services.AddSingleton<ICatalogFetcher, HttpCatalogFetcher>();
+        builder.Services.AddSingleton(sp => new CatalogService(
+            sp.GetRequiredService<IFileSystem>(), sp.GetRequiredService<ICatalogFetcher>()));
+        builder.Services.AddSingleton(sp => new RecommendationService(sp.GetRequiredService<IFileSystem>()));
+
         // Batch-A screen ViewModels (transient; each page owns its own instance).
         builder.Services.AddTransient<EffectiveConfigViewModel>();
         builder.Services.AddTransient<SafeEditViewModel>(sp => new SafeEditViewModel(
@@ -70,6 +80,17 @@ internal static class Program
         builder.Services.AddTransient<ArtifactBrowserViewModel>();
         builder.Services.AddTransient<DependencyViewModel>();
         builder.Services.AddTransient<ChangeLogViewModel>();
+
+        // Batch-B screen ViewModels (transient).
+        builder.Services.AddTransient(sp => new MarketplaceViewModel(
+            sp.GetRequiredService<CatalogService>(),
+            sp.GetRequiredService<SafeMutationService>(),
+            sp.GetRequiredService<IWorkspaceContext>(),
+            sp.GetRequiredService<Func<string>>()));
+        builder.Services.AddTransient(sp => new RecommendationsViewModel(
+            sp.GetRequiredService<CatalogService>(),
+            sp.GetRequiredService<RecommendationService>(),
+            sp.GetRequiredService<IWorkspaceContext>()));
 
         builder.RootComponents.Add<App>("app");
 
