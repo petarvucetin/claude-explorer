@@ -109,3 +109,23 @@ public static class HookRowsMapper
         _ => $"{r.Runtime} · present",
     };
 }
+
+/// <summary>One matcher token rendered as a chip. <see cref="IsAny"/> marks the wildcard.</summary>
+public sealed record MatcherChip(string Text, bool IsAny);
+
+/// <summary>Splits a hook matcher (a tool-name regex) into display chips. A <c>*</c> or empty matcher
+/// is a single "any tool" chip; otherwise the pipe-delimited tokens each become a chip (regex tokens
+/// pass through unchanged).</summary>
+public static class HookMatcher
+{
+    public static IReadOnlyList<MatcherChip> Chips(string? matcher)
+    {
+        if (string.IsNullOrWhiteSpace(matcher) || matcher == "*")
+            return new[] { new MatcherChip("∗ any tool", true) };
+
+        return matcher
+            .Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(t => new MatcherChip(t, false))
+            .ToList();
+    }
+}
