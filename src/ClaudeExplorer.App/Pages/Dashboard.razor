@@ -1,6 +1,7 @@
 @page "/"
 @using ClaudeExplorer.App.ViewModels
 @inject DashboardViewModel Vm
+@inject RefreshService Refresh
 @implements IDisposable
 
 <div class="pagehead">
@@ -13,6 +14,16 @@
         <div class="scope">EFFECTIVE FOR <b>@Vm.Data.EffectiveForLabel</b><br>MERGE: @Vm.Data.MergeOrder</div>
     }
 </div>
+
+@if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel">
+        <div class="rowx">
+            <div class="glyph bad"></div>
+            <div class="body"><div class="ttl">Failed to load dashboard</div><div class="meta">@Vm.ErrorMessage</div></div>
+        </div>
+    </CornerTickPanel>
+}
 
 @if (Vm.Data is { } data)
 {
@@ -65,10 +76,13 @@
     protected override void OnInitialized()
     {
         Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
         Vm.Load();
     }
 
     private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    private void OnRefreshRequested() => Vm.Load();
 
     private static string GlyphClass(AttentionTone tone) => tone switch
     {
@@ -77,5 +91,9 @@
         _ => "info",
     };
 
-    public void Dispose() => Vm.PropertyChanged -= OnVmChanged;
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
 }

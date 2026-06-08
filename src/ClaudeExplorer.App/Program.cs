@@ -46,6 +46,9 @@ internal static class Program
             sp.GetRequiredService<IFileSystem>(), sp.GetRequiredService<IFileWriter>(),
             sp.GetRequiredService<IBackupStore>(), sp.GetRequiredService<IProcessRunner>()));
 
+        // App-wide services.
+        builder.Services.AddSingleton<RefreshService>();
+
         // Dashboard data + view models.
         builder.Services.AddSingleton<IDashboardDataSource, EngineDashboardDataSource>();
         builder.Services.AddTransient<DashboardViewModel>();

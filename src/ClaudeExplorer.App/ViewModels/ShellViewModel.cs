@@ -29,11 +29,11 @@ public sealed class ShellViewModel : ObservableObject
     {
         var data = DashboardComputer.Compute(_source.GetInputs());
         var stat = data.Stats;
-        CommandsAndSkills = Value(stat, "Commands") + Value(stat, "Skills+Agents");
-        HasDependencyProblem = stat.Single(s => s.Label == "Dependencies").Badge is not null;
-        HasMcpProblem = stat.Single(s => s.Label == "MCP Servers").Badge is not null;
+        CommandsAndSkills = Value(stat, DashboardComputer.Commands) + Value(stat, DashboardComputer.SkillsAgents);
+        HasDependencyProblem = stat.FirstOrDefault(s => s.Label == DashboardComputer.Dependencies)?.Badge is not null;
+        HasMcpProblem = stat.FirstOrDefault(s => s.Label == DashboardComputer.McpServers)?.Badge is not null;
     }
 
     private static int Value(IReadOnlyList<StatCard> stats, string label)
-        => stats.Single(s => s.Label == label).Value;
+        => stats.FirstOrDefault(s => s.Label == label)?.Value ?? 0;
 }

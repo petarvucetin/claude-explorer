@@ -8,6 +8,13 @@ namespace ClaudeExplorer.App.Dashboard;
 /// is fully unit-tested by constructing Core records directly.</summary>
 public static class DashboardComputer
 {
+    public const string Commands = "Commands";
+    public const string SkillsAgents = "Skills+Agents";
+    public const string McpServers = "MCP Servers";
+    public const string Dependencies = "Dependencies";
+    public const string Conflicts = "Conflicts";
+    public const string Warnings = "Warnings";
+
     public static DashboardData Compute(DashboardInputs input)
     {
         var commands = input.Artifacts.OfKind(ArtifactKind.Command).ToList();
@@ -42,17 +49,17 @@ public static class DashboardComputer
 
         var stats = new List<StatCard>
         {
-            new("Commands", "01", commands.Count, null, BadgeTone.None,
+            new(Commands, "01", commands.Count, null, BadgeTone.None,
                 $"{cmdUser} user / {cmdProject} project / {cmdPlugin} plugin"),
-            new("Skills+Agents", "02", skillsAgents, null, BadgeTone.None,
+            new(SkillsAgents, "02", skillsAgents, null, BadgeTone.None,
                 $"{pluginNames} plugin{(pluginNames == 1 ? "" : "s")}"),
-            new("MCP Servers", "03", mcpTotal, mcpDown > 0 ? $"{mcpDown} down" : null,
+            new(McpServers, "03", mcpTotal, mcpDown > 0 ? $"{mcpDown} down" : null,
                 mcpDown > 0 ? BadgeTone.Bad : BadgeTone.None, $"{mcpTotal - mcpDown} reachable"),
-            new("Dependencies", "04", depTotal, depMissing > 0 ? $"{depMissing} miss" : null,
+            new(Dependencies, "04", depTotal, depMissing > 0 ? $"{depMissing} miss" : null,
                 depMissing > 0 ? BadgeTone.Warn : BadgeTone.None,
                 depMissing > 0 ? "missing on PATH" : "all resolved"),
-            new("Conflicts", "05", conflicts, null, BadgeTone.None, "overrides resolved"),
-            new("Warnings", "06", warnings, null, BadgeTone.None, "non-blocking"),
+            new(Conflicts, "05", conflicts, null, BadgeTone.None, "overrides resolved"),
+            new(Warnings, "06", warnings, null, BadgeTone.None, "non-blocking"),
         };
 
         var attention = new List<AttentionItem>();

@@ -11,7 +11,10 @@ public sealed class WorkspaceContext : IWorkspaceContext
         UserDir = Normalize(userDir);
         ProjectDir = Normalize(projectDir);
         var i = ProjectDir.LastIndexOf('/');
-        ProjectLabel = i >= 0 && i < ProjectDir.Length - 1 ? ProjectDir[(i + 1)..] : ProjectDir;
+        var segment = i >= 0 && i < ProjectDir.Length - 1 ? ProjectDir[(i + 1)..] : string.Empty;
+        ProjectLabel = !string.IsNullOrEmpty(segment) ? segment
+                     : !string.IsNullOrEmpty(ProjectDir) ? ProjectDir
+                     : "/";
     }
 
     private static string Normalize(string p) => p.Replace('\\', '/').TrimEnd('/');

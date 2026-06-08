@@ -1,10 +1,11 @@
 @inject IWorkspaceContext Workspace
+@inject RefreshService Refresh
 <header class="topbar">
     <div class="brand"><span class="mark"></span> Claude&nbsp;Explorer</div>
     <span class="coord">FIG.01 — ENVIRONMENT SCHEMATIC</span>
     <div class="spacer"></div>
     <div class="proj"><span class="dot"></span> @Workspace.ProjectLabel</div>
-    <div class="iconbtn" title="Refresh" @onclick="OnRefresh">
+    <div class="iconbtn" title="Refresh" @onclick="OnRefreshClicked">
         <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><path d="M21 3v5h-5" />
         </svg>
@@ -12,5 +13,5 @@
 </header>
 
 @code {
-    [Parameter] public EventCallback OnRefresh { get; set; }
+    private void OnRefreshClicked() => Refresh.Request();
 }

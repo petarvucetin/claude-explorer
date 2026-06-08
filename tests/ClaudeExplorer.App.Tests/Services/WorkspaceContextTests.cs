@@ -20,4 +20,18 @@ public class WorkspaceContextTests
         Assert.Equal("C:/work/proj", ctx.ProjectDir);
         Assert.Equal("proj", ctx.ProjectLabel);
     }
+
+    [Fact]
+    public void Root_path_gives_a_non_empty_label()
+    {
+        var ctx = new WorkspaceContext("/home/u", "/");
+        Assert.NotEmpty(ctx.ProjectLabel);
+    }
+
+    [Fact]
+    public void Windows_drive_root_gives_non_empty_label()
+    {
+        var ctx = new WorkspaceContext(@"C:\u", @"C:\");
+        Assert.NotEmpty(ctx.ProjectLabel);
+    }
 }

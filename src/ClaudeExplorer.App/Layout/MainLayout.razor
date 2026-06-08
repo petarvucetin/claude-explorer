@@ -1,8 +1,10 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject ShellViewModel Shell
+@inject RefreshService Refresh
 
 <div class="app">
-    <TopBar OnRefresh="Reload" />
+    <TopBar />
     <LeftRail Shell="Shell" />
     <main class="content">
         @Body
@@ -12,9 +14,23 @@
 @code {
     protected override void OnInitialized()
     {
-        Shell.PropertyChanged += (_, _) => InvokeAsync(StateHasChanged);
-        Reload();
+        Shell.PropertyChanged += OnShellChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Shell.Load();
     }
 
-    private void Reload() => Shell.Load();
+    private void OnShellChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnRefreshRequested()
+    {
+        Shell.Load();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Shell.PropertyChanged -= OnShellChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
 }
