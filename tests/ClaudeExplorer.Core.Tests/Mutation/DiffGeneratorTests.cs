@@ -71,4 +71,26 @@ public class DiffGeneratorTests
 
         Assert.False(diff.HasChanges);
     }
+
+    [Fact]
+    public void Empty_before_yields_only_additions_no_phantom_removed_line()
+    {
+        // A brand-new file (empty "before") must not produce a spurious removed empty line.
+        var diff = Gen.Generate("", "a\nb");
+
+        Assert.DoesNotContain(diff.Lines, l => l.Kind == DiffKind.Removed);
+        Assert.Equal(2, diff.Added);
+        Assert.Collection(diff.Lines,
+            l => Assert.Equal((DiffKind.Added, "a"), (l.Kind, l.Text)),
+            l => Assert.Equal((DiffKind.Added, "b"), (l.Kind, l.Text)));
+    }
+
+    [Fact]
+    public void Empty_after_yields_only_removals_no_phantom_added_line()
+    {
+        var diff = Gen.Generate("a\nb", "");
+
+        Assert.DoesNotContain(diff.Lines, l => l.Kind == DiffKind.Added);
+        Assert.Equal(2, diff.Removed);
+    }
 }

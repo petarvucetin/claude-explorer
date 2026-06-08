@@ -51,7 +51,8 @@ public sealed class ChangeLog
             }
     }
 
-    /// <summary>Entries grouped by the scope they touched, in precedence order (User→Enterprise).</summary>
+    /// <summary>Entries grouped by the scope they touched, ordered by ascending scope value
+    /// (User → Project → Local → Enterprise, i.e. lowest-precedence scope first).</summary>
     public IReadOnlyList<IGrouping<ScopeKind, ChangeLogEntry>> ByScope()
         => _entries.GroupBy(e => e.Scope).OrderBy(g => (int)g.Key).ToList();
 }

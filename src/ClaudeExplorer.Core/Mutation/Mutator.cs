@@ -133,34 +133,36 @@ public sealed class Mutator
     /// run the recorded uninstall command for an install. Marks the entry undone in the change log.</summary>
     public void Undo(ChangeLogEntry entry)
     {
-        // Look up the current state in the log (the passed-in entry may be stale since records are immutable).
+        // Resolve the live entry from the log: the passed-in record may be stale, since
+        // records are immutable and MarkUndone replaces the slot rather than mutating it.
+        // Use `current` throughout so the guard and the action read the same fresh state.
         var current = _log.Entries.FirstOrDefault(e => e.Id == entry.Id) ?? entry;
         if (current.IsUndone)
-            throw new MutationException($"Change '{entry.Id}' has already been undone.");
+            throw new MutationException($"Change '{current.Id}' has already been undone.");
 
-        switch (entry.Kind)
+        switch (current.Kind)
         {
             case ChangeKind.Edit:
-                if (entry.Backup is null)
-                    throw new MutationException($"Change '{entry.Id}' has no backup to restore.");
-                if (entry.Backup.OriginalExisted)
-                    _writer.WriteAllText(entry.Backup.OriginalPath, _backups.Read(entry.Backup));
+                if (current.Backup is null)
+                    throw new MutationException($"Change '{current.Id}' has no backup to restore.");
+                if (current.Backup.OriginalExisted)
+                    _writer.WriteAllText(current.Backup.OriginalPath, _backups.Read(current.Backup));
                 else
-                    _writer.Delete(entry.Backup.OriginalPath);
+                    _writer.Delete(current.Backup.OriginalPath);
                 break;
 
             case ChangeKind.Install:
-                if (entry.UndoCommand is null)
-                    throw new MutationException($"Change '{entry.Id}' has no uninstall command.");
-                var result = _runner.Run(_claudeExecutable, entry.UndoCommand);
+                if (current.UndoCommand is null)
+                    throw new MutationException($"Change '{current.Id}' has no uninstall command.");
+                var result = _runner.Run(_claudeExecutable, current.UndoCommand);
                 if (!result.Success)
                     throw new MutationException($"Uninstall failed (exit {result.ExitCode}): {result.StdErr}");
                 break;
 
             default:
-                throw new MutationException($"Cannot undo change kind {entry.Kind}.");
+                throw new MutationException($"Cannot undo change kind {current.Kind}.");
         }
 
-        _log.MarkUndone(entry.Id);
+        _log.MarkUndone(current.Id);
     }
 }

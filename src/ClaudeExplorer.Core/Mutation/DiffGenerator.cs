@@ -47,5 +47,10 @@ public sealed class DiffGenerator
     }
 
     private static string[] SplitLines(string text)
-        => (text ?? "").Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
+    {
+        // An empty document is zero lines, not one empty line — otherwise a brand-new file
+        // (empty "before") would diff with a phantom "removed empty line" alongside the additions.
+        var normalized = (text ?? "").Replace("\r\n", "\n").Replace("\r", "\n");
+        return normalized.Length == 0 ? Array.Empty<string>() : normalized.Split('\n');
+    }
 }
