@@ -1,0 +1,104 @@
+@page "/recommended"
+@using ClaudeExplorer.App.Screens.Recommendations
+@using ClaudeExplorer.Core.Catalog
+@inject RecommendationsViewModel Vm
+@inject RefreshService Refresh
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Discover</div>
+        <h1>Recommended for Project</h1>
+    </div>
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card">
+        <div class="sub" style="padding:18px">Analyzing project…</div>
+    </CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card">
+        <div class="err-banner" style="margin:18px">@Vm.ErrorMessage</div>
+    </CornerTickPanel>
+}
+else if (Vm.View is { } view)
+{
+    @if (view.Signals.Any())
+    {
+        <CornerTickPanel Class="card" style="margin-bottom:18px">
+            <div class="rec-analyzed">Signals detected in project:</div>
+            <div class="rec-signals">
+                @foreach (var sig in view.Signals)
+                {
+                    <span class="signal-chip">@sig.Kind: @sig.Value</span>
+                }
+            </div>
+        </CornerTickPanel>
+    }
+
+    <CornerTickPanel Class="card">
+        @if (!view.Strong.Any() && !view.Consider.Any() && !view.AlreadyCovered.Any())
+        {
+            <div class="sub" style="padding:18px">No recommendations — add a marketplace source first.</div>
+        }
+
+        @if (view.Strong.Any())
+        {
+            <div class="rec-section-head">
+                <Pill Text="STRONG MATCH" Tone="ClaudeExplorer.App.Dashboard.BadgeTone.Ok" />
+                @view.Strong.Count match@(view.Strong.Count == 1 ? "" : "es")
+            </div>
+            @foreach (var rec in view.Strong)
+            {
+                <RecCard Row="rec" />
+            }
+        }
+
+        @if (view.Consider.Any())
+        {
+            <div class="rec-section-head">
+                <Pill Text="WORTH CONSIDERING" Tone="ClaudeExplorer.App.Dashboard.BadgeTone.Warn" />
+                @view.Consider.Count item@(view.Consider.Count == 1 ? "" : "s")
+            </div>
+            @foreach (var rec in view.Consider)
+            {
+                <RecCard Row="rec" />
+            }
+        }
+
+        @if (view.AlreadyCovered.Any())
+        {
+            <div class="rec-section-head">
+                <Pill Text="ALREADY COVERED" Tone="ClaudeExplorer.App.Dashboard.BadgeTone.Ok" />
+                @view.AlreadyCovered.Count installed
+            </div>
+            @foreach (var rec in view.AlreadyCovered)
+            {
+                <RecCard Row="rec" />
+            }
+        }
+    </CornerTickPanel>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefresh;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnRefresh() => Vm.Load();
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefresh;
+    }
+}

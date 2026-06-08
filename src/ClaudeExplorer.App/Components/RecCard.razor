@@ -1,0 +1,62 @@
+@using ClaudeExplorer.App.Screens.Recommendations
+@using ClaudeExplorer.Core.Catalog
+
+<div class="rec-card">
+    <div class="rec-card-head">
+        <span class="rec-card-name">@Row.Name</span>
+        <TypeBadge Text="@TypeLabel(Row.Type)" />
+        <TrustBadge Trust="Row.Trust" />
+    </div>
+
+    @foreach (var reason in Row.Reasons)
+    {
+        <div class="rec-why">@reason.Text</div>
+        @if (reason.Evidence.Any())
+        {
+            <div class="rec-evidence-chips">
+                @foreach (var ev in reason.Evidence)
+                {
+                    <span class="evidence-chip" title="@ev.FilePath">
+                        @ShortPath(ev.FilePath)@(ev.Count.HasValue ? $" ×{ev.Count}" : "")
+                    </span>
+                }
+            </div>
+        }
+    }
+
+    @if (Row.Runtimes.Any())
+    {
+        <div class="rec-runtime-row">
+            @foreach (var rt in Row.Runtimes)
+            {
+                <span class="runtime-tag @(rt.Available ? "ok" : "bad")">
+                    @rt.Runtime @(rt.Available ? "✓" : "— missing")
+                </span>
+            }
+        </div>
+    }
+
+    <div class="rec-footer">
+        <div class="rec-matchbar-wrap">
+            <MatchBar Confidence="Row.Confidence" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RecommendationRow Row { get; set; } = null!;
+
+    private static string TypeLabel(CatalogItemType t) => t switch
+    {
+        CatalogItemType.Plugin => "Plugin",
+        CatalogItemType.Skill  => "Skill",
+        CatalogItemType.Agent  => "Agent",
+        _                      => t.ToString(),
+    };
+
+    private static string ShortPath(string path)
+    {
+        var segments = path.Replace('\\', '/').Split('/');
+        return segments.Length <= 2 ? path : string.Join("/", segments[^2..]);
+    }
+}
