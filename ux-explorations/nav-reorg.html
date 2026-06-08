@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Left rail — IA reorg</title>
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/fonts.css">
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/blueprint.css?v=5">
+<style>
+  body { overflow: auto !important; height: auto; padding: 28px 36px 60px; }
+  .mk-h { font-family: "Archivo", sans-serif; font-size: 13px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); margin-bottom: 4px; }
+  .mk-sub { font-family: "Spline Sans Mono", monospace; font-size: 11px; color: var(--ink-soft); margin-bottom: 20px; }
+  .cols { display: flex; gap: 40px; align-items: flex-start; }
+  .col { width: 250px; }
+  .col-cap { display: flex; align-items: center; gap: 9px; font-family: "Spline Sans Mono", monospace; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+  .tag { padding: 2px 8px; border-radius: 4px; border: 1.5px solid var(--edge-2); color: var(--ink); }
+  .tag.cur { color: var(--ink-faint); border-color: var(--edge); }
+  .tag.new { color: #fff; background: var(--blue); border-color: var(--blue); }
+  .railbox { border: 1.5px solid var(--edge-2); border-radius: 8px; overflow: hidden; }
+  .rail { border-right: none; height: auto; }
+  .nav { cursor: default; }
+  .ico { width: 16px; height: 16px; border: 1.6px solid currentColor; border-radius: 4px; flex: none; opacity: .85; }
+  .moved { position: relative; }
+  .moved::after { content: "moved in"; font-family: "Spline Sans Mono", monospace; font-size: 8.5px; font-weight: 700; letter-spacing: .04em; color: var(--blue); margin-left: auto; }
+  .folded .lbl { color: var(--blue); }
+  .note { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--ink-soft); margin-top: 12px; line-height: 1.6; }
+  .note b { color: var(--blue); }
+</style>
+</head>
+<body>
+  <div class="mk-h">Left rail · information-architecture reorg</div>
+  <div class="mk-sub">①  fold Extensions (MCP, Plugins) into Config Artifacts · ②  move Hooks into Config Artifacts</div>
+
+  <div class="cols">
+    <!-- CURRENT -->
+    <div class="col">
+      <div class="col-cap"><span class="tag cur">CURRENT</span></div>
+      <div class="railbox"><aside class="rail">
+        <div class="lbl">Workspace</div>
+        <div class="nav"><span class="ico"></span>Dashboard</div>
+        <div class="nav"><span class="ico"></span>Effective Config</div>
+        <div class="nav"><span class="ico"></span>Hooks <span class="count">13</span></div>
+        <div class="nav"><span class="ico"></span>Dependencies</div>
+        <div class="lbl">Config Artifacts</div>
+        <div class="nav"><span class="ico"></span>Commands <span class="count">7</span></div>
+        <div class="nav"><span class="ico"></span>Skills <span class="count">22</span></div>
+        <div class="nav"><span class="ico"></span>Subagents <span class="count">10</span></div>
+        <div class="lbl">Extensions</div>
+        <div class="nav"><span class="ico"></span>MCP <span class="count">3</span></div>
+        <div class="nav"><span class="ico"></span>Plugins <span class="count">9</span></div>
+        <div class="lbl">Analyze</div>
+        <div class="nav"><span class="ico"></span>Compare</div>
+        <div class="lbl">Discover</div>
+        <div class="nav"><span class="ico"></span>Marketplace</div>
+        <div class="nav"><span class="ico"></span>Recommended</div>
+        <div class="nav"><span class="ico"></span>Change Log</div>
+      </aside></div>
+    </div>
+
+    <!-- PROPOSED -->
+    <div class="col">
+      <div class="col-cap"><span class="tag new">PROPOSED</span></div>
+      <div class="railbox"><aside class="rail">
+        <div class="lbl">Workspace</div>
+        <div class="nav"><span class="ico"></span>Dashboard</div>
+        <div class="nav"><span class="ico"></span>Effective Config</div>
+        <div class="nav"><span class="ico"></span>Dependencies</div>
+        <div class="lbl folded">Config Artifacts</div>
+        <div class="nav"><span class="ico"></span>Commands <span class="count">7</span></div>
+        <div class="nav"><span class="ico"></span>Skills <span class="count">22</span></div>
+        <div class="nav"><span class="ico"></span>Subagents <span class="count">10</span></div>
+        <div class="nav moved"><span class="ico"></span>Hooks <span class="count">13</span></div>
+        <div class="nav moved"><span class="ico"></span>MCP <span class="count">3</span></div>
+        <div class="nav moved"><span class="ico"></span>Plugins <span class="count">9</span></div>
+        <div class="lbl">Analyze</div>
+        <div class="nav"><span class="ico"></span>Compare</div>
+        <div class="nav"><span class="ico" style="border-color:var(--blue)"></span>Project Sync <span class="count" style="color:var(--blue)">new?</span></div>
+        <div class="lbl">Discover</div>
+        <div class="nav"><span class="ico"></span>Marketplace</div>
+        <div class="nav"><span class="ico"></span>Recommended</div>
+        <div class="nav"><span class="ico"></span>Change Log</div>
+      </aside></div>
+      <div class="note">Workspace shrinks to <b>Dashboard · Effective Config · Dependencies</b>. “Project Sync” (shown under Analyze) is the candidate home for ③④ — but that surface is still open (see questions).</div>
+    </div>
+  </div>
+</body>
+</html>

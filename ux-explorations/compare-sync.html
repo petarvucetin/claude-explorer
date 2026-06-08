@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compare / Sync — base + projects</title>
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/fonts.css">
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/blueprint.css?v=6">
+<style>
+  body { overflow: auto !important; height: auto; padding: 26px 34px 70px; }
+  .mk-wrap { max-width: 1080px; }
+  .k { margin-bottom: 6px; }
+  .pagehead h1 { font-size: 25px; }
+
+  /* endpoint pickers */
+  .endpoints { display: flex; align-items: center; gap: 14px; margin: 4px 0 18px; }
+  .ep { flex: 1; border: 1.5px solid var(--edge-2); border-radius: 8px; background: var(--panel); padding: 9px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 3px 3px 0 var(--blue-wash); }
+  .ep .side { font-family: "Spline Sans Mono", monospace; font-size: 9px; font-weight: 700; letter-spacing: .1em; color: var(--ink-faint); }
+  .ep .name { font-weight: 800; font-size: 14px; }
+  .ep .path { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--ink-soft); margin-left: auto; }
+  .kind { width: 9px; height: 9px; border-radius: 2px; border: 1.5px solid var(--edge-2); flex: none; }
+  .kind.base { background: var(--blue); }
+  .kind.wsl { background: #6B3FB0; }
+  .kind.proj { background: var(--amber); }
+  .swap { width: 34px; height: 34px; border: 1.5px solid var(--edge-2); border-radius: 8px; background: var(--panel); display: grid; place-items: center; font-size: 15px; cursor: pointer; flex: none; }
+  .addproj { font-family: "Spline Sans Mono", monospace; font-size: 11px; font-weight: 700; color: var(--blue); border: 1.5px dashed var(--blue); border-radius: 8px; padding: 9px 12px; cursor: pointer; background: var(--blue-wash); flex: none; }
+
+  /* category tabs */
+  .cats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .cat { font-family: "Spline Sans Mono", monospace; font-size: 11px; font-weight: 700; padding: 6px 11px; border: 1.5px solid var(--edge); border-radius: 7px; background: var(--panel); color: var(--ink-soft); cursor: pointer; display: flex; align-items: center; gap: 7px; }
+  .cat .b { font-size: 9px; background: var(--paper); border: 1px solid var(--edge); border-radius: 9px; padding: 0 6px; color: var(--ink-faint); }
+  .cat.active { border-color: var(--edge-2); color: var(--ink); box-shadow: 2px 2px 0 var(--blue); }
+  .cat.active .b { background: var(--blue-wash); border-color: var(--blue); color: var(--blue); }
+  .cat.ro { color: var(--ink-faint); }
+  .cat.ro::after { content: "view"; font-size: 8px; color: var(--ink-faint); }
+
+  /* summary */
+  .summary { display: flex; gap: 16px; font-family: "Spline Sans Mono", monospace; font-size: 11px; margin-bottom: 12px; align-items: center; }
+  .scount b { font-weight: 800; }
+  .scount.differ b { color: var(--amber); } .scount.la b { color: var(--blue); } .scount.lb b { color: var(--amber); } .scount.same b { color: var(--green); }
+  .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 5px; }
+  .dot.differ { background: var(--amber); } .dot.la { background: var(--blue); } .dot.lb { background: #6B3FB0; } .dot.same { background: var(--green); }
+
+  /* diff table */
+  .cmp { border: 1.5px solid var(--edge-2); border-radius: 8px; overflow: hidden; }
+  .crow { display: grid; grid-template-columns: 200px 1fr 96px 1fr; align-items: center; border-bottom: 1px solid var(--grid-bold); background: var(--panel); }
+  .crow.head { background: var(--paper); }
+  .crow.head > div { font-family: "Spline Sans Mono", monospace; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); padding: 8px 12px; }
+  .crow:last-child { border-bottom: none; }
+  .crow .key { font-family: "Spline Sans Mono", monospace; font-size: 12px; font-weight: 700; color: var(--ink); padding: 11px 12px; border-left: 3px solid transparent; }
+  .crow.differ .key { border-left-color: var(--amber); }
+  .crow.la .key { border-left-color: var(--blue); }
+  .crow.lb .key { border-left-color: #6B3FB0; }
+  .crow.same .key { border-left-color: var(--green); }
+  .val { font-family: "Spline Sans Mono", monospace; font-size: 11.5px; color: var(--ink-soft); padding: 11px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .val.none { color: var(--ink-faint); font-style: italic; }
+  .acts { display: flex; gap: 5px; justify-content: center; padding: 6px; }
+  .cbtn { font-family: "Spline Sans Mono", monospace; font-size: 13px; font-weight: 800; width: 30px; height: 26px; border: 1.5px solid var(--edge-2); border-radius: 6px; background: var(--panel); color: var(--blue); cursor: pointer; }
+  .cbtn:hover { background: var(--blue); color: #fff; }
+  .cbtn.off { color: var(--edge); border-color: var(--edge); cursor: default; }
+  .synced { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--green); text-align: center; }
+
+  .note { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--ink-soft); margin-top: 12px; line-height: 1.6; }
+  .note b { color: var(--blue); }
+</style>
+</head>
+<body>
+<div class="mk-wrap">
+  <div class="pagehead"><div><div class="k">Analyze</div><h1>Compare / Sync</h1></div></div>
+
+  <!-- endpoint pickers -->
+  <div class="endpoints">
+    <div class="ep"><span class="kind base"></span><div><div class="side">A · LEFT</div><div class="name">Base · Windows</div></div><span class="path">~/.claude ▾</span></div>
+    <div class="swap">⇄</div>
+    <div class="ep"><span class="kind proj"></span><div><div class="side">B · RIGHT</div><div class="name">Project A · myproject</div></div><span class="path">D:/work/myproject/.claude ▾</span></div>
+    <div class="addproj">＋ Add project…</div>
+  </div>
+
+  <!-- category tabs -->
+  <div class="cats">
+    <div class="cat active">Settings <span class="b">18</span></div>
+    <div class="cat">Memory <span class="b">2</span></div>
+    <div class="cat">Commands <span class="b">9</span></div>
+    <div class="cat">Skills <span class="b">22</span></div>
+    <div class="cat">Subagents <span class="b">10</span></div>
+    <div class="cat">MCP <span class="b">3</span></div>
+    <div class="cat">Hooks <span class="b">13</span></div>
+    <div class="cat ro">Plugins <span class="b">9</span></div>
+    <div class="cat ro">Dependencies <span class="b">7</span></div>
+  </div>
+
+  <!-- summary -->
+  <div class="summary">
+    <span class="scount same"><span class="dot same"></span><b>6</b> same</span>
+    <span class="scount differ"><span class="dot differ"></span><b>4</b> differ</span>
+    <span class="scount la"><span class="dot la"></span><b>6</b> only A (base)</span>
+    <span class="scount lb"><span class="dot lb"></span><b>2</b> only B (project)</span>
+  </div>
+
+  <!-- diff table -->
+  <div class="cmp">
+    <div class="crow head"><div>Setting</div><div>A · Base · Windows</div><div style="text-align:center">Copy</div><div>B · Project A</div></div>
+
+    <div class="crow la"><div class="key">model</div><div class="val">"opus"</div><div class="acts"><button class="cbtn" title="copy A→B">→</button></div><div class="val none">— not set</div></div>
+
+    <div class="crow differ"><div class="key">permissions.allow</div><div class="val">12 rules</div><div class="acts"><button class="cbtn" title="A→B">→</button><button class="cbtn" title="B→A">←</button></div><div class="val">3 rules</div></div>
+
+    <div class="crow lb"><div class="key">env.NODE_ENV</div><div class="val none">— not set</div><div class="acts"><button class="cbtn off">→</button><button class="cbtn" title="B→A">←</button></div><div class="val">"development"</div></div>
+
+    <div class="crow differ"><div class="key">hooks.PostToolUse</div><div class="val">2 groups</div><div class="acts"><button class="cbtn" title="A→B">→</button><button class="cbtn" title="B→A">←</button></div><div class="val">1 group</div></div>
+
+    <div class="crow same"><div class="key">env.EDITOR</div><div class="val">"code"</div><div class="acts"><span class="synced">✓</span></div><div class="val">"code"</div></div>
+
+    <div class="crow la"><div class="key">statusLine</div><div class="val">{ command… }</div><div class="acts"><button class="cbtn" title="A→B">→</button></div><div class="val none">— not set</div></div>
+  </div>
+
+  <div class="note">Each row: copy the value <b>A→B</b> (→) or <b>B→A</b> (←) — any direction, any endpoint pair. Every copy routes through the safe-mutation flow (diff preview · backup · change-log · undo). <b>“Move”</b> = copy + remove from source (offered behind a warning). Plugins / Dependencies are <b>compare-only</b>. Endpoints (bases + projects) are persisted; “Add project…” registers a new folder endpoint.</div>
+</div>
+</body>
+</html>
