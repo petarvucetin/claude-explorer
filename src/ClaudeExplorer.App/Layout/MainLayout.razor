@@ -35,7 +35,9 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnEnvChanged() => Refresh.Request();
+    // Defer the refresh out of the event-dispatch chain so an environment switch doesn't run the
+    // screens' synchronous disk-reads in the middle of handling the Changed event.
+    private void OnEnvChanged() => InvokeAsync(Refresh.Request);
 
     public void Dispose()
     {

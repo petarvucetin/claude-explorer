@@ -49,8 +49,10 @@ public sealed class EnvironmentStore
         {
             return JsonSerializer.Deserialize<EnvironmentState>(_fs.ReadAllText(_path), Options) ?? EnvironmentState.Empty;
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
+            // Garbled JSON, a locked/unreadable file, or a permission problem must not crash startup
+            // (this runs in the EnvironmentService DI factory) — degrade to empty state.
             return EnvironmentState.Empty;
         }
     }
