@@ -1,5 +1,20 @@
 @inherits LayoutComponentBase
+@inject ShellViewModel Shell
 
-<div class="app-shell">
-    @Body
+<div class="app">
+    <TopBar OnRefresh="Reload" />
+    <LeftRail Shell="Shell" />
+    <main class="content">
+        @Body
+    </main>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Shell.PropertyChanged += (_, _) => InvokeAsync(StateHasChanged);
+        Reload();
+    }
+
+    private void Reload() => Shell.Load();
+}
