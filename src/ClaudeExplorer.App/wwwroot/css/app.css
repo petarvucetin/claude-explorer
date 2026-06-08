@@ -1,16 +1,7 @@
-/* Minimal foundation styles — Blueprint theme is layered in during Phase 7 build. */
+/* Foundation styles — Blueprint theme is in blueprint.css */
 html, body {
     margin: 0;
     padding: 0;
-    font-family: sans-serif;
-}
-
-.app-shell {
-    height: 100vh;
-}
-
-.page-probe {
-    padding: 32px;
 }
 
 #blazor-error-ui {
