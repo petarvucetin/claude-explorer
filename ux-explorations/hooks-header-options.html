@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hooks — event header options</title>
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/fonts.css">
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/blueprint.css">
+<style>
+  /* mockup chrome — not part of the app */
+  body { overflow: auto !important; height: auto; padding: 30px 40px 70px; }
+  .mk-wrap { max-width: 760px; }
+  .mk-h { font-family: "Archivo", sans-serif; font-size: 13px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); }
+  .mk-sub { font-family: "Spline Sans Mono", monospace; font-size: 11px; color: var(--ink-soft); margin: 3px 0 26px; }
+  .opt { margin: 0 0 34px; }
+  .opt-cap { display: flex; align-items: baseline; gap: 12px; margin: 0 0 14px; }
+  .opt-tag { font-family: "Spline Sans Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; padding: 3px 9px; border: 1.5px solid var(--edge-2); border-radius: 4px; background: var(--panel); color: var(--ink); white-space: nowrap; }
+  .opt-tag.cur { color: var(--ink-faint); border-color: var(--edge); }
+  .opt-desc { font-family: "Spline Sans Mono", monospace; font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* faithful box internals (scope tag + ok pill) */
+  .sb { font-family: "Spline Sans Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; padding: 2px 7px; border: 1.5px solid var(--blue); border-radius: 3px; color: var(--blue); background: var(--blue-wash); white-space: nowrap; }
+  .okp { font-family: "Spline Sans Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; padding: 2px 7px; border: 1.5px solid var(--green, #2E7D4F); border-radius: 3px; color: var(--green, #2E7D4F); background: var(--green-wash, #E0EFE6); white-space: nowrap; }
+
+  /* ── OPTION A — ink eyebrow: blue tick + dark name + count chip + trailing rule ── */
+  .gl-a { display: flex; align-items: center; gap: 10px; margin: 0 2px 9px; }
+  .gl-a .tick { width: 16px; height: 3px; background: var(--blue); border-radius: 2px; flex: none; }
+  .gl-a .name { font-family: "Spline Sans Mono", monospace; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+  .gl-a .cnt { font-family: "Spline Sans Mono", monospace; font-size: 10px; font-weight: 700; color: var(--blue); background: var(--blue-wash); border-radius: 10px; padding: 1px 8px; }
+  .gl-a .rule { flex: 1; height: 1px; background: var(--edge); }
+
+  /* ── OPTION B — filled tag: solid accent label sitting on the section ── */
+  .gl-b { display: flex; align-items: center; gap: 10px; margin: 0 2px 9px; }
+  .gl-b .tab { display: inline-flex; align-items: center; gap: 9px; background: var(--blue); border-radius: 5px; padding: 5px 12px; box-shadow: 2px 2px 0 var(--blue-wash); }
+  .gl-b .name { font-family: "Spline Sans Mono", monospace; font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #fff; }
+  .gl-b .cnt { font-family: "Spline Sans Mono", monospace; font-size: 10px; font-weight: 700; color: #fff; opacity: .72; }
+  .gl-b .rule { flex: 1; height: 1px; background: var(--edge); }
+
+  /* ── OPTION C — display heading: Archivo, big, blue underline accent ── */
+  .gl-c { display: flex; align-items: baseline; gap: 11px; margin: 0 2px 12px; }
+  .gl-c .name { font-family: "Archivo", sans-serif; font-size: 17px; font-weight: 800; letter-spacing: -.2px; text-transform: uppercase; color: var(--ink); padding-bottom: 4px; border-bottom: 2.5px solid var(--blue); }
+  .gl-c .cnt { font-family: "Spline Sans Mono", monospace; font-size: 11px; font-weight: 600; color: var(--ink-faint); }
+
+  /* ── OPTION D — section bracket: left blue rule + dark name + count chip ── */
+  .gl-d { display: flex; align-items: center; gap: 10px; margin: 0 2px 9px; padding: 3px 0 3px 12px; border-left: 3.5px solid var(--blue); }
+  .gl-d .name { font-family: "Spline Sans Mono", monospace; font-size: 12.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink); }
+  .gl-d .cnt { font-family: "Spline Sans Mono", monospace; font-size: 10px; font-weight: 700; color: var(--ink-soft); background: var(--paper); border: 1px solid var(--edge); border-radius: 10px; padding: 1px 8px; }
+</style>
+</head>
+<body>
+<div class="mk-wrap">
+  <div class="mk-h">Hooks · event-group header</div>
+  <div class="mk-sub">Same two rows under each treatment. Scan top-to-bottom: which header reads as a heading, not a caption?</div>
+
+  <!-- CURRENT -->
+  <div class="opt">
+    <div class="opt-cap"><span class="opt-tag cur">CURRENT</span><span class="opt-desc">10px · <code>--ink-faint</code> · mono + trailing hairline → reads as a divider, recedes behind the boxes</span></div>
+    <div class="grp-label">PostToolUse · 3</div>
+    <div class="mcprow"><span class="mcp-name">Bash</span><span class="mcp-ep">context-mode/hooks/pretool.js</span><span class="sb">USER</span><span class="okp">OK · node 22.3</span></div>
+    <div class="mcprow"><span class="mcp-name">Edit|Write</span><span class="mcp-ep">.claude/hooks/format-on-save.sh</span><span class="sb">PROJECT</span><span class="okp">OK · bash</span></div>
+  </div>
+
+  <!-- OPTION A -->
+  <div class="opt">
+    <div class="opt-cap"><span class="opt-tag">OPTION A — INK EYEBROW</span><span class="opt-desc">Reuses the page-eyebrow language: blue tick + 13px dark name + count chip. Calm but unmistakably a heading.</span></div>
+    <div class="gl-a"><span class="tick"></span><span class="name">PostToolUse</span><span class="cnt">3</span><span class="rule"></span></div>
+    <div class="mcprow"><span class="mcp-name">Bash</span><span class="mcp-ep">context-mode/hooks/pretool.js</span><span class="sb">USER</span><span class="okp">OK · node 22.3</span></div>
+    <div class="mcprow"><span class="mcp-name">Edit|Write</span><span class="mcp-ep">.claude/hooks/format-on-save.sh</span><span class="sb">PROJECT</span><span class="okp">OK · bash</span></div>
+  </div>
+
+  <!-- OPTION B -->
+  <div class="opt">
+    <div class="opt-cap"><span class="opt-tag">OPTION B — FILLED TAG</span><span class="opt-desc">Solid electric-blue label with offset shadow. Maximum stand-out; loudest when many groups stack.</span></div>
+    <div class="gl-b"><span class="tab"><span class="name">PostToolUse</span><span class="cnt">3</span></span><span class="rule"></span></div>
+    <div class="mcprow"><span class="mcp-name">Bash</span><span class="mcp-ep">context-mode/hooks/pretool.js</span><span class="sb">USER</span><span class="okp">OK · node 22.3</span></div>
+    <div class="mcprow"><span class="mcp-name">Edit|Write</span><span class="mcp-ep">.claude/hooks/format-on-save.sh</span><span class="sb">PROJECT</span><span class="okp">OK · bash</span></div>
+  </div>
+
+  <!-- OPTION C -->
+  <div class="opt">
+    <div class="opt-cap"><span class="opt-tag">OPTION C — DISPLAY HEADING</span><span class="opt-desc">Archivo 17px/800 with a blue underline — like a mini page heading. Strongest hierarchy; text-driven.</span></div>
+    <div class="gl-c"><span class="name">PostToolUse</span><span class="cnt">3 hooks</span></div>
+    <div class="mcprow"><span class="mcp-name">Bash</span><span class="mcp-ep">context-mode/hooks/pretool.js</span><span class="sb">USER</span><span class="okp">OK · node 22.3</span></div>
+    <div class="mcprow"><span class="mcp-name">Edit|Write</span><span class="mcp-ep">.claude/hooks/format-on-save.sh</span><span class="sb">PROJECT</span><span class="okp">OK · bash</span></div>
+  </div>
+
+  <!-- OPTION D -->
+  <div class="opt">
+    <div class="opt-cap"><span class="opt-tag">OPTION D — SECTION BRACKET</span><span class="opt-desc">Vertical blue rule + dark name + count chip. Drafting-schematic feel; clear without a full-width line.</span></div>
+    <div class="gl-d"><span class="name">PostToolUse</span><span class="cnt">3</span></div>
+    <div class="mcprow"><span class="mcp-name">Bash</span><span class="mcp-ep">context-mode/hooks/pretool.js</span><span class="sb">USER</span><span class="okp">OK · node 22.3</span></div>
+    <div class="mcprow"><span class="mcp-name">Edit|Write</span><span class="mcp-ep">.claude/hooks/format-on-save.sh</span><span class="sb">PROJECT</span><span class="okp">OK · bash</span></div>
+  </div>
+
+</div>
+</body>
+</html>

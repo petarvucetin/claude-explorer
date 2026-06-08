@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hooks — row redesign + inline editor</title>
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/fonts.css">
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/blueprint.css?v=3">
+<style>
+  body { overflow: auto !important; height: auto; padding: 30px 40px 70px; }
+  .mk-wrap { max-width: 820px; }
+  .mk-h { font-family: "Archivo", sans-serif; font-size: 13px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); }
+  .mk-sub { font-family: "Spline Sans Mono", monospace; font-size: 11px; color: var(--ink-soft); margin: 3px 0 24px; }
+  .opt { margin: 0 0 32px; }
+  .opt-cap { display: flex; align-items: baseline; gap: 12px; margin: 0 0 12px; flex-wrap: wrap; }
+  .opt-tag { font-family: "Spline Sans Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; padding: 3px 9px; border: 1.5px solid var(--edge-2); border-radius: 4px; background: var(--panel); color: var(--ink); white-space: nowrap; }
+  .opt-tag.cur { color: var(--ink-faint); border-color: var(--edge); }
+  .opt-desc { font-family: "Spline Sans Mono", monospace; font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* shared bits */
+  .scopetag { font-family: "Spline Sans Mono", monospace; font-size: 9px; font-weight: 700; letter-spacing: .06em; padding: 2px 6px; border: 1.5px solid var(--blue); border-radius: 3px; color: var(--blue); background: var(--blue-wash); white-space: nowrap; }
+  .scopetag.proj { color: var(--amber); border-color: var(--amber); background: var(--amber-wash); }
+  .scopetag.plugin { color: #6B3FB0; border-color: #6B3FB0; background: #ECE3F8; }
+  .okp { font-family: "Spline Sans Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .04em; padding: 2px 7px; border: 1.5px solid var(--green, #2E7D4F); border-radius: 3px; color: var(--green, #2E7D4F); background: var(--green-wash, #E0EFE6); white-space: nowrap; }
+  .tchip { font-family: "Spline Sans Mono", monospace; font-size: 10px; padding: 2px 7px; border: 1px solid var(--edge); border-radius: 5px; background: var(--paper); color: var(--ink); white-space: nowrap; }
+  .tchip.any { border-color: var(--blue); color: var(--blue); background: var(--blue-wash); font-weight: 700; }
+  .tmore { font-family: "Spline Sans Mono", monospace; font-size: 10px; font-weight: 700; color: var(--blue); cursor: pointer; white-space: nowrap; }
+  .evb { font-family: "Spline Sans Mono", monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .05em; color: var(--ink-soft); text-transform: uppercase; }
+
+  /* ── group header (the new ink-eyebrow, already shipped) ── */
+  .grp { display: flex; align-items: center; gap: 10px; margin: 0 2px 10px; }
+  .grp::before { content: ""; flex: none; width: 16px; height: 3px; border-radius: 2px; background: var(--blue); }
+  .grp .name { font-family: "Spline Sans Mono", monospace; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+  .grp .cnt { font-family: "Spline Sans Mono", monospace; font-size: 10px; font-weight: 700; color: var(--blue); background: var(--blue-wash); border-radius: 10px; padding: 1px 8px; }
+  .grp::after { content: ""; flex: 1; height: 1px; background: var(--edge); }
+
+  /* ── OPTION A — two-line: matcher chips up top, command below ── */
+  .hrow { border: 1.5px solid var(--edge); border-radius: 8px; background: var(--panel); padding: 10px 13px; margin-bottom: 8px; cursor: pointer; }
+  .hrow:hover { border-color: var(--edge-2); }
+  .hrow.sel { border-color: var(--edge-2); box-shadow: 3px 3px 0 var(--blue-wash); }
+  .hrow .l1 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .hrow .l1 .right { margin-left: auto; display: flex; align-items: center; gap: 7px; }
+  .hrow .l2 { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+  .hrow .cmd { font-family: "Spline Sans Mono", monospace; font-size: 12px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .hrow .typ { font-family: "Spline Sans Mono", monospace; font-size: 9px; font-weight: 700; letter-spacing: .06em; color: var(--ink-faint); text-transform: uppercase; border: 1px solid var(--edge); border-radius: 4px; padding: 1px 6px; }
+
+  /* ── OPTION B — one line: matcher collapses to a summary chip ── */
+  .brow { display: flex; align-items: center; gap: 11px; border: 1.5px solid var(--edge); border-radius: 8px; background: var(--panel); padding: 11px 13px; margin-bottom: 8px; cursor: pointer; }
+  .matsum { display: inline-flex; align-items: center; gap: 6px; font-family: "Spline Sans Mono", monospace; font-size: 12px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .matsum .pipe { color: var(--ink-faint); font-weight: 400; }
+  .matsum .ntools { font-size: 9.5px; font-weight: 700; color: var(--blue); background: var(--blue-wash); border-radius: 10px; padding: 1px 7px; }
+  .brow .cmd { font-family: "Spline Sans Mono", monospace; font-size: 12px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .brow .right { display: flex; align-items: center; gap: 7px; }
+
+  /* ── inline editor (accordion) ── */
+  .ed { border: 1.5px solid var(--edge-2); border-top: none; border-radius: 0 0 8px 8px; background: var(--panel); margin: -10px 0 12px; padding: 13px; box-shadow: 3px 4px 0 var(--blue-wash); }
+  .ed-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .ed-head .t { font-family: "Spline Sans Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink); }
+  .ed-head .path { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--ink-soft); margin-left: auto; }
+  .ed-warn { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--amber); background: var(--amber-wash); border: 1px solid var(--amber); border-radius: 5px; padding: 6px 9px; margin-bottom: 10px; }
+  .ed-area { background: #0F1722; border: 1.5px solid var(--edge-2); border-radius: 6px; color: #D7E0EC; font-family: "Spline Sans Mono", monospace; font-size: 12px; line-height: 1.55; padding: 11px 13px; white-space: pre; overflow: auto; }
+  .ed-area .k { color: #7FA7FF; } .ed-area .s { color: #9CD3A0; } .ed-area .cur { background: rgba(127,167,255,.25); }
+  .ed-bar { display: flex; align-items: center; gap: 9px; margin-top: 11px; }
+  .ed-bar .log { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--ink-soft); margin-right: auto; }
+  .btn { font-family: "Spline Sans Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .03em; padding: 6px 13px; border-radius: 6px; border: 1.5px solid var(--edge-2); background: var(--panel); color: var(--ink); cursor: pointer; }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: 2px 2px 0 var(--blue-wash); }
+  .btn.ghost { border-color: var(--edge); color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="mk-wrap">
+  <div class="mk-h">Hooks · row redesign + inline editor</div>
+  <div class="mk-sub">The matcher is a tool-name regex and can be huge. Goal: keep rows scannable + open an editor inline under the clicked row.</div>
+
+  <!-- CURRENT -->
+  <div class="opt">
+    <div class="opt-cap"><span class="opt-tag cur">CURRENT</span><span class="opt-desc">Matcher rendered raw on one line — a 17-tool pipe list pushes the command off-screen and breaks alignment.</span></div>
+    <div class="grp"><span class="name">PostToolUse</span><span class="cnt">3</span></div>
+    <div class="mcprow"><span class="mcp-name" style="min-width:120px">Bash|Read|Write|Edit|NotebookEdit|Glob|Grep|TodoWrite|TaskCreate|TaskUpdate|EnterPlanMode|ExitPlanMode|Skill|Agent|AskUserQuestion|WebFetch|WebSearch</span><span class="mcp-ep">context-mode/hooks/posttool.js</span><span class="scopetag">USER</span><span class="okp">node ✓</span></div>
+  </div>
+
+  <!-- OPTION A -->
+  <div class="opt">
+    <div class="opt-cap"><span class="opt-tag">OPTION A — TWO-LINE, MATCHER CHIPS</span><span class="opt-desc">Matcher broken into tool chips (capped at 6 + “+N”), command on its own line. Most literal “break it down”.</span></div>
+    <div class="grp"><span class="name">PostToolUse</span><span class="cnt">3</span></div>
+
+    <div class="hrow">
+      <div class="l1">
+        <span class="tchip">Bash</span><span class="tchip">Read</span><span class="tchip">Write</span><span class="tchip">Edit</span><span class="tchip">NotebookEdit</span><span class="tchip">Glob</span><span class="tmore">+11 more</span>
+        <span class="right"><span class="scopetag">USER</span><span class="okp">node ✓</span></span>
+      </div>
+      <div class="l2"><span class="typ">command</span><span class="cmd">context-mode/hooks/posttool.js</span></div>
+    </div>
+
+    <div class="hrow">
+      <div class="l1">
+        <span class="tchip any">✶ any tool</span>
+        <span class="right"><span class="scopetag proj">PROJECT</span><span class="okp">python ✓</span></span>
+      </div>
+      <div class="l2"><span class="typ">command</span><span class="cmd">.claude/hooks/log.py</span></div>
+    </div>
+
+    <div class="hrow">
+      <div class="l1">
+        <span class="tchip">Edit</span><span class="tchip">Write</span>
+        <span class="right"><span class="scopetag plugin">PLUGIN</span><span class="okp">bash ✓</span></span>
+      </div>
+      <div class="l2"><span class="typ">command</span><span class="cmd">${CLAUDE_PLUGIN_ROOT}/hooks/format-on-save.sh</span></div>
+    </div>
+  </div>
+
+  <!-- OPTION B -->
+  <div class="opt">
+    <div class="opt-cap"><span class="opt-tag">OPTION B — ONE LINE, COLLAPSED MATCHER</span><span class="opt-desc">Matcher shows first 2 tools + an “N tools” chip; full list on expand. Densest; one row each.</span></div>
+    <div class="grp"><span class="name">PostToolUse</span><span class="cnt">3</span></div>
+
+    <div class="brow">
+      <span class="matsum">Bash<span class="pipe">|</span>Read <span class="ntools">17 tools ▸</span></span>
+      <span class="cmd">context-mode/hooks/posttool.js</span>
+      <span class="right"><span class="scopetag">USER</span><span class="okp">node ✓</span></span>
+    </div>
+    <div class="brow">
+      <span class="matsum"><span class="tchip any">✶ any tool</span></span>
+      <span class="cmd">.claude/hooks/log.py</span>
+      <span class="right"><span class="scopetag proj">PROJECT</span><span class="okp">python ✓</span></span>
+    </div>
+    <div class="brow">
+      <span class="matsum">Edit<span class="pipe">|</span>Write</span>
+      <span class="cmd">${CLAUDE_PLUGIN_ROOT}/hooks/format-on-save.sh</span>
+      <span class="right"><span class="scopetag plugin">PLUGIN</span><span class="okp">bash ✓</span></span>
+    </div>
+  </div>
+
+  <!-- INLINE EDITOR -->
+  <div class="opt">
+    <div class="opt-cap"><span class="opt-tag">INLINE EDITOR — accordion under the clicked row</span><span class="opt-desc">Click a row → it expands and an editor drops in directly beneath it. Shown here on Option A with the JSON source (a hook lives in settings.json). Save routes through the existing diff → backup → validate → change-log flow.</span></div>
+    <div class="grp"><span class="name">PostToolUse</span><span class="cnt">3</span></div>
+
+    <div class="hrow sel" style="border-radius:8px 8px 0 0;margin-bottom:0">
+      <div class="l1">
+        <span class="tchip">Bash</span><span class="tchip">Read</span><span class="tchip">Write</span><span class="tchip">Edit</span><span class="tchip">NotebookEdit</span><span class="tchip">Glob</span><span class="tmore">+11 more</span>
+        <span class="right"><span class="scopetag">USER</span><span class="okp">node ✓</span></span>
+      </div>
+      <div class="l2"><span class="typ">command</span><span class="cmd">context-mode/hooks/posttool.js</span></div>
+    </div>
+
+    <div class="ed">
+      <div class="ed-head"><span class="t">Edit hook source</span><span class="path">~/.claude/settings.json · USER</span></div>
+      <div class="ed-warn">⚠ This is the <b>global (USER)</b> source — changes affect every project. You can override at Project instead.</div>
+<div class="ed-area"><span class="k">"PostToolUse"</span>: [
+  {
+    <span class="k">"matcher"</span>: <span class="s">"Bash|Read|Write|Edit|NotebookEdit|Glob|..."</span>,
+    <span class="k">"hooks"</span>: [
+      { <span class="k">"type"</span>: <span class="s">"command"</span>, <span class="k">"command"</span>: <span class="s">"context-mode/hooks/posttool.js"</span><span class="cur"> </span> }
+    ]
+  }
+]</div>
+      <div class="ed-bar">
+        <span class="log">↻ change will be logged to Change Log (USER) · backup taken</span>
+        <button class="btn ghost">Preview diff</button>
+        <button class="btn ghost">Cancel</button>
+        <button class="btn primary">Save</button>
+      </div>
+    </div>
+
+    <div class="hrow" style="margin-top:8px">
+      <div class="l1">
+        <span class="tchip any">✶ any tool</span>
+        <span class="right"><span class="scopetag proj">PROJECT</span><span class="okp">python ✓</span></span>
+      </div>
+      <div class="l2"><span class="typ">command</span><span class="cmd">.claude/hooks/log.py</span></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
