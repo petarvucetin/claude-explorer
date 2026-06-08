@@ -89,4 +89,42 @@ public class HookRowsTests
         Assert.Empty(view.Groups);
         Assert.Equal(0, view.Total);
     }
+
+    [Fact]
+    public void Records_source_group_index_per_matcher_group()
+    {
+        var config = new EffectiveConfig(new[]
+        {
+            HookSetting("PostToolUse", ScopeKind.User, "/home/.claude/settings.json",
+                """
+                [
+                  { "matcher": "Bash", "hooks": [ { "type": "command", "command": "a.js" } ] },
+                  { "matcher": "Edit", "hooks": [ { "type": "command", "command": "b.js" } ] }
+                ]
+                """),
+        });
+
+        var rows = HookRowsMapper.Map(config, Report()).Groups.Single().Rows;
+
+        Assert.Equal(0, rows[0].SourceGroupIndex);
+        Assert.Equal(1, rows[1].SourceGroupIndex);
+    }
+
+    [Theory]
+    [InlineData(ScopeKind.User, true)]
+    [InlineData(ScopeKind.Project, true)]
+    [InlineData(ScopeKind.Local, true)]
+    [InlineData(ScopeKind.Plugin, false)]
+    [InlineData(ScopeKind.Enterprise, false)]
+    public void IsEditable_only_for_user_project_local(ScopeKind scope, bool expected)
+    {
+        var config = new EffectiveConfig(new[]
+        {
+            HookSetting("PreToolUse", scope, "/x/settings.json",
+                """[ { "matcher": "Bash", "hooks": [ { "type": "command", "command": "a.js" } ] } ]"""),
+        });
+
+        var row = HookRowsMapper.Map(config, Report()).Groups.Single().Rows.Single();
+        Assert.Equal(expected, row.IsEditable);
+    }
 }

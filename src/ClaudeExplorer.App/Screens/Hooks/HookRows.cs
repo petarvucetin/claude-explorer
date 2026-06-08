@@ -16,7 +16,13 @@ public sealed record HookRow(
     ScopeKind Source,
     string SourceFile,
     string? Runtime,
-    HookHealth Health);
+    HookHealth Health,
+    int SourceGroupIndex)
+{
+    /// <summary>Editable only when the defining source is a writable settings.json scope.
+    /// Plugin- and enterprise/managed-provided hooks are read-only.</summary>
+    public bool IsEditable => Source is ScopeKind.User or ScopeKind.Project or ScopeKind.Local;
+}
 
 public sealed record HookGroup(string Event, IReadOnlyList<HookRow> Rows);
 
@@ -46,9 +52,9 @@ public static class HookRowsMapper
             {
                 if (contribution.Value is not JsonArray matcherGroups) continue;
 
-                foreach (var groupNode in matcherGroups)
+                for (var gi = 0; gi < matcherGroups.Count; gi++)
                 {
-                    if (groupNode is not JsonObject mg) continue;
+                    if (matcherGroups[gi] is not JsonObject mg) continue;
                     var matcher = (string?)mg["matcher"];
                     if (string.IsNullOrEmpty(matcher)) matcher = "*";
                     if (mg["hooks"] is not JsonArray hookNodes) continue;
@@ -63,7 +69,7 @@ public static class HookRowsMapper
                         rows.Add(new HookRow(
                             evt, matcher!, command, (string?)h["type"],
                             contribution.Origin.Scope, contribution.Origin.FilePath,
-                            runtime, HealthOf(command, runtime, health)));
+                            runtime, HealthOf(command, runtime, health), SourceGroupIndex: gi));
                     }
                 }
             }
