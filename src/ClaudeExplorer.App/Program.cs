@@ -1,4 +1,6 @@
+using ClaudeExplorer.App.Compare;
 using ClaudeExplorer.App.Dashboard;
+using ClaudeExplorer.App.Environments;
 using ClaudeExplorer.App.Screens.Artifacts;
 using ClaudeExplorer.App.Screens.ChangeLog;
 using ClaudeExplorer.App.Screens.Dependencies;
@@ -38,12 +40,25 @@ internal static class Program
         builder.Services.AddSingleton<IPathResolver, PhysicalPathResolver>();
         builder.Services.AddSingleton<IProcessRunner>(_ => new PhysicalProcessRunner());
 
-        // Workspace: always read the standard user-global ~/.claude folder. Overlay a project only
-        // when launched from (or pointed at, via a command-line arg) a real Claude project — a dir
-        // with a .claude folder. Otherwise there is no project and the app shows just ~/.claude.
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var project = WorkspaceResolver.ResolveProjectDir(args, Directory.GetCurrentDirectory(), fileSystem);
-        builder.Services.AddSingleton<IWorkspaceContext>(new WorkspaceContext(home, project));
+        // Environments.
+        var winHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        builder.Services.AddSingleton<IWslLocator>(sp => new WslLocator(sp.GetRequiredService<IProcessRunner>()));
+        builder.Services.AddSingleton(sp => new EnvironmentDiscovery(
+            sp.GetRequiredService<IFileSystem>(), sp.GetRequiredService<IWslLocator>(), winHome));
+        builder.Services.AddSingleton(sp => new EnvironmentStore(
+            sp.GetRequiredService<IFileSystem>(), sp.GetRequiredService<IFileWriter>(),
+            $"{winHome.Replace('\\', '/')}/.claude/.claude-explorer/environments.json"));
+        builder.Services.AddSingleton(sp =>
+        {
+            var svc = new EnvironmentService(sp.GetRequiredService<EnvironmentDiscovery>(), sp.GetRequiredService<EnvironmentStore>());
+            svc.Load();
+            return svc;
+        });
+
+        // IWorkspaceContext is now driven by the active environment (replaces the old fixed WorkspaceContext).
+        // WorkspaceResolver is retained for future "open project" wiring.
+        builder.Services.AddSingleton<IWorkspaceContext>(sp =>
+            new ActiveEnvironmentWorkspaceContext(sp.GetRequiredService<EnvironmentService>()));
 
         // Core façades.
         builder.Services.AddSingleton(sp => new EffectiveConfigService(sp.GetRequiredService<IFileSystem>()));
@@ -94,6 +109,11 @@ internal static class Program
             sp.GetRequiredService<CatalogService>(),
             sp.GetRequiredService<RecommendationService>(),
             sp.GetRequiredService<IWorkspaceContext>()));
+
+        // Compare.
+        builder.Services.AddSingleton(sp => new InstalledPluginsReader(sp.GetRequiredService<IFileSystem>()));
+        builder.Services.AddSingleton<IEnvironmentCompareDataSource, EngineEnvironmentCompareDataSource>();
+        builder.Services.AddTransient<CompareViewModel>();
 
         builder.RootComponents.Add<App>("app");
 
