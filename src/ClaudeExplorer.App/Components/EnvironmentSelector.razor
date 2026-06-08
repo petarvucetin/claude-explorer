@@ -1,0 +1,112 @@
+@inject EnvironmentService EnvService
+@implements IDisposable
+
+<div class="envsel">
+    @if (EnvService.Environments.Count > 1)
+    {
+        <div class="envchip @KindClass(EnvService.Active.Kind)" @onclick="ToggleLeft" title="Switch environment">
+            <span class="dot"></span>
+            <span>@EnvService.Active.Name</span>
+            <span class="caret">▾</span>
+        </div>
+        @if (_leftOpen)
+        {
+            <div class="env-dropdown">
+                <div class="env-dropdown-sep">Select Environment</div>
+                @foreach (var env in EnvService.Environments)
+                {
+                    <div class="env-dropdown-item @(env.Id == EnvService.Active.Id ? "active" : "")"
+                         @onclick="() => SelectEnv(env.Id)">
+                        <span class="dot @KindClass(env.Kind)" style="display:inline-block;width:9px;height:9px;border:1px solid var(--edge-2);border-radius:2px;"></span>
+                        @env.Name
+                    </div>
+                }
+                <div class="env-dropdown-sep">Actions</div>
+                <div class="env-dropdown-item" @onclick="AddEnvironment">＋ Add custom root…</div>
+                <div class="env-dropdown-item" @onclick="RefreshEnvs">↺ Refresh</div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="envchip @KindClass(EnvService.Active.Kind)">
+            <span class="dot"></span>
+            <span>@EnvService.Active.Name</span>
+        </div>
+    }
+</div>
+
+@if (_addOpen)
+{
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:rgba(0,0,0,.18);" @onclick="CancelAdd"></div>
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:201;background:var(--panel);border:1.5px solid var(--edge-2);border-radius:8px;padding:20px 24px;min-width:340px;box-shadow:6px 6px 0 var(--edge);">
+        <div style="font-weight:800;font-size:13px;text-transform:uppercase;margin-bottom:12px;">Add Custom Environment</div>
+        <label style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);">Root path (e.g. D:/my-claude-root)</label>
+        <input class="search-box" style="width:100%;margin:6px 0;" @bind="_addPath" placeholder="D:/path/to/root" />
+        <label style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);">Display name</label>
+        <input class="search-box" style="width:100%;margin:6px 0;" @bind="_addName" placeholder="My Root" />
+        <div style="display:flex;gap:9px;margin-top:14px;">
+            <button class="btn-primary" @onclick="ConfirmAdd">Add</button>
+            <button class="btn-secondary" @onclick="CancelAdd">Cancel</button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _leftOpen;
+    private bool _addOpen;
+    private string _addPath = "";
+    private string _addName = "";
+
+    protected override void OnInitialized()
+    {
+        EnvService.Changed += OnChanged;
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private void ToggleLeft() => _leftOpen = !_leftOpen;
+
+    private void SelectEnv(string id)
+    {
+        EnvService.SetActive(id);
+        _leftOpen = false;
+    }
+
+    private void AddEnvironment()
+    {
+        _leftOpen = false;
+        _addOpen = true;
+        _addPath = "";
+        _addName = "";
+    }
+
+    private void ConfirmAdd()
+    {
+        if (!string.IsNullOrWhiteSpace(_addPath))
+        {
+            var name = string.IsNullOrWhiteSpace(_addName)
+                ? System.IO.Path.GetFileName(_addPath.TrimEnd('/', '\\'))
+                : _addName;
+            EnvService.AddCustom(_addPath.Trim(), name);
+        }
+        _addOpen = false;
+    }
+
+    private void CancelAdd() => _addOpen = false;
+
+    private void RefreshEnvs()
+    {
+        EnvService.Refresh();
+        _leftOpen = false;
+    }
+
+    private static string KindClass(EnvironmentKind kind) => kind switch
+    {
+        EnvironmentKind.Wsl => "env-wsl",
+        EnvironmentKind.Custom => "env-custom",
+        _ => "env-win",
+    };
+
+    public void Dispose() => EnvService.Changed -= OnChanged;
+}

@@ -1,0 +1,216 @@
+@page "/compare"
+@inject CompareViewModel Vm
+@inject RefreshService Refresh
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Analyze · @(Vm.LeftEnv?.Name ?? "—") ⇄ @(Vm.RightEnv?.Name ?? "—")</div>
+        <h1>Environment Compare</h1>
+    </div>
+    @if (Vm.LeftEnv is not null && Vm.RightEnv is not null)
+    {
+        <div class="cmp-legend">
+            <b>@Vm.LeftEnv.Name</b> @Vm.LeftEnv.UserDir/.claude<br>
+            <b>@Vm.RightEnv.Name</b> @Vm.RightEnv.UserDir/.claude
+        </div>
+    }
+</div>
+
+@if (Vm.Environments.Count < 2)
+{
+    <CornerTickPanel Class="card">
+        <div class="rowx">
+            <div class="glyph info"></div>
+            <div class="body">
+                <div class="ttl">Only one environment discovered.</div>
+                <div class="meta">Add a WSL distro with <code>~/.claude</code> or add a custom root via the environment selector.</div>
+            </div>
+        </div>
+    </CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel">
+        <div class="rowx">
+            <div class="glyph bad"></div>
+            <div class="body"><div class="ttl">Compare failed</div><div class="meta">@Vm.ErrorMessage</div></div>
+        </div>
+    </CornerTickPanel>
+}
+else if (Vm.Comparison is { } cmp)
+{
+    @* Environment pickers *@
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+        <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);">COMPARE</span>
+        <select class="search-box" style="width:auto;" value="@Vm.LeftEnv?.Id" @onchange="OnLeftChanged">
+            @foreach (var env in Vm.Environments)
+            {
+                <option value="@env.Id">@env.Name</option>
+            }
+        </select>
+        <span class="vs">vs</span>
+        <select class="search-box" style="width:auto;" value="@Vm.RightEnv?.Id" @onchange="OnRightChanged">
+            @foreach (var env in Vm.Environments)
+            {
+                <option value="@env.Id">@env.Name</option>
+            }
+        </select>
+    </div>
+
+    @* Category tabs *@
+    <div class="cats">
+        @foreach (var cat in cmp.Categories)
+        {
+            <div class="cat @(cat.Name == Vm.SelectedCategory?.Name ? "active" : "")"
+                 @onclick="() => Vm.SelectCategory(cat.Name)">
+                @cat.Name
+                @if (cat.Differs > 0 || cat.OnlyA > 0 || cat.OnlyB > 0)
+                {
+                    <span class="warn">@(cat.Differs + cat.OnlyA + cat.OnlyB) differ</span>
+                }
+                else
+                {
+                    <span class="n">· @cat.Same same</span>
+                }
+            </div>
+        }
+    </div>
+
+    @* Summary bar *@
+    @if (Vm.SelectedCategory is { } sel)
+    {
+        <div class="summary">
+            <div class="scount same">◆ @sel.Same same</div>
+            <div class="scount diff">◆ @sel.Differs differ</div>
+            <div class="scount onlya">◆ @sel.OnlyA @(Vm.LeftEnv?.Name ?? "A") only</div>
+            <div class="scount onlyb">◆ @sel.OnlyB @(Vm.RightEnv?.Name ?? "B") only</div>
+        </div>
+
+        @* Diff table *@
+        @if (sel.Rows.Count == 0)
+        {
+            <CornerTickPanel Class="card">
+                <div class="rowx"><div class="body"><div class="ttl">No items in this category.</div></div></div>
+            </CornerTickPanel>
+        }
+        else
+        {
+            <div class="panel">
+                <table class="cmp-table">
+                    <thead>
+                        <tr>
+                            <th style="width:30%">@sel.Name</th>
+                            <th class="h-left" style="width:28%">@Vm.LeftEnv?.Name</th>
+                            <th class="@RightHeaderClass(Vm.RightEnv)" style="width:28%">@Vm.RightEnv?.Name</th>
+                            <th style="width:14%">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in sel.Rows)
+                        {
+                            <tr class="@RowClass(row.Status)">
+                                <td class="cmp-key">@row.Key</td>
+                                <td class="@(row.Status == DiffStatus.Differs ? "diffval" : "")">
+                                    @if (row.ValueA is not null)
+                                    {
+                                        <code>@row.ValueA</code>
+                                    }
+                                    else
+                                    {
+                                        <span class="cmp-absent">— not set —</span>
+                                    }
+                                </td>
+                                <td class="@(row.Status == DiffStatus.Differs ? "diffval" : "")">
+                                    @if (row.ValueB is not null)
+                                    {
+                                        <code>@row.ValueB</code>
+                                    }
+                                    else
+                                    {
+                                        <span class="cmp-absent">— not set —</span>
+                                    }
+                                </td>
+                                <td><span class="cmp-stat @StatClass(row.Status)">@StatLabel(row.Status)</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+}
+else if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card">
+        <div class="rowx"><div class="body"><div class="ttl">Loading comparison…</div></div></div>
+    </CornerTickPanel>
+}
+
+@code {
+    private string? _leftId;
+    private string? _rightId;
+
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnRefreshRequested() => Vm.Load();
+
+    private void OnLeftChanged(ChangeEventArgs e)
+    {
+        _leftId = e.Value?.ToString();
+        if (_leftId is not null) Vm.SetEnvironments(_leftId, _rightId ?? Vm.RightEnv?.Id ?? _leftId);
+    }
+
+    private void OnRightChanged(ChangeEventArgs e)
+    {
+        _rightId = e.Value?.ToString();
+        if (_rightId is not null) Vm.SetEnvironments(_leftId ?? Vm.LeftEnv?.Id ?? _rightId, _rightId);
+    }
+
+    private static string RowClass(DiffStatus s) => s switch
+    {
+        DiffStatus.Differs => "r-diff",
+        DiffStatus.OnlyA => "r-onlya",
+        DiffStatus.OnlyB => "r-onlyb",
+        _ => "",
+    };
+
+    private static string StatClass(DiffStatus s) => s switch
+    {
+        DiffStatus.Same => "same",
+        DiffStatus.Differs => "diff",
+        DiffStatus.OnlyA => "onlya",
+        DiffStatus.OnlyB => "onlyb",
+        _ => "",
+    };
+
+    private static string StatLabel(DiffStatus s) => s switch
+    {
+        DiffStatus.Same => "SAME",
+        DiffStatus.Differs => "DIFFERS",
+        DiffStatus.OnlyA => "LEFT ONLY",
+        DiffStatus.OnlyB => "RIGHT ONLY",
+        _ => "",
+    };
+
+    private static string RightHeaderClass(ClaudeEnvironment? env) => env?.Kind switch
+    {
+        EnvironmentKind.Wsl => "h-right",
+        EnvironmentKind.Custom => "h-right-custom",
+        _ => "h-left",
+    };
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}

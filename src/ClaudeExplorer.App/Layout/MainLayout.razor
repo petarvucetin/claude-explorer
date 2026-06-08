@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject ShellViewModel Shell
 @inject RefreshService Refresh
+@inject EnvironmentService EnvService
 
 <div class="app">
     <TopBar />
@@ -16,6 +17,12 @@
     {
         Shell.PropertyChanged += OnShellChanged;
         Refresh.Requested += OnRefreshRequested;
+        EnvService.Changed += OnEnvChanged;
+
+        // Ensure environment service has data (it is loaded in DI singleton factory, but guard here too).
+        if (!EnvService.Environments.Any())
+            EnvService.Load();
+
         Shell.Load();
     }
 
@@ -28,9 +35,12 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnEnvChanged() => Refresh.Request();
+
     public void Dispose()
     {
         Shell.PropertyChanged -= OnShellChanged;
         Refresh.Requested -= OnRefreshRequested;
+        EnvService.Changed -= OnEnvChanged;
     }
 }
