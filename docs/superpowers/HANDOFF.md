@@ -11,9 +11,9 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Current state (2026-06-07)
-- **Phases 1–8 are merged and pushed to `main`** (`git log` tip ≈ `81b75eb`).
-- **Phase 9 (multi-environment + compare) is complete** on branch `phase-9-multi-environment` (pending merge/review). `git log` tip ≈ `413c600`.
-- **`dotnet test` → 308 passing** (205 Core + 103 App). `.NET SDK 10.0.300` is installed.
+- **Phases 1–9 are merged and pushed to `main`** (`git log` tip ≈ `d74a58a`). **Next: Phase 10 —
+  environment settings sync** (settings.json attribute + whole-config sync via safe-mutation; epic CLA-97).
+- **`dotnet test` → 309 passing** (205 Core + 104 App). `.NET SDK 10.0.300` is installed.
   Solution file is `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via
   PowerShell (it is NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash
   fails with exit 127).
