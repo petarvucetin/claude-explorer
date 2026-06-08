@@ -9,7 +9,9 @@ public sealed record ArtifactItem(
     string? Summary,
     bool IsShadowing,
     string FilePath,
-    IReadOnlyList<DiscoveredArtifact> Shadowed);
+    IReadOnlyList<DiscoveredArtifact> Shadowed,
+    IReadOnlyDictionary<string, string> Frontmatter,
+    int ExtraFileCount);
 
 /// <summary>A source group in the master list.</summary>
 public sealed record ArtifactGroup(string Label, IReadOnlyList<ArtifactItem> Items);
@@ -31,7 +33,9 @@ public static class ArtifactBrowserMapper
                         a.Winner.Summary,
                         a.IsShadowing,
                         a.Winner.FilePath,
-                        a.Shadowed))
+                        a.Shadowed,
+                        a.Winner.Fm,
+                        a.Winner.ExtraFileCount))
                     .OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
                     .ToList()))
             .ToList();

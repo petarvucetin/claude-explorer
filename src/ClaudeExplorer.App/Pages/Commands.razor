@@ -1,0 +1,87 @@
+@page "/commands"
+@using ClaudeExplorer.App.Screens.Artifacts
+@using ClaudeExplorer.Core.Artifacts
+@inject ArtifactBrowserViewModel Vm
+@inject RefreshService Refresh
+@inject ClaudeExplorer.Core.Io.IFileSystem Fs
+@implements IDisposable
+
+<div class="pagehead">
+    <div><div class="k">Slash Commands</div><h1>Commands</h1></div>
+    <div class="scope">@Vm.Groups.Sum(g => g.Items.Count) COMMANDS</div>
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card"><div class="sub" style="padding:18px">Loading…</div></CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel"><div class="rowx"><div class="glyph bad"></div>
+        <div class="body"><div class="ttl">Failed to load commands</div><div class="meta">@Vm.ErrorMessage</div></div></div></CornerTickPanel>
+}
+else
+{
+    <div class="filter-row">
+        <input class="search-box" type="search" placeholder="Search commands…"
+               value="@Vm.Search" @oninput="e => Vm.Search = e.Value?.ToString() ?? string.Empty" />
+    </div>
+    <div class="browser-layout">
+        <CornerTickPanel Class="card master-panel">
+            @if (!Vm.Groups.Any()) { <div class="sub" style="padding:16px">No commands found.</div> }
+            @foreach (var group in Vm.Groups)
+            {
+                <div class="master-group-label">@group.Label</div>
+                @foreach (var item in group.Items)
+                {
+                    var sel = item;
+                    <div class="master-item @(Vm.Selected == item ? "selected" : "")" @onclick="() => Vm.Selected = sel">
+                        <span class="master-item-name" style="font-family:'Spline Sans Mono',monospace;color:var(--blue)">@ArtifactDetail.Invocation(item.Name)</span>
+                        @if (item.IsShadowing) { <span class="shadow-badge">SHADOWS</span> }
+                    </div>
+                }
+            }
+        </CornerTickPanel>
+        <div class="detail-panel">
+            @if (Vm.Selected is { } s)
+            {
+                <CornerTickPanel Class="card" style="padding:18px">
+                    <h2 style="margin:0 0 4px;font-size:19px;font-family:'Spline Sans Mono',monospace;color:var(--blue)">@ArtifactDetail.Invocation(s.Name)</h2>
+                    @if (!string.IsNullOrEmpty(s.Summary)) { <div class="detail-summary">@s.Summary</div> }
+                    <div class="kv" style="margin-top:12px">
+                        <span class="kvk">invoke</span><span class="kvv">@ArtifactDetail.Invocation(s.Name)@(s.Frontmatter.TryGetValue("argument-hint", out var ah) ? " " + ah : "")</span>
+                        @if (s.Frontmatter.TryGetValue("argument-hint", out var ah2)) { <span class="kvk">argument-hint</span><span class="kvv">@ah2</span> }
+                        <span class="kvk">file</span><span class="kvv">@s.FilePath</span>
+                    </div>
+                    @if (Fs.FileExists(s.FilePath))
+                    {
+                        <div style="margin-top:12px"><CodeViewer Title="@s.FilePath" Content="@Fs.ReadAllText(s.FilePath)" /></div>
+                    }
+                </CornerTickPanel>
+            }
+            else
+            {
+                <CornerTickPanel Class="card"><div class="sub" style="padding:24px;text-align:center;color:var(--ink-faint)">Select a command to see details.</div></CornerTickPanel>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.KindFilter = ArtifactKind.Command;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+    private void OnRefreshRequested() => Vm.Load();
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}

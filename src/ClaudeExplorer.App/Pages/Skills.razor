@@ -1,0 +1,92 @@
+@page "/skills"
+@using ClaudeExplorer.App.Screens.Artifacts
+@using ClaudeExplorer.Core.Artifacts
+@inject ArtifactBrowserViewModel Vm
+@inject RefreshService Refresh
+@inject ClaudeExplorer.Core.Io.IFileSystem Fs
+@implements IDisposable
+
+<div class="pagehead">
+    <div><div class="k">Agent Skills</div><h1>Skills</h1></div>
+    <div class="scope">@Vm.Groups.Sum(g => g.Items.Count) SKILLS</div>
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card"><div class="sub" style="padding:18px">Loading…</div></CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel"><div class="rowx"><div class="glyph bad"></div>
+        <div class="body"><div class="ttl">Failed to load skills</div><div class="meta">@Vm.ErrorMessage</div></div></div></CornerTickPanel>
+}
+else
+{
+    <div class="filter-row">
+        <input class="search-box" type="search" placeholder="Search skills…"
+               value="@Vm.Search" @oninput="e => Vm.Search = e.Value?.ToString() ?? string.Empty" />
+    </div>
+    <div class="browser-layout">
+        <CornerTickPanel Class="card master-panel">
+            @if (!Vm.Groups.Any()) { <div class="sub" style="padding:16px">No skills found.</div> }
+            @foreach (var group in Vm.Groups)
+            {
+                <div class="master-group-label">@group.Label</div>
+                @foreach (var item in group.Items)
+                {
+                    var sel = item;
+                    <div class="master-item @(Vm.Selected == item ? "selected" : "")" @onclick="() => Vm.Selected = sel">
+                        <span class="master-item-name">@item.Name</span>
+                        @if (item.ExtraFileCount > 0) { <span class="pp" style="font-size:9.5px">+@item.ExtraFileCount</span> }
+                        @if (item.IsShadowing) { <span class="shadow-badge">SHADOWS</span> }
+                    </div>
+                }
+            }
+        </CornerTickPanel>
+        <div class="detail-panel">
+            @if (Vm.Selected is { } s)
+            {
+                <CornerTickPanel Class="card" style="padding:18px">
+                    <h2 style="margin:0 0 6px;font-size:19px">@s.Name</h2>
+                    @if (!string.IsNullOrEmpty(s.Summary))
+                    {
+                        <div class="fieldlabel">Trigger — when Claude loads this</div>
+                        <div class="detail-summary" style="margin-bottom:10px">@s.Summary</div>
+                    }
+                    <div class="kv">
+                        @if (s.Frontmatter.TryGetValue("allowed-tools", out var at)) { <span class="kvk">allowed-tools</span><span class="kvv">@at</span> }
+                        <span class="kvk">bundled files</span><span class="kvv">@s.ExtraFileCount</span>
+                        <span class="kvk">file</span><span class="kvv">@s.FilePath</span>
+                    </div>
+                    @if (Fs.FileExists(s.FilePath))
+                    {
+                        <div style="margin-top:12px"><CodeViewer Title="@s.FilePath" Content="@Fs.ReadAllText(s.FilePath)" /></div>
+                    }
+                </CornerTickPanel>
+            }
+            else
+            {
+                <CornerTickPanel Class="card"><div class="sub" style="padding:24px;text-align:center;color:var(--ink-faint)">Select a skill to see details.</div></CornerTickPanel>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.KindFilter = ArtifactKind.Skill;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+    private void OnRefreshRequested() => Vm.Load();
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}
