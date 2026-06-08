@@ -1,0 +1,144 @@
+@page "/commands"
+@using ClaudeExplorer.App.Screens.Artifacts
+@using ClaudeExplorer.Core.Artifacts
+@inject ArtifactBrowserViewModel Vm
+@inject RefreshService Refresh
+@inject ClaudeExplorer.Core.Io.IFileSystem Fs
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Skills</div>
+        <h1>Commands &amp; Skills</h1>
+    </div>
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card">
+        <div class="sub" style="padding:18px">Loading…</div>
+    </CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel">
+        <div class="rowx">
+            <div class="glyph bad"></div>
+            <div class="body"><div class="ttl">Failed to load artifacts</div><div class="meta">@Vm.ErrorMessage</div></div>
+        </div>
+    </CornerTickPanel>
+}
+else
+{
+    <div class="filter-row">
+        <input class="search-box" type="search" placeholder="Search by name…"
+               value="@Vm.Search"
+               @oninput="e => Vm.Search = e.Value?.ToString() ?? string.Empty" />
+        <button class="filter-chip @(Vm.KindFilter is null ? "active" : "")"
+                @onclick="() => Vm.KindFilter = null">All</button>
+        <button class="filter-chip @(Vm.KindFilter == ArtifactKind.Command ? "active" : "")"
+                @onclick="() => Vm.KindFilter = ArtifactKind.Command">Commands</button>
+        <button class="filter-chip @(Vm.KindFilter == ArtifactKind.Skill ? "active" : "")"
+                @onclick="() => Vm.KindFilter = ArtifactKind.Skill">Skills</button>
+        <button class="filter-chip @(Vm.KindFilter == ArtifactKind.Subagent ? "active" : "")"
+                @onclick="() => Vm.KindFilter = ArtifactKind.Subagent">Subagents</button>
+    </div>
+
+    <div class="browser-layout">
+        @* Master list *@
+        <CornerTickPanel Class="card master-panel">
+            @if (!Vm.Groups.Any())
+            {
+                <div class="sub" style="padding:16px">No items match the filter.</div>
+            }
+            @foreach (var group in Vm.Groups)
+            {
+                <div class="master-group-label">@group.Label</div>
+                @foreach (var item in group.Items)
+                {
+                    var selectedItem = item;
+                    <div class="master-item @(Vm.Selected == item ? "selected" : "")"
+                         @onclick="() => Vm.Selected = selectedItem">
+                        <TypeBadge Text="@item.Kind.ToString()" />
+                        <span class="master-item-name">@item.Name</span>
+                        @if (item.IsShadowing)
+                        {
+                            <span class="shadow-badge">SHADOWS</span>
+                        }
+                    </div>
+                }
+            }
+        </CornerTickPanel>
+
+        @* Detail panel *@
+        <div class="detail-panel">
+            @if (Vm.Selected is { } sel)
+            {
+                <CornerTickPanel Class="card" style="padding:18px">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                        <h2 style="margin:0;font-size:18px">@sel.Name</h2>
+                        <TypeBadge Text="@sel.Kind.ToString()" />
+                    </div>
+                    <div class="detail-meta">
+                        <span class="detail-path">@sel.FilePath</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(sel.Summary))
+                    {
+                        <div class="detail-summary" style="margin-top:10px">@sel.Summary</div>
+                    }
+                    @if (sel.IsShadowing)
+                    {
+                        <div style="margin-top:12px;padding:8px 12px;background:var(--amber-wash);border:1.5px solid var(--amber);border-radius:4px;font-size:12px;color:var(--amber)">
+                            This item shadows @sel.Shadowed.Count earlier definition(s).
+                        </div>
+                    }
+                    <div class="action-row" style="margin-top:14px">
+                        <button class="btn-action" @onclick="() => CopyPath(sel.FilePath)">Copy path</button>
+                        <button class="btn-action" disabled title="Open in editor (not available headless)">Open in editor</button>
+                        <button class="btn-action" disabled title="Reveal in file manager (not available headless)">Reveal</button>
+                    </div>
+                    @if (Fs.FileExists(sel.FilePath))
+                    {
+                        <div style="margin-top:14px">
+                            <CodeViewer Title="@sel.FilePath" Content="@Fs.ReadAllText(sel.FilePath)" />
+                        </div>
+                    }
+                </CornerTickPanel>
+            }
+            else
+            {
+                <CornerTickPanel Class="card">
+                    <div class="sub" style="padding:24px;text-align:center;color:var(--ink-faint)">
+                        Select an item from the list to see details.
+                    </div>
+                </CornerTickPanel>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnRefreshRequested() => Vm.Load();
+
+    private void CopyPath(string path)
+    {
+        // Best-effort: no clipboard access in headless Photino without JSInterop
+        // Leave as a no-op stub; wiring it up requires IJSRuntime call
+    }
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}
