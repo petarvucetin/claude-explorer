@@ -58,4 +58,29 @@ public class McpServerReaderTests
 
         Assert.Empty(new McpServerReader(fs).Read("/home", "/repo"));
     }
+
+    [Fact]
+    public void Reads_plugin_mcp_json_at_root_so_dependency_health_covers_plugin_servers()
+    {
+        var fs = new InMemoryFileSystem()
+            .AddFile("/home/.claude/plugins/cache/official/playwright/unknown/.mcp.json",
+                """{ "playwright": { "command": "npx", "args": ["@playwright/mcp@latest"] } }""");
+
+        var pw = Assert.Single(new McpServerReader(fs).Read("/home", "/repo"));
+        Assert.Equal("playwright", pw.Name);
+        Assert.Equal("npx", pw.Command);
+        Assert.Equal(ScopeKind.Plugin, pw.Scope);
+    }
+
+    [Fact]
+    public void Reads_mcpServers_from_claude_json()
+    {
+        var fs = new InMemoryFileSystem()
+            .AddFile("/home/.claude.json",
+                """{ "mcpServers": { "u": { "command": "node", "args": ["s.js"] } } }""");
+
+        var u = Assert.Single(new McpServerReader(fs).Read("/home", "/repo"));
+        Assert.Equal("u", u.Name);
+        Assert.Equal(ScopeKind.User, u.Scope);
+    }
 }
