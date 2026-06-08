@@ -64,4 +64,38 @@ public class EnvironmentServiceTests
         Assert.Equal("My Root", added.Name);
         Assert.Equal("D:/cfg", added.UserDir);
     }
+
+    [Fact]
+    public void Refresh_rediscovers_newly_available_environments()
+    {
+        var fs = new InMemoryFileSystem();
+        var wsl = new FakeWslLocator(); // no WSL distros yet
+        var svc = Build(fs, wsl);
+        svc.Load();
+        Assert.Single(svc.Environments); // Windows only
+        var raised = 0; svc.Changed += () => raised++;
+
+        // A WSL distro now has a ~/.claude (e.g. the user just created it).
+        wsl.AddDistro("Ubuntu", "//wsl.localhost/Ubuntu/home/p");
+        fs.AddFile("//wsl.localhost/Ubuntu/home/p/.claude/settings.json", "{}");
+        svc.Refresh();
+
+        Assert.Contains(svc.Environments, e => e.Id == "wsl:Ubuntu");
+        Assert.True(raised > 0); // Refresh raised Changed so the UI reloads
+    }
+
+    [Fact]
+    public void Refresh_preserves_the_active_environment_and_custom_roots()
+    {
+        var fs = new InMemoryFileSystem();
+        var svc = Build(fs, new FakeWslLocator());
+        svc.Load();
+        svc.AddCustom("D:/cfg", "My Root");
+        svc.SetActive("custom:D:/cfg");
+
+        svc.Refresh();
+
+        Assert.Equal("custom:D:/cfg", svc.Active.Id);                        // active preserved
+        Assert.Contains(svc.Environments, e => e.Id == "custom:D:/cfg");     // custom preserved
+    }
 }
