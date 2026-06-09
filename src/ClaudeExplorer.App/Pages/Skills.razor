@@ -10,6 +10,8 @@
     <div><div class="k">Agent Skills</div><h1>Skills</h1></div>
     <div class="scope">@Vm.Groups.Sum(g => g.Items.Count) SKILLS</div>
 </div>
+<CompareBar />
+<DiffOverlay Category="Skills" />
 
 @if (Vm.IsLoading)
 {
