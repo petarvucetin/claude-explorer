@@ -5,26 +5,26 @@
 
 <div class="pagehead">
     <div>
-        <div class="k">Analyze · @(Vm.LeftEnv?.Name ?? "—") ⇄ @(Vm.RightEnv?.Name ?? "—")</div>
+        <div class="k">Analyze · @(Vm.LeftEndpoint?.Label ?? "—") ⇄ @(Vm.RightEndpoint?.Label ?? "—")</div>
         <h1>Environment Compare</h1>
     </div>
-    @if (Vm.LeftEnv is not null && Vm.RightEnv is not null)
+    @if (Vm.LeftEndpoint is not null && Vm.RightEndpoint is not null)
     {
         <div class="cmp-legend">
-            <b>@Vm.LeftEnv.Name</b> @Vm.LeftEnv.UserDir/.claude<br>
-            <b>@Vm.RightEnv.Name</b> @Vm.RightEnv.UserDir/.claude
+            <b>@Vm.LeftEndpoint.Label</b><br>
+            <b>@Vm.RightEndpoint.Label</b>
         </div>
     }
 </div>
 
-@if (Vm.Environments.Count < 2)
+@if (Vm.Endpoints.Count < 2)
 {
     <CornerTickPanel Class="card">
         <div class="rowx">
             <div class="glyph info"></div>
             <div class="body">
-                <div class="ttl">Only one environment discovered.</div>
-                <div class="meta">Add a WSL distro with <code>~/.claude</code> or add a custom root via the environment selector.</div>
+                <div class="ttl">Only one endpoint discovered.</div>
+                <div class="meta">Add a WSL distro with <code>~/.claude</code>, add a custom root via the environment selector, or add a project endpoint.</div>
             </div>
         </div>
     </CornerTickPanel>
@@ -40,20 +40,20 @@ else if (Vm.ErrorMessage is not null)
 }
 else if (Vm.Comparison is { } cmp)
 {
-    @* Environment pickers *@
+    @* TODO(B6): endpoint pickers + Add project *@
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
         <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);">COMPARE</span>
-        <select class="search-box" style="width:auto;" value="@Vm.LeftEnv?.Id" @onchange="OnLeftChanged">
-            @foreach (var env in Vm.Environments)
+        <select class="search-box" style="width:auto;" value="@Vm.LeftEndpoint?.Id" @onchange="OnLeftChanged">
+            @foreach (var ep in Vm.Endpoints)
             {
-                <option value="@env.Id">@env.Name</option>
+                <option value="@ep.Id">@ep.Label</option>
             }
         </select>
         <span class="vs">vs</span>
-        <select class="search-box" style="width:auto;" value="@Vm.RightEnv?.Id" @onchange="OnRightChanged">
-            @foreach (var env in Vm.Environments)
+        <select class="search-box" style="width:auto;" value="@Vm.RightEndpoint?.Id" @onchange="OnRightChanged">
+            @foreach (var ep in Vm.Endpoints)
             {
-                <option value="@env.Id">@env.Name</option>
+                <option value="@ep.Id">@ep.Label</option>
             }
         </select>
     </div>
@@ -83,8 +83,8 @@ else if (Vm.Comparison is { } cmp)
         <div class="summary">
             <div class="scount same">◆ @sel.Same same</div>
             <div class="scount diff">◆ @sel.Differs differ</div>
-            <div class="scount onlya">◆ @sel.OnlyA @(Vm.LeftEnv?.Name ?? "A") only</div>
-            <div class="scount onlyb">◆ @sel.OnlyB @(Vm.RightEnv?.Name ?? "B") only</div>
+            <div class="scount onlya">◆ @sel.OnlyA @(Vm.LeftEndpoint?.Label ?? "A") only</div>
+            <div class="scount onlyb">◆ @sel.OnlyB @(Vm.RightEndpoint?.Label ?? "B") only</div>
         </div>
 
         @* Diff table *@
@@ -101,8 +101,8 @@ else if (Vm.Comparison is { } cmp)
                     <thead>
                         <tr>
                             <th style="width:30%">@sel.Name</th>
-                            <th class="h-left" style="width:28%">@Vm.LeftEnv?.Name</th>
-                            <th class="@RightHeaderClass(Vm.RightEnv)" style="width:28%">@Vm.RightEnv?.Name</th>
+                            <th class="h-left" style="width:28%">@Vm.LeftEndpoint?.Label</th>
+                            <th class="h-left" style="width:28%">@Vm.RightEndpoint?.Label</th>
                             <th style="width:14%">Status</th>
                         </tr>
                     </thead>
@@ -166,13 +166,13 @@ else if (Vm.IsLoading)
     private void OnLeftChanged(ChangeEventArgs e)
     {
         _leftId = e.Value?.ToString();
-        if (_leftId is not null) Vm.SetEnvironments(_leftId, _rightId ?? Vm.RightEnv?.Id ?? _leftId);
+        if (_leftId is not null) Vm.SetEndpoints(_leftId, _rightId ?? Vm.RightEndpoint?.Id ?? _leftId);
     }
 
     private void OnRightChanged(ChangeEventArgs e)
     {
         _rightId = e.Value?.ToString();
-        if (_rightId is not null) Vm.SetEnvironments(_leftId ?? Vm.LeftEnv?.Id ?? _rightId, _rightId);
+        if (_rightId is not null) Vm.SetEndpoints(_leftId ?? Vm.LeftEndpoint?.Id ?? _rightId, _rightId);
     }
 
     private static string RowClass(DiffStatus s) => s switch
@@ -199,13 +199,6 @@ else if (Vm.IsLoading)
         DiffStatus.OnlyA => "LEFT ONLY",
         DiffStatus.OnlyB => "RIGHT ONLY",
         _ => "",
-    };
-
-    private static string RightHeaderClass(ClaudeEnvironment? env) => env?.Kind switch
-    {
-        EnvironmentKind.Wsl => "h-right",
-        EnvironmentKind.Custom => "h-right-custom",
-        _ => "h-left",
     };
 
     public void Dispose()

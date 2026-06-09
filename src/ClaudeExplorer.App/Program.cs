@@ -59,6 +59,12 @@ internal static class Program
             svc.Load();
             return svc;
         });
+        builder.Services.AddSingleton(sp =>
+        {
+            var r = new ProjectRegistry(sp.GetRequiredService<EnvironmentStore>());
+            r.Load();
+            return r;
+        });
 
         // IWorkspaceContext is now driven by the active environment (replaces the old fixed WorkspaceContext).
         // WorkspaceResolver is retained for future "open project" wiring.
