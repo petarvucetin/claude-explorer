@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Explorer — Claude Environment Settings (mockup)</title>
+<!-- Uses the REAL app theme so this mockup matches production 1:1 -->
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/fonts.css" />
+<link rel="stylesheet" href="../src/ClaudeExplorer.App/wwwroot/css/blueprint.css" />
+<style>
+  /* mockup-only helpers (not shipped) */
+  .es-hero { display:grid; grid-template-columns: 1fr; gap:14px; margin-bottom:6px; }
+  .es-id { padding:16px 18px; display:flex; align-items:center; gap:16px; }
+  .es-id .dot { width:14px; height:14px; border-radius:3px; border:1.5px solid var(--edge-2); flex:none; }
+  .es-id.env-win .dot { background: var(--win); }
+  .es-id .who { display:flex; flex-direction:column; gap:3px; }
+  .es-id .who .nm { font-size:18px; font-weight:800; letter-spacing:.2px; }
+  .es-id .who .pth { font-family:"Spline Sans Mono",monospace; font-size:11px; color:var(--ink-soft); word-break:break-all; }
+  .es-id .right { margin-left:auto; display:flex; gap:10px; align-items:center; }
+  .es-grid2 { display:grid; grid-template-columns: 1.25fr 1fr; gap:18px; align-items:start; }
+  .es-perm-cols { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0; }
+  .es-perm-col { border-right:1px solid var(--edge); }
+  .es-perm-col:last-child { border-right:none; }
+  .es-perm-head { display:flex; align-items:center; gap:8px; padding:11px 14px 8px; }
+  .es-perm-head .ph { font-family:"Spline Sans Mono",monospace; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .es-perm-head.allow .ph { color:var(--green); }
+  .es-perm-head.deny  .ph { color:var(--red); }
+  .es-perm-head.ask   .ph { color:var(--amber); }
+  .es-perm-head .c { font-family:"Spline Sans Mono",monospace; font-size:10px; color:var(--ink-faint); margin-left:auto; }
+  .es-perm-list { display:flex; flex-direction:column; }
+  .es-perm-item { font-family:"Spline Sans Mono",monospace; font-size:11.5px; padding:6px 14px; border-top:1px solid var(--edge); color:var(--ink); word-break:break-all; display:flex; align-items:center; gap:8px; }
+  .es-perm-item .acc { width:6px; height:6px; border-radius:50%; flex:none; }
+  .es-perm-item.allow .acc { background:var(--green); }
+  .es-perm-item.deny  .acc { background:var(--red); }
+  .es-perm-item.ask   .acc { background:var(--amber); }
+  .es-rowline { display:flex; align-items:center; gap:10px; padding:9px 16px; border-top:1px solid var(--edge); font-family:"Spline Sans Mono",monospace; font-size:12px; }
+  .es-rowline .vk { color:var(--ink-faint); min-width:160px; word-break:break-all; }
+  .es-rowline .vv { color:var(--ink); flex:1; word-break:break-all; }
+  .es-hooks { display:flex; flex-direction:column; }
+  .es-hookline { display:flex; align-items:center; gap:10px; padding:10px 16px; border-top:1px solid var(--edge); }
+  .es-hookline .ev { font-weight:700; font-size:13px; }
+  .es-hookline .ct { font-family:"Spline Sans Mono",monospace; font-size:10.5px; color:var(--ink-faint); }
+  .es-hookline .lnk { margin-left:auto; }
+  .es-note { font-family:"Spline Sans Mono",monospace; font-size:10.5px; color:var(--ink-faint); padding:10px 16px 4px; }
+  .es-empty { font-family:"Spline Sans Mono",monospace; font-size:11px; color:var(--ink-faint); padding:12px 16px; }
+  .lnk { font-family:"Spline Sans Mono",monospace; font-size:10.5px; font-weight:700; color:var(--blue); cursor:pointer; border:1px solid var(--blue); border-radius:4px; padding:2px 8px; text-decoration:none; }
+  .lnk:hover { background:var(--blue); color:#fff; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="brand"><span class="mark"></span> Claude Explorer</div>
+    <div class="spacer"></div>
+    <div class="coord">EFFECTIVE · USER ▸ PROJECT ▸ LOCAL</div>
+    <div class="envsel">
+      <div class="envchip env-win"><span class="dot"></span> Windows <span class="caret">▾</span></div>
+    </div>
+    <button class="iconbtn" title="Refresh">⟳</button>
+  </header>
+
+  <!-- LEFT RAIL (reflects the change: Effective Config → Claude Environment Settings; Plugins now in Workspace) -->
+  <aside class="rail">
+    <div class="lbl">Workspace</div>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg> Dashboard</a>
+    <a class="nav active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 6.6 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4 13.6H4a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 5 6.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1A1.6 1.6 0 0 0 18 4.6l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1A1.6 1.6 0 0 0 21.9 11H22a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg> Claude Environment Settings</a>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg> Dependencies</a>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v4H6a2 2 0 0 0-2 2v3h2.5a2.5 2.5 0 1 1 0 5H4v3a2 2 0 0 0 2 2h3v-2.5a2.5 2.5 0 1 1 5 0V22h3a2 2 0 0 0 2-2v-4h-4"/></svg> Plugins <span class="count">6</span></a>
+
+    <div class="lbl">Config Artifacts</div>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/></svg> Commands <span class="count">14</span></a>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 17.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg> Skills <span class="count">9</span></a>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Subagents <span class="count">5</span></a>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v6h8"/><path d="M8 14h8M8 17h5"/></svg> Memory</a>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5v6a6 6 0 0 0 6 6h4"/><path d="m11 13 3 3-3 3"/></svg> Hooks <span class="count">4</span></a>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg> MCP <span class="count">3</span></a>
+
+    <div class="lbl">Discover</div>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg> Marketplace</a>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Recommended</a>
+    <a class="nav" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M12 7v5l3 2M3 4v5h5"/></svg> Change Log</a>
+
+    <div class="foot">ENVIRONMENTS: 2<br>● Windows<br>● WSL : Ubuntu<br>cli: see Dependencies</div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <div class="pagehead">
+      <div>
+        <div class="k">Workspace</div>
+        <h1>Claude Environment Settings</h1>
+      </div>
+      <div class="scope">ACTIVE ENV · <b>Windows</b><br>~/.claude · settings.json</div>
+    </div>
+
+    <!-- Active environment identity -->
+    <div class="es-hero">
+      <div class="panel es-id env-win">
+        <span class="dot"></span>
+        <div class="who">
+          <div class="nm">Windows</div>
+          <div class="pth">C:\Users\petar\.claude</div>
+        </div>
+        <div class="right">
+          <span class="scope-tag s-user">USER GLOBAL</span>
+          <span class="pill ok">resolved</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core scalars as stat cards -->
+    <div class="stats" style="margin-bottom:6px">
+      <div class="panel stat">
+        <div class="num-tag"><span class="t">Model</span><span class="idx">settings.model</span></div>
+        <div class="v">opus-4.8 <span class="scope-tag s-user">user</span></div>
+        <div class="s">claude-opus-4-8</div>
+      </div>
+      <div class="panel stat">
+        <div class="num-tag"><span class="t">Output Style</span><span class="idx">settings.outputStyle</span></div>
+        <div class="v">explanatory <span class="scope-tag s-user">user</span></div>
+        <div class="s">1 custom style available</div>
+      </div>
+      <div class="panel stat">
+        <div class="num-tag"><span class="t">Default Perm Mode</span><span class="idx">permissions.defaultMode</span></div>
+        <div class="v">acceptEdits <span class="scope-tag s-project">project</span></div>
+        <div class="s">overrides user (plan)</div>
+      </div>
+    </div>
+
+    <!-- Permissions -->
+    <div class="grp-label"><span class="name">Permissions</span><span class="cnt">15</span></div>
+    <div class="panel">
+      <div class="es-perm-cols">
+        <div class="es-perm-col">
+          <div class="es-perm-head allow"><span class="ph">Allow</span><span class="c">12</span></div>
+          <div class="es-perm-list">
+            <div class="es-perm-item allow"><span class="acc"></span>Bash(git status:*)</div>
+            <div class="es-perm-item allow"><span class="acc"></span>Bash(npm test:*)</div>
+            <div class="es-perm-item allow"><span class="acc"></span>Read(~/**)</div>
+            <div class="es-perm-item allow"><span class="acc"></span>WebFetch(domain:docs.anthropic.com)</div>
+            <div class="es-perm-item allow"><span class="acc"></span>mcp__linear-server__*</div>
+            <div class="es-perm-item allow" style="color:var(--ink-faint)"><span class="acc"></span>+7 more…</div>
+          </div>
+        </div>
+        <div class="es-perm-col">
+          <div class="es-perm-head deny"><span class="ph">Deny</span><span class="c">2</span></div>
+          <div class="es-perm-list">
+            <div class="es-perm-item deny"><span class="acc"></span>Bash(rm -rf:*)</div>
+            <div class="es-perm-item deny"><span class="acc"></span>Read(./.env)</div>
+          </div>
+        </div>
+        <div class="es-perm-col">
+          <div class="es-perm-head ask"><span class="ph">Ask</span><span class="c">1</span></div>
+          <div class="es-perm-list">
+            <div class="es-perm-item ask"><span class="acc"></span>Bash(git push:*)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two-column: env vars + statusline/hooks -->
+    <div class="es-grid2" style="margin-top:4px">
+      <div>
+        <div class="grp-label"><span class="name">Environment Variables</span><span class="cnt">4</span></div>
+        <div class="panel card">
+          <div class="es-rowline"><span class="vk">DISABLE_TELEMETRY</span><span class="vv">1</span><span class="scope-tag s-user">user</span></div>
+          <div class="es-rowline"><span class="vk">ANTHROPIC_LOG</span><span class="vv">info</span><span class="scope-tag s-user">user</span></div>
+          <div class="es-rowline"><span class="vk">MAX_THINKING_TOKENS</span><span class="vv">31999</span><span class="scope-tag s-project">project</span></div>
+          <div class="es-rowline"><span class="vk">GIT_TERMINAL_PROMPT</span><span class="vv">0</span><span class="scope-tag s-local">local</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="grp-label"><span class="name">Status Line</span></div>
+        <div class="panel card">
+          <div class="es-rowline"><span class="vk">type</span><span class="vv">command</span><span class="scope-tag s-user">user</span></div>
+          <div class="es-rowline"><span class="vk">command</span><span class="vv">~/.claude/statusline.sh</span><span class="scope-tag s-user">user</span></div>
+        </div>
+
+        <div class="grp-label" style="margin-top:16px"><span class="name">Hooks</span><span class="cnt">4</span></div>
+        <div class="panel card es-hooks">
+          <div class="es-note">defined across 3 events · full detail on the Hooks screen</div>
+          <div class="es-hookline"><span class="ev">PreToolUse</span><span class="ct">2 matchers</span><a class="lnk es-hookline-lnk" href="#" style="margin-left:auto">View ▸</a></div>
+          <div class="es-hookline"><span class="ev">PostToolUse</span><span class="ct">1 matcher</span><a class="lnk" href="#" style="margin-left:auto">View ▸</a></div>
+          <div class="es-hookline"><span class="ev">SessionStart</span><span class="ct">1 matcher</span><a class="lnk" href="#" style="margin-left:auto">View ▸</a></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:30px"></div>
+  </main>
+</div>
+</body>
+</html>
