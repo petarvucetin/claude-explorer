@@ -16,13 +16,28 @@ public sealed record CopyRequest(
     string? SourceFilePath = null, string? TargetFilePath = null,
     string? SourceMcpPath = null, string? TargetMcpPath = null);
 
-/// <summary>The source edit that removes the item (for Move operations).</summary>
-public sealed record SourceRemoval(string Path, string NewContent);
+/// <summary>One file to write at the target (content + whether it should be JSON-validated).</summary>
+public sealed record CopyWrite(string Path, string Content, bool IsJson);
 
-/// <summary>The resulting plan: the target to write plus an optional source removal.</summary>
+/// <summary>The source edit that removes/clears the item (for Move operations). When
+/// <see cref="IsDelete"/> is true the whole file is deleted; otherwise <see cref="NewContent"/>
+/// replaces the source file (e.g. a settings key or hook group spliced out).</summary>
+public sealed record SourceRemoval(string Path, string NewContent, bool IsDelete = false);
+
+/// <summary>The resulting plan. <see cref="Writes"/> lists every target file to write (one for
+/// scalar/JSON/single-file categories, many for a recursive Skills folder). <see cref="Removals"/>
+/// lists the source edits/deletes for a Move. <see cref="TargetPath"/>/<see cref="NewTargetContent"/>/
+/// <see cref="TargetIsJson"/>/<see cref="SourceRemoval"/> mirror the FIRST write/removal so existing
+/// single-file/JSON callers keep working.</summary>
 public sealed record CopyPlan(
-    string TargetPath, string NewTargetContent, bool TargetIsJson,
-    SourceRemoval? SourceRemoval = null);
+    IReadOnlyList<CopyWrite> Writes,
+    IReadOnlyList<SourceRemoval> Removals)
+{
+    public string TargetPath => Writes.Count > 0 ? Writes[0].Path : "";
+    public string NewTargetContent => Writes.Count > 0 ? Writes[0].Content : "";
+    public bool TargetIsJson => Writes.Count > 0 && Writes[0].IsJson;
+    public SourceRemoval? SourceRemoval => Removals.Count > 0 ? Removals[0] : null;
+}
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -56,7 +71,8 @@ public sealed class ConfigCopyService
         req.Category switch
         {
             "Settings"  => CopySettings(req, move),
-            "Memory" or "Commands" or "Skills" or "Subagents" => CopyFile(req, move),
+            "Memory" or "Commands" or "Subagents" => CopyFile(req, move),
+            "Skills"    => CopySkillDirectory(req, move),
             "MCP"       => CopyMcp(req, move),
             "Hooks"     => CopyHooks(req, move),
             _ => throw new MutationException($"Unknown copy category \"{req.Category}\"."),
@@ -77,10 +93,12 @@ public sealed class ConfigCopyService
             ? new SourceRemoval(sourcePath, SettingsKeyEditor.RemoveKey(sourceText, req.Key))
             : null;
 
-        return new CopyPlan(targetPath, newTarget, TargetIsJson: true, removal);
+        return new CopyPlan(
+            new[] { new CopyWrite(targetPath, newTarget, IsJson: true) },
+            removal is null ? Array.Empty<SourceRemoval>() : new[] { removal });
     }
 
-    // ── Memory / Commands / Skills / Subagents (file copy) ───────────────────
+    // ── Memory / Commands / Subagents (single-file copy) ─────────────────────
 
     private CopyPlan CopyFile(CopyRequest req, bool move)
     {
@@ -88,11 +106,43 @@ public sealed class ConfigCopyService
         var targetPath = req.TargetFilePath!;
         var content    = ReadText(sourcePath, "");
 
-        // Empty string is the delete sentinel — the apply layer deletes when
-        // TargetIsJson==false and SourceRemoval.NewContent is empty.
-        SourceRemoval? removal = move ? new SourceRemoval(sourcePath, "") : null;
+        var writes = new[] { new CopyWrite(targetPath, content, IsJson: false) };
+        var removals = move ? new[] { new SourceRemoval(sourcePath, "", IsDelete: true) } : Array.Empty<SourceRemoval>();
+        return new CopyPlan(writes, removals);
+    }
 
-        return new CopyPlan(targetPath, content, TargetIsJson: false, removal);
+    // ── Skills (recursive directory copy/move) ───────────────────────────────
+
+    /// <summary>Copy a whole skill folder. <c>SourceFilePath</c>/<c>TargetFilePath</c> are the
+    /// source/target <c>SKILL.md</c> paths; the skill DIRECTORY is each file's parent. Every file under
+    /// the source dir (recursively) becomes a write rebased under the target dir; Move adds a delete per
+    /// source file.</summary>
+    private CopyPlan CopySkillDirectory(CopyRequest req, bool move)
+    {
+        var sourceDir = DirOf(req.SourceFilePath!);
+        var targetDir = DirOf(req.TargetFilePath!);
+
+        var files = _fs.GetFiles(sourceDir, "*", recurse: true);
+        if (files.Count == 0)
+            throw new MutationException($"Skill folder is empty or missing: {sourceDir}");
+
+        var writes = new List<CopyWrite>();
+        var removals = new List<SourceRemoval>();
+        foreach (var file in files)
+        {
+            var rel = file.Substring(sourceDir.Length).TrimStart('/');
+            var targetFile = $"{targetDir}/{rel}";
+            writes.Add(new CopyWrite(targetFile, _fs.ReadAllText(file), IsJson: false));
+            if (move) removals.Add(new SourceRemoval(file, "", IsDelete: true));
+        }
+        return new CopyPlan(writes, removals);
+    }
+
+    private static string DirOf(string filePath)
+    {
+        var p = filePath.Replace('\\', '/');
+        var i = p.LastIndexOf('/');
+        return i >= 0 ? p.Substring(0, i) : p;
     }
 
     // ── MCP (copy a named server entry between MCP JSON files) ───────────────
@@ -137,7 +187,9 @@ public sealed class ConfigCopyService
             removal = new SourceRemoval(sourcePath, sourceRoot.ToJsonString(Pretty));
         }
 
-        return new CopyPlan(targetPath, newTarget, TargetIsJson: true, removal);
+        return new CopyPlan(
+            new[] { new CopyWrite(targetPath, newTarget, IsJson: true) },
+            removal is null ? Array.Empty<SourceRemoval>() : new[] { removal });
     }
 
     // ── Hooks (key = "<event>#<sourceGroupIndex>") ────────────────────────────
@@ -184,7 +236,9 @@ public sealed class ConfigCopyService
             removal = new SourceRemoval(sourcePath, newSource);
         }
 
-        return new CopyPlan(targetPath, newTarget, TargetIsJson: true, removal);
+        return new CopyPlan(
+            new[] { new CopyWrite(targetPath, newTarget, IsJson: true) },
+            removal is null ? Array.Empty<SourceRemoval>() : new[] { removal });
     }
 
     /// <summary>Remove the hook group at <paramref name="idx"/> from <c>hooks.&lt;evt&gt;</c>
