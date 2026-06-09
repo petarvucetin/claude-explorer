@@ -78,4 +78,15 @@ public class CopyRequestBuilderTests
         Assert.Equal("C:/Users/me/.claude/skills/lint/SKILL.md", req.SourceFilePath);
         Assert.Equal("D:/work/a/.claude/skills/lint/SKILL.md", req.TargetFilePath);
     }
+
+    [Fact]
+    public void Hooks_uses_settings_json_paths_respects_local_flag()
+    {
+        var row = new CompareRow("PreToolUse#0", DiffStatus.OnlyA, "{}", null);
+        var req = CopyRequestBuilder.Build("Hooks", row, src: Base, tgt: Proj, local: true);
+
+        Assert.Equal("Hooks", req.Category);
+        Assert.Equal("C:/Users/me/.claude/settings.json", req.SourceSettingsPath);
+        Assert.Equal("D:/work/a/.claude/settings.local.json", req.TargetSettingsPath);
+    }
 }

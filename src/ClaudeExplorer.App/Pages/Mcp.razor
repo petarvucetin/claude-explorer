@@ -16,6 +16,8 @@
         <div class="scope">@v.Total SERVERS · @v.Stdio STDIO · @v.Remote REMOTE@if (v.Missing > 0) { <text> · <b>@v.Missing MISSING</b></text> }<br />local config only · remote connectors not shown</div>
     }
 </div>
+<CompareBar />
+<DiffOverlay Category="MCP" />
 
 @if (Vm.IsLoading)
 {

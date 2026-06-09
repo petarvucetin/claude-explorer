@@ -18,6 +18,7 @@ public static class EnvironmentComparer
             BuildCategory("Skills", ArtifactMap(a, ArtifactKind.Skill), ArtifactMap(b, ArtifactKind.Skill)),
             BuildCategory("Subagents", ArtifactMap(a, ArtifactKind.Subagent), ArtifactMap(b, ArtifactKind.Subagent)),
             BuildCategory("MCP", McpMap(a), McpMap(b)),
+            BuildCategory("Hooks", HookMap(a), HookMap(b)),
             BuildCategory("Memory", MemoryMap(a), MemoryMap(b)),
             BuildCategory("Plugins", PluginMap(a), PluginMap(b), viewOnly: true),
             BuildCategory("Dependencies", DepMap(a), DepMap(b), viewOnly: true),
@@ -70,6 +71,20 @@ public static class EnvironmentComparer
     private static Dictionary<string, CompareEntry> DepMap(EnvironmentSnapshot s)
         => s.Dependencies.Results.GroupBy(r => r.Ref.Name, StringComparer.Ordinal)
                .ToDictionary(g => g.Key, g => new CompareEntry(g.First().Status.Kind.ToString()), StringComparer.Ordinal);
+
+    private static Dictionary<string, CompareEntry> HookMap(EnvironmentSnapshot s)
+    {
+        var map = new Dictionary<string, CompareEntry>(StringComparer.Ordinal);
+        foreach (var setting in s.Settings)
+        {
+            if (!setting.Key.StartsWith("hooks.", StringComparison.Ordinal)) continue;
+            var evt = setting.Key.Substring("hooks.".Length);
+            if (setting.Value is not System.Text.Json.Nodes.JsonArray groups) continue;
+            for (var i = 0; i < groups.Count; i++)
+                map[$"{evt}#{i}"] = new CompareEntry(groups[i]?.ToJsonString() ?? "null");
+        }
+        return map;
+    }
 
     private static Dictionary<string, CompareEntry> MemoryMap(EnvironmentSnapshot s)
         => s.Memory.ToDictionary(kv => kv.Key, kv => new CompareEntry(Descriptor(kv.Value), Content: kv.Value), StringComparer.Ordinal);
