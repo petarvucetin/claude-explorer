@@ -13,7 +13,7 @@
     </div>
     @if (Vm.View is { } v)
     {
-        <div class="scope">@v.Total SERVERS · @v.Stdio STDIO · @v.Remote REMOTE@if (v.Missing > 0) { <text> · <b>@v.Missing MISSING</b></text> }<br />local config only · remote connectors not shown</div>
+        <div class="scope">@v.Total SERVERS · @v.Stdio STDIO · @v.Remote REMOTE @if (v.Missing > 0) { <text> · <b>@v.Missing MISSING</b></text> }<br />local config only · remote connectors not shown</div>
     }
 </div>
 <CompareBar />
@@ -48,6 +48,10 @@ else if (Vm.View is { } view)
             <span class="pill @McpRowsMapper.Pill(row.Health)">@HealthText(row)</span>
         </div>
     }
+
+    <div class="sub" style="margin-top:10px;font-size:12px;opacity:0.65">
+        Account-managed connectors (claude.ai) are configured in your Anthropic account and are not listed here.
+    </div>
 
     @if (Vm.Selected is { } sel)
     {
