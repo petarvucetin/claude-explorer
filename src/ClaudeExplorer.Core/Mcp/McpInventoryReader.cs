@@ -39,6 +39,7 @@ public sealed class McpInventoryReader
             Collect(result, seen, file.Path, ScopeLabel(file.Scope), allowRoot: false);
 
         Collect(result, seen, $"{userDir}/.claude.json", "user", allowRoot: false);
+        CollectProjectsBlock(result, seen, $"{userDir}/.claude.json");
         Collect(result, seen, $"{projectDir}/.mcp.json", "project", allowRoot: true);
 
         foreach (var plugin in _plugins.Locate(userDir))
@@ -67,6 +68,41 @@ public sealed class McpInventoryReader
                 : new Dictionary<string, string>();
 
             into.Add(new McpServerInfo(name, McpJson.Transport(obj), command, args, url, env, sourceLabel, path));
+        }
+    }
+
+    private void CollectProjectsBlock(List<McpServerInfo> into, HashSet<string> seen, string claudeJsonPath)
+    {
+        var root = TryParse(claudeJsonPath);
+        if (root?["projects"] is not JsonObject projects) return;
+
+        foreach (var (projectKey, projectValue) in projects)
+        {
+            if (projectValue is not JsonObject projectObj) continue;
+            if (projectObj["mcpServers"] is not JsonObject mcpServers) continue;
+
+            var projectLabel = projectKey.TrimEnd('/').TrimEnd('\\');
+            var lastSep = projectLabel.LastIndexOfAny(['/', '\\']);
+            var shortName = lastSep >= 0 ? projectLabel[(lastSep + 1)..] : projectLabel;
+            var sourceLabel = $"local: {shortName}";
+
+            foreach (var (name, def) in mcpServers)
+            {
+                if (def is not JsonObject obj) continue;
+                // Include projectKey in dedup key so same-named servers in different projects both appear
+                if (!seen.Add($"{name}|{claudeJsonPath}|{projectKey}")) continue;
+
+                var command = (string?)obj["command"];
+                var args = obj["args"] is JsonArray arr
+                    ? arr.Select(a => (string?)a ?? "").Where(a => a.Length > 0).ToList()
+                    : new List<string>();
+                var url = (string?)obj["url"];
+                var env = obj["env"] is JsonObject e
+                    ? e.ToDictionary(kv => kv.Key, kv => (string?)kv.Value ?? "")
+                    : new Dictionary<string, string>();
+
+                into.Add(new McpServerInfo(name, McpJson.Transport(obj), command, args, url, env, sourceLabel, claudeJsonPath));
+            }
         }
     }
 

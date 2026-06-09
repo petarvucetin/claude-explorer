@@ -55,4 +55,62 @@ public class McpInventoryReaderTests
         var servers = new McpInventoryReader(new InMemoryFileSystem()).Read("/home", "/repo");
         Assert.Empty(servers);
     }
+
+    [Fact]
+    public void Reads_per_project_mcp_servers_from_claude_json_projects_block()
+    {
+        var fs = new InMemoryFileSystem()
+            .AddFile("/home/.claude.json",
+                """
+                {
+                  "mcpServers": {},
+                  "projects": {
+                    "C:/work/proj-a": {
+                      "mcpServers": {
+                        "linear-server": { "command": "npx", "args": ["-y", "mcp-remote"] }
+                      }
+                    }
+                  }
+                }
+                """);
+
+        var servers = new McpInventoryReader(fs).Read("/home", "");
+
+        var srv = servers.Single(s => s.Name == "linear-server");
+        Assert.Equal("local: proj-a", srv.SourceLabel);
+        Assert.Equal("/home/.claude.json", srv.SourceFile);
+        Assert.Equal("npx", srv.Command);
+        Assert.Equal(new[] { "-y", "mcp-remote" }, srv.Args);
+        Assert.Equal(McpTransport.Stdio, srv.Transport);
+    }
+
+    [Fact]
+    public void Same_named_servers_in_different_projects_both_appear()
+    {
+        var fs = new InMemoryFileSystem()
+            .AddFile("/home/.claude.json",
+                """
+                {
+                  "projects": {
+                    "C:/work/proj-a": {
+                      "mcpServers": {
+                        "srv": { "command": "node", "args": ["a.js"] }
+                      }
+                    },
+                    "C:/work/proj-b": {
+                      "mcpServers": {
+                        "srv": { "command": "node", "args": ["b.js"] }
+                      }
+                    }
+                  }
+                }
+                """);
+
+        var servers = new McpInventoryReader(fs).Read("/home", "");
+
+        var allSrv = servers.Where(s => s.Name == "srv").ToList();
+        Assert.Equal(2, allSrv.Count);
+        Assert.Contains(allSrv, s => s.SourceLabel == "local: proj-a");
+        Assert.Contains(allSrv, s => s.SourceLabel == "local: proj-b");
+    }
 }
