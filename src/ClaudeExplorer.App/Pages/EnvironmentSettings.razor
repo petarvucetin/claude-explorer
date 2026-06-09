@@ -1,0 +1,286 @@
+@page "/env-settings"
+@using ClaudeExplorer.App.Screens.EnvironmentSettings
+@using ClaudeExplorer.App.Environments
+@inject EnvironmentSettingsViewModel Vm
+@inject RefreshService Refresh
+@implements IDisposable
+
+<div class="pagehead">
+    <div>
+        <div class="k">Configuration</div>
+        <h1>Claude Environment Settings</h1>
+    </div>
+    @if (Vm.View is { } v)
+    {
+        <div class="scope">
+            @v.Identity.Name
+            @if (!string.IsNullOrEmpty(v.Identity.ProjectLabel))
+            {
+                <text> · @v.Identity.ProjectLabel</text>
+            }
+        </div>
+    }
+</div>
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card">
+        <div class="sub" style="padding:18px">Loading…</div>
+    </CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel">
+        <div class="rowx">
+            <div class="glyph bad"></div>
+            <div class="body">
+                <div class="ttl">Failed to load environment settings</div>
+                <div class="meta">@Vm.ErrorMessage</div>
+            </div>
+        </div>
+    </CornerTickPanel>
+}
+else if (Vm.View is { } view)
+{
+    @* ── Identity panel ── *@
+    <div class="es-hero">
+        <CornerTickPanel Class="@($"panel es-id {EnvCss(view.Identity.Kind)}")">
+            <span class="dot"></span>
+            <div class="who">
+                <div class="nm">@view.Identity.Name</div>
+                <div class="pth">@view.Identity.UserDir</div>
+            </div>
+            <div class="right">
+                <span class="scope-tag s-user">USER GLOBAL</span>
+                <span class="pill ok">resolved</span>
+            </div>
+        </CornerTickPanel>
+    </div>
+
+    @* ── Scalar stat cards ── *@
+    <div class="stats" style="margin-bottom:6px">
+        <div class="panel stat">
+            <div class="num-tag">
+                <span class="t">Model</span>
+                <span class="idx">settings.model</span>
+            </div>
+            @if (view.Model is { } model)
+            {
+                <div class="v">@model.Display <span class="scope-tag s-@model.ScopeCss">@model.ScopeCss</span></div>
+            }
+            else
+            {
+                <div class="v" style="color:var(--ink-faint)">—</div>
+            }
+        </div>
+        <div class="panel stat">
+            <div class="num-tag">
+                <span class="t">Output Style</span>
+                <span class="idx">settings.outputStyle</span>
+            </div>
+            @if (view.OutputStyle is { } os)
+            {
+                <div class="v">@os.Display <span class="scope-tag s-@os.ScopeCss">@os.ScopeCss</span></div>
+            }
+            else
+            {
+                <div class="v" style="color:var(--ink-faint)">—</div>
+            }
+        </div>
+        <div class="panel stat">
+            <div class="num-tag">
+                <span class="t">Default Perm Mode</span>
+                <span class="idx">permissions.defaultMode</span>
+            </div>
+            @if (view.DefaultMode is { } dm)
+            {
+                <div class="v">@dm.Display <span class="scope-tag s-@dm.ScopeCss">@dm.ScopeCss</span></div>
+            }
+            else
+            {
+                <div class="v" style="color:var(--ink-faint)">—</div>
+            }
+        </div>
+    </div>
+
+    @* ── Permissions ── *@
+    <div class="grp-label">
+        <span class="name">Permissions</span>
+        <span class="cnt">@(view.Allow.Count + view.Deny.Count + view.Ask.Count)</span>
+    </div>
+    <CornerTickPanel Class="panel">
+        <div class="es-perm-cols">
+            <div class="es-perm-col">
+                <div class="es-perm-head allow">
+                    <span class="ph">Allow</span>
+                    <span class="c">@view.Allow.Count</span>
+                </div>
+                <div class="es-perm-list">
+                    @foreach (var item in view.Allow)
+                    {
+                        <div class="es-perm-item allow">
+                            <span class="acc"></span>@item
+                        </div>
+                    }
+                    @if (view.Allow.Count == 0)
+                    {
+                        <div class="es-perm-item" style="color:var(--ink-faint)">none</div>
+                    }
+                </div>
+            </div>
+            <div class="es-perm-col">
+                <div class="es-perm-head deny">
+                    <span class="ph">Deny</span>
+                    <span class="c">@view.Deny.Count</span>
+                </div>
+                <div class="es-perm-list">
+                    @foreach (var item in view.Deny)
+                    {
+                        <div class="es-perm-item deny">
+                            <span class="acc"></span>@item
+                        </div>
+                    }
+                    @if (view.Deny.Count == 0)
+                    {
+                        <div class="es-perm-item" style="color:var(--ink-faint)">none</div>
+                    }
+                </div>
+            </div>
+            <div class="es-perm-col">
+                <div class="es-perm-head ask">
+                    <span class="ph">Ask</span>
+                    <span class="c">@view.Ask.Count</span>
+                </div>
+                <div class="es-perm-list">
+                    @foreach (var item in view.Ask)
+                    {
+                        <div class="es-perm-item ask">
+                            <span class="acc"></span>@item
+                        </div>
+                    }
+                    @if (view.Ask.Count == 0)
+                    {
+                        <div class="es-perm-item" style="color:var(--ink-faint)">none</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </CornerTickPanel>
+
+    @* ── Two-column: env vars + status line / hooks ── *@
+    <div class="es-grid2" style="margin-top:4px">
+        <div>
+            <div class="grp-label">
+                <span class="name">Environment Variables</span>
+                <span class="cnt">@view.EnvVars.Count</span>
+            </div>
+            @if (view.EnvVars.Count == 0)
+            {
+                <CornerTickPanel Class="card">
+                    <div class="sub" style="padding:12px 16px;color:var(--ink-faint)">No environment variables configured.</div>
+                </CornerTickPanel>
+            }
+            else
+            {
+                <CornerTickPanel Class="panel card">
+                    @foreach (var ev in view.EnvVars)
+                    {
+                        <div class="es-rowline">
+                            <span class="vk">@ev.Name</span>
+                            <span class="vv">@ev.Value</span>
+                            @if (!string.IsNullOrEmpty(ev.ScopeCss))
+                            {
+                                <span class="scope-tag s-@ev.ScopeCss">@ev.ScopeCss</span>
+                            }
+                        </div>
+                    }
+                </CornerTickPanel>
+            }
+        </div>
+
+        <div>
+            @* Status Line *@
+            <div class="grp-label">
+                <span class="name">Status Line</span>
+                <span class="cnt">@view.StatusLine.Count</span>
+            </div>
+            @if (view.StatusLine.Count == 0)
+            {
+                <CornerTickPanel Class="panel card">
+                    <div class="sub" style="padding:12px 16px;color:var(--ink-faint)">Not configured.</div>
+                </CornerTickPanel>
+            }
+            else
+            {
+                <CornerTickPanel Class="panel card">
+                    @foreach (var sl in view.StatusLine)
+                    {
+                        <div class="es-rowline">
+                            <span class="vk">@sl.Key</span>
+                            <span class="vv">@sl.Value</span>
+                            @if (!string.IsNullOrEmpty(sl.ScopeCss))
+                            {
+                                <span class="scope-tag s-@sl.ScopeCss">@sl.ScopeCss</span>
+                            }
+                        </div>
+                    }
+                </CornerTickPanel>
+            }
+
+            @* Hooks summary *@
+            <div class="grp-label" style="margin-top:16px">
+                <span class="name">Hooks</span>
+                <span class="cnt">@view.Hooks.Count</span>
+            </div>
+            @if (view.Hooks.Count == 0)
+            {
+                <CornerTickPanel Class="panel card es-hooks">
+                    <div class="sub" style="padding:12px 16px;color:var(--ink-faint)">No hooks configured.</div>
+                </CornerTickPanel>
+            }
+            else
+            {
+                <CornerTickPanel Class="panel card es-hooks">
+                    <div class="es-note">defined across @view.Hooks.Count events · full detail on the Hooks screen</div>
+                    @foreach (var h in view.Hooks)
+                    {
+                        <div class="es-hookline">
+                            <span class="ev">@h.Event</span>
+                            <span class="ct">@h.MatcherCount matcher@(h.MatcherCount == 1 ? "" : "s")</span>
+                            <NavLink class="lnk es-hookline-lnk" href="hooks">View →</NavLink>
+                        </div>
+                    }
+                </CornerTickPanel>
+            }
+        </div>
+    </div>
+
+    <div style="height:30px"></div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnRefreshRequested() => Vm.Load();
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+
+    private static string EnvCss(EnvironmentKind kind) => kind switch
+    {
+        EnvironmentKind.Windows => "env-win",
+        EnvironmentKind.Wsl => "env-wsl",
+        _ => "env-custom",
+    };
+}

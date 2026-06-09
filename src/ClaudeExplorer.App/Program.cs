@@ -5,6 +5,7 @@ using ClaudeExplorer.App.Screens.Artifacts;
 using ClaudeExplorer.App.Screens.ChangeLog;
 using ClaudeExplorer.App.Screens.Dependencies;
 using ClaudeExplorer.App.Screens.EffectiveConfig;
+using ClaudeExplorer.App.Screens.EnvironmentSettings;
 using ClaudeExplorer.App.Screens.Hooks;
 using ClaudeExplorer.App.Screens.Marketplace;
 using ClaudeExplorer.App.Screens.Mcp;
@@ -107,6 +108,7 @@ internal static class Program
         // Note: SafeEditViewModel is NOT registered in DI — EffectiveConfig.razor creates it
         // via `new` so it can pass the winning SettingOrigin and real projectDir at runtime.
         builder.Services.AddTransient<EffectiveConfigViewModel>();
+        builder.Services.AddTransient<EnvironmentSettingsViewModel>();
         builder.Services.AddTransient<ArtifactBrowserViewModel>();
         builder.Services.AddTransient<DependencyViewModel>();
         builder.Services.AddTransient<ChangeLogViewModel>();

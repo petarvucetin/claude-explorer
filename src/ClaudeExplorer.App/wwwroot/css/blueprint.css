@@ -1269,3 +1269,40 @@ td.diffval code { background: var(--amber-wash); border-color: var(--amber); col
 .copy-confirm-panel .cp-bar { display: flex; gap: 7px; }
 .copy-confirm-panel .cp-err { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--red); background: var(--red-wash); border: 1px solid var(--red); border-radius: 4px; padding: 5px 8px; margin-top: 8px; }
 .copy-confirm-panel .cp-ok { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--green); background: var(--paper); border: 1px solid var(--green); border-radius: 4px; padding: 5px 8px; margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+
+/* ── Claude Environment Settings screen ── */
+.es-hero { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 6px; }
+.es-id { padding: 16px 18px; display: flex; align-items: center; gap: 16px; }
+.es-id .dot { width: 14px; height: 14px; border-radius: 3px; border: 1.5px solid var(--edge-2); flex: none; }
+.es-id.env-win .dot { background: var(--win, #0078d4); }
+.es-id.env-wsl .dot { background: var(--amber); }
+.es-id.env-custom .dot { background: var(--blue); }
+.es-id .who { display: flex; flex-direction: column; gap: 3px; }
+.es-id .who .nm { font-size: 18px; font-weight: 800; letter-spacing: .2px; }
+.es-id .who .pth { font-family: "Spline Sans Mono", monospace; font-size: 11px; color: var(--ink-soft); word-break: break-all; }
+.es-id .right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.es-grid2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 18px; align-items: start; }
+.es-perm-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+.es-perm-col { border-right: 1px solid var(--edge); }
+.es-perm-col:last-child { border-right: none; }
+.es-perm-head { display: flex; align-items: center; gap: 8px; padding: 11px 14px 8px; }
+.es-perm-head .ph { font-family: "Spline Sans Mono", monospace; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.es-perm-head.allow .ph { color: var(--green); }
+.es-perm-head.deny  .ph { color: var(--red); }
+.es-perm-head.ask   .ph { color: var(--amber); }
+.es-perm-head .c { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--ink-faint); margin-left: auto; }
+.es-perm-list { display: flex; flex-direction: column; }
+.es-perm-item { font-family: "Spline Sans Mono", monospace; font-size: 11.5px; padding: 6px 14px; border-top: 1px solid var(--edge); color: var(--ink); word-break: break-all; display: flex; align-items: center; gap: 8px; }
+.es-perm-item .acc { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.es-perm-item.allow .acc { background: var(--green); }
+.es-perm-item.deny  .acc { background: var(--red); }
+.es-perm-item.ask   .acc { background: var(--amber); }
+.es-rowline { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-top: 1px solid var(--edge); font-family: "Spline Sans Mono", monospace; font-size: 12px; }
+.es-rowline .vk { color: var(--ink-faint); min-width: 160px; word-break: break-all; }
+.es-rowline .vv { color: var(--ink); flex: 1; word-break: break-all; }
+.es-hooks { display: flex; flex-direction: column; }
+.es-hookline { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--edge); }
+.es-hookline .ev { font-weight: 700; font-size: 13px; }
+.es-hookline .ct { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--ink-soft); }
+.es-hookline-lnk { margin-left: auto; }
+.es-note { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--ink-faint); padding: 8px 16px 4px; }
