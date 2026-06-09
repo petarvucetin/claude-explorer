@@ -130,10 +130,10 @@ public class CopyViewModelTests
         Assert.DoesNotContain("opus", fs.ReadAllText("/proj/.claude/settings.json"));
     }
 
-    // ── File move not supported ───────────────────────────────────────────────
+    // ── File move ────────────────────────────────────────────────────────────
 
     [Fact]
-    public void Move_file_category_copies_but_reports_unsupported_error()
+    public void Move_memory_file_copies_target_and_deletes_source()
     {
         var (svc, fs, vm) = Build();
         fs.AddFile("/base/.claude/CLAUDE.md", "# notes");
@@ -142,16 +142,69 @@ public class CopyViewModelTests
             SourceFilePath: "/base/.claude/CLAUDE.md",
             TargetFilePath: "/proj/.claude/CLAUDE.md"));
 
-        // Copy still applied.
+        Assert.Null(vm.Error);
         Assert.True(fs.FileExists("/proj/.claude/CLAUDE.md"));
-        Assert.Contains("notes", fs.ReadAllText("/proj/.claude/CLAUDE.md"));
-        // Error set to "not supported" message.
-        Assert.NotNull(vm.Error);
-        Assert.Contains("not supported", vm.Error, StringComparison.OrdinalIgnoreCase);
-        // Source untouched.
-        Assert.True(fs.FileExists("/base/.claude/CLAUDE.md"));
-        // Only the target write is logged (not a source removal).
-        Assert.Single(svc.ChangeLog.Entries);
+        Assert.Equal("# notes", fs.ReadAllText("/proj/.claude/CLAUDE.md"));
+        Assert.False(fs.FileExists("/base/.claude/CLAUDE.md")); // source deleted
+        Assert.Equal(2, svc.ChangeLog.Entries.Count);            // write + delete
+    }
+
+    [Fact]
+    public void Move_memory_file_undo_restores_source_and_reverts_target()
+    {
+        var (_, fs, vm) = Build();
+        fs.AddFile("/base/.claude/CLAUDE.md", "# notes");
+
+        vm.Move(new CopyRequest("Memory", "CLAUDE.md",
+            SourceFilePath: "/base/.claude/CLAUDE.md",
+            TargetFilePath: "/proj/.claude/CLAUDE.md"));
+        Assert.False(fs.FileExists("/base/.claude/CLAUDE.md"));
+
+        vm.Undo();
+
+        Assert.Null(vm.Error);
+        Assert.True(fs.FileExists("/base/.claude/CLAUDE.md"));   // delete undone
+        Assert.Equal("# notes", fs.ReadAllText("/base/.claude/CLAUDE.md"));
+        Assert.False(fs.FileExists("/proj/.claude/CLAUDE.md"));  // target write undone
+    }
+
+    [Fact]
+    public void Copy_skill_directory_writes_every_file_and_logs_each_write()
+    {
+        var (svc, fs, vm) = Build();
+        fs.AddFile("/base/.claude/skills/lint/SKILL.md", "# lint");
+        fs.AddFile("/base/.claude/skills/lint/scripts/run.sh", "echo hi");
+
+        vm.Copy(new CopyRequest("Skills", "lint",
+            SourceFilePath: "/base/.claude/skills/lint/SKILL.md",
+            TargetFilePath: "/proj/.claude/skills/lint/SKILL.md"));
+
+        Assert.Null(vm.Error);
+        Assert.Equal("# lint", fs.ReadAllText("/proj/.claude/skills/lint/SKILL.md"));
+        Assert.Equal("echo hi", fs.ReadAllText("/proj/.claude/skills/lint/scripts/run.sh"));
+        Assert.Equal(2, svc.ChangeLog.Entries.Count);
+    }
+
+    [Fact]
+    public void Move_skill_directory_undo_restores_all_source_files_and_removes_target()
+    {
+        var (_, fs, vm) = Build();
+        fs.AddFile("/base/.claude/skills/lint/SKILL.md", "# lint");
+        fs.AddFile("/base/.claude/skills/lint/scripts/run.sh", "echo hi");
+
+        vm.Move(new CopyRequest("Skills", "lint",
+            SourceFilePath: "/base/.claude/skills/lint/SKILL.md",
+            TargetFilePath: "/proj/.claude/skills/lint/SKILL.md"));
+        Assert.False(fs.FileExists("/base/.claude/skills/lint/SKILL.md"));
+        Assert.True(fs.FileExists("/proj/.claude/skills/lint/SKILL.md"));
+
+        vm.Undo();
+
+        Assert.Null(vm.Error);
+        Assert.True(fs.FileExists("/base/.claude/skills/lint/SKILL.md"));
+        Assert.True(fs.FileExists("/base/.claude/skills/lint/scripts/run.sh"));
+        Assert.False(fs.FileExists("/proj/.claude/skills/lint/SKILL.md"));
+        Assert.False(fs.FileExists("/proj/.claude/skills/lint/scripts/run.sh"));
     }
 
     // ── Error handling ────────────────────────────────────────────────────────
