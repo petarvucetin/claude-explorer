@@ -105,7 +105,7 @@ public static class EnvironmentSettingsMapper
         foreach (var item in arr)
         {
             if (item is JsonValue v)
-                list.Add(v.GetValue<string>());
+                list.Add(v.TryGetValue<string>(out var s) ? s : v.ToString());
         }
         return list;
     }

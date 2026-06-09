@@ -100,19 +100,18 @@ public class EnvironmentSettingsViewModelTests
     [Fact]
     public void Load_clears_ErrorMessage_after_success()
     {
-        var badFs = new InMemoryFileSystem()
+        var fs = new InMemoryFileSystem()
             .AddFile("/home/.claude/settings.json", "NOT_VALID_JSON!!!");
-        var vm = BuildVm(badFs, new FakeWorkspaceContext("/home", ""));
+        var vm = BuildVm(fs, new FakeWorkspaceContext("/home", ""));
         vm.Load();
         Assert.NotNull(vm.ErrorMessage);
 
-        // Simulate a good subsequent load by building a new vm with a good fs
-        var goodFs = new InMemoryFileSystem();
-        var goodVm = BuildVm(goodFs, new FakeWorkspaceContext("/home", ""));
-        goodVm.Load();
+        // Fix the underlying settings.json and reload the SAME vm: ErrorMessage must clear.
+        fs.WriteAllText("/home/.claude/settings.json", "{ }");
+        vm.Load();
 
-        Assert.Null(goodVm.ErrorMessage);
-        Assert.NotNull(goodVm.View);
+        Assert.Null(vm.ErrorMessage);
+        Assert.NotNull(vm.View);
     }
 
     [Fact]
