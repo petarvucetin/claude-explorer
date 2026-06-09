@@ -61,8 +61,8 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
   settings sync, artifact-split/real MCP+Plugins screens) and the work above are not reflected in it.
 
 ## Current state (2026-06-07)
-- **Phases 1–9 are merged and pushed to `main`** (`git log` tip ≈ `d74a58a`). **Next: Phase 10 —
-  environment settings sync** (settings.json attribute + whole-config sync via safe-mutation; epic CLA-97).
+- **Phases 1–9 are merged and pushed to `main`** (`git log` tip ≈ `d74a58a`). **Phase 10 (env settings
+  sync, epic CLA-97) is DONE** — delivered via per-screen compare/sync (plans 13+14); CLA-97 closed 2026-06-08.
 - **`dotnet test` → 309 passing** (205 Core + 104 App) *(superseded — see Latest above)*. `.NET SDK 10.0.300` is installed.
   Solution file is `ClaudeExplorer.slnx` (new .NET 10 format — normal). Run `dotnet` via
   PowerShell (it is NOT on the Bash tool's PATH here — `dotnet … | Select-Object` in Bash
@@ -156,7 +156,7 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
   - `blueprint.css` — extended with `--win`/`--wsl`/`--custom` tokens, `.envchip`, `.cats/.cat`, `.summary/.scount`, `.cmp-table`/`.cmp-stat`/row accents.
   - `Program.cs` — old fixed `WorkspaceContext` registration replaced; `EnvironmentService` is singleton (loaded in factory); `WorkspaceResolver` retained for future "open project".
 - **Deferrals (backlog):**
-  - **Phase 10 — Environment settings sync:** consume the Compare Settings rows (Differs / OnlyA / OnlyB) + the Phase-6 safe-mutation layer to let the user copy a setting from one environment to another. Blueprint mockup already covers the compare → sync flow; artifact/MCP/plugin file-sync remains deferred.
+  - **Phase 10 — Environment settings sync: DONE** (CLA-97 closed 2026-06-08) — delivered via per-screen compare/sync overlays (plans 13+14) routing copies through the Phase-6 safe-mutation layer (`Sync/ConfigCopyService` + `SettingsKeyEditor` + `CopyViewModel`). Artifact/MCP/plugin file-sync remains deferred (CLA-96).
   - **Full MCP & Plugins screen** — only a stub page (`McpStub.razor` at `/mcp`) exists;
     full screen (MCP server definitions, scope/enabled state, plugin management) is deferred.
 
@@ -223,9 +223,12 @@ escalate to opus only if blocked. Each phase ≈ 1 plan + ~30–75 subagent tool
    Visual verify: run `/run` to confirm the environment selector (top-bar chip + dropdown),
    Compare screen (category tabs, summary bar, diff table), and LeftRail "Analyze" section
    render correctly. WSL environments appear only if the machine has a WSL distro with `~/.claude`.
-2. **Next: Phase 10 — Environment settings sync** — consume Compare Settings rows (Differs / OnlyA / OnlyB)
-   + Phase-6 safe-mutation layer to copy settings between environments. Plan: write
-   `docs/superpowers/plans/2026-06-07-10-env-settings-sync.md` using the writing-plans skill.
+2. **Phase 10 — Environment settings sync: DONE** (audit 2026-06-08; CLA-97 closed). No standalone
+   Phase-10 plan was written — the intent was delivered & superseded by plans 13 (`compare-sync-base-projects`)
+   + 14 (`per-screen-compare-sync`): per-screen compare/sync overlays copy settings/memory/MCP/commands/
+   skills/subagents between environments via the Phase-6 safe-mutation layer (`Sync/ConfigCopyService` +
+   `SettingsKeyEditor` + `CopyViewModel`, undo as one group). Minor follow-up: `ConfigCopyService.CopyMcp()`
+   lacks a direct unit test (path resolution is covered).
 3. **Backlog (nice-to-have v1.1+):**
    - Artifact/MCP/plugin file-sync across environments (deferred from Phase 9/10).
    - Full MCP & Plugins screen (definitions from `.mcp.json` / settings / `~/.claude.json`,
