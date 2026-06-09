@@ -2,7 +2,7 @@ using ClaudeExplorer.Core.Model;
 
 namespace ClaudeExplorer.Core.Mutation;
 
-public enum ChangeKind { Edit, Install, Uninstall }
+public enum ChangeKind { Edit, Install, Uninstall, Delete }
 
 /// <summary>
 /// One recorded mutation. <see cref="Backup"/> is present for reversible config edits; installs

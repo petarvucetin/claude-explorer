@@ -108,6 +108,27 @@ public sealed class Mutator
             IsUndone: false));
     }
 
+    /// <summary>Delete a file safely: back it up (recording the absence if it does not exist), remove
+    /// it, and record a reversible <see cref="ChangeKind.Delete"/> entry. <see cref="Undo"/> re-creates
+    /// the original content (or, when the file never existed, leaves nothing behind).</summary>
+    public ChangeLogEntry ApplyDelete(ResolvedTarget target, string timestamp, string? description = null)
+    {
+        var existed = _fs.FileExists(target.FilePath);
+        var backup = _backups.Backup(target.FilePath, existed ? _fs.ReadAllText(target.FilePath) : null, existed, timestamp);
+        _writer.Delete(target.FilePath);
+
+        return _log.Record(new ChangeLogEntry(
+            Id: "",
+            Timestamp: timestamp,
+            Kind: ChangeKind.Delete,
+            Scope: target.Scope,
+            FilePath: target.FilePath,
+            Description: description ?? $"Delete {target.FilePath}",
+            Backup: backup,
+            UndoCommand: null,
+            IsUndone: false));
+    }
+
     /// <summary>Install a catalog item by running the <c>claude</c> CLI. Throws on non-zero exit;
     /// records an install entry carrying the uninstall command for undo.</summary>
     public ChangeLogEntry Install(InstallRequest request, string timestamp)
@@ -149,6 +170,15 @@ public sealed class Mutator
                     _writer.WriteAllText(current.Backup.OriginalPath, _backups.Read(current.Backup));
                 else
                     _writer.Delete(current.Backup.OriginalPath);
+                break;
+
+            case ChangeKind.Delete:
+                if (current.Backup is null)
+                    throw new MutationException($"Change '{current.Id}' has no backup to restore.");
+                // A delete of a previously-existing file is reversed by re-creating it; a delete whose
+                // original never existed has nothing to restore.
+                if (current.Backup.OriginalExisted)
+                    _writer.WriteAllText(current.Backup.OriginalPath, _backups.Read(current.Backup));
                 break;
 
             case ChangeKind.Install:
