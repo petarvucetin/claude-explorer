@@ -37,6 +37,11 @@ public sealed class SafeMutationService
     public ChangeLogEntry ApplyEdit(EditPreview preview, string timestamp, string? description = null)
         => _mutator.ApplyEdit(preview, timestamp, description);
 
+    /// <summary>Safely delete a file (backup → delete → change-log record). Reversible via
+    /// <see cref="Undo"/>, which re-creates the original content.</summary>
+    public ChangeLogEntry ApplyDelete(ResolvedTarget target, string timestamp, string? description = null)
+        => _mutator.ApplyDelete(target, timestamp, description);
+
     public ChangeLogEntry Install(InstallRequest request, string timestamp)
         => _mutator.Install(request, timestamp);
 
