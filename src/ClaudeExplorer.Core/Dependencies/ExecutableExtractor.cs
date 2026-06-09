@@ -18,7 +18,9 @@ public static class ExecutableExtractor
         return first.Length == 0 ? null : BaseName(first);
     }
 
-    private static string FirstToken(string s)
+    /// <summary>The first whitespace-delimited token of a command line, honoring surrounding quotes
+    /// and preserving the raw path (no base-name reduction). Empty for blank input.</summary>
+    public static string FirstToken(string s)
     {
         int i = 0;
         while (i < s.Length && char.IsWhiteSpace(s[i])) i++;

@@ -1,3 +1,5 @@
+using ClaudeExplorer.Core.Io;
+
 namespace ClaudeExplorer.Core.Dependencies;
 
 /// <summary>
@@ -10,11 +12,13 @@ public sealed class DependencyChecker
 {
     private readonly IPathResolver _resolver;
     private readonly IProcessRunner _runner;
+    private readonly IFileSystem _fs;
 
-    public DependencyChecker(IPathResolver resolver, IProcessRunner runner)
+    public DependencyChecker(IPathResolver resolver, IProcessRunner runner, IFileSystem fs)
     {
         _resolver = resolver;
         _runner = runner;
+        _fs = fs;
     }
 
     public DependencyReport Check(IReadOnlyList<DependencyRef> refs)
@@ -22,6 +26,13 @@ public sealed class DependencyChecker
 
     private DependencyResult CheckOne(DependencyRef dep)
     {
+        // A plugin-local script (${CLAUDE_PLUGIN_ROOT}-resolved) lives at a known absolute path, not on
+        // PATH: health is whether that file exists. Never resolve it on PATH and never execute it.
+        if (dep.ResolvedPath is not null)
+            return _fs.FileExists(dep.ResolvedPath)
+                ? new DependencyResult(dep, new DependencyStatus(DependencyStatusKind.Found, Path: dep.ResolvedPath))
+                : new DependencyResult(dep, new DependencyStatus(DependencyStatusKind.Missing));
+
         var path = _resolver.Resolve(dep.Name);
         if (path is null)
             return new DependencyResult(dep, new DependencyStatus(DependencyStatusKind.Missing));

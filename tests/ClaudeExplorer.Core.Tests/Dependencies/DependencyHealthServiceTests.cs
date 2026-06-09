@@ -58,6 +58,32 @@ public class DependencyHealthServiceTests
     }
 
     [Fact]
+    public void Plugin_root_templated_hook_resolves_via_registry_and_is_found_not_missing()
+    {
+        const string root = "/home/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0";
+        var fs = new InMemoryFileSystem()
+            .AddFile("/home/.claude/plugins/installed_plugins.json", """
+                { "version": 2, "plugins": {
+                    "superpowers@claude-plugins-official": [ { "version": "5.1.0", "scope": "user" } ] } }
+                """)
+            .AddFile($"{root}/hooks/hooks.json", """
+                { "hooks": { "SessionStart": [
+                    { "matcher": "startup", "hooks": [
+                        { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start" } ] } ] } }
+                """)
+            .AddFile($"{root}/hooks/run-hook.cmd", "echo");
+
+        var report = new DependencyHealthService(fs, new FakePathResolver(), new FakeProcessRunner())
+            .Check("/home", "/repo");
+
+        var runHook = Assert.Single(report.Results);
+        Assert.Equal("run-hook", runHook.Ref.Name);
+        Assert.Equal(DependencyStatusKind.Found, runHook.Status.Kind);
+        Assert.Equal($"{root}/hooks/run-hook.cmd", runHook.Status.Path);
+        Assert.Equal(new[] { "hook:SessionStart" }, runHook.Ref.ReferencedBy);
+    }
+
+    [Fact]
     public void Empty_workspace_yields_empty_report()
     {
         var report = new DependencyHealthService(

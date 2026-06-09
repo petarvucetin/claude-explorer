@@ -12,19 +12,29 @@ public sealed class DependencyExtractor
 {
     private const string HookPrefix = "hooks.";
 
-    public IReadOnlyList<DependencyRef> Extract(EffectiveConfig config, IReadOnlyList<McpServer> mcpServers)
+    public IReadOnlyList<DependencyRef> Extract(
+        EffectiveConfig config,
+        IReadOnlyList<McpServer> mcpServers,
+        IReadOnlyList<string>? pluginRoots = null)
     {
-        var raw = new List<(string Name, string Raw, string Source)>();
+        var roots = pluginRoots ?? Array.Empty<string>();
+        var raw = new List<(string Name, string Raw, string Source, string? ResolvedPath)>();
 
         foreach (var setting in config.Settings)
         {
             if (!setting.Key.StartsWith(HookPrefix, StringComparison.Ordinal)) continue;
             var evt = setting.Key.Substring(HookPrefix.Length);
-            foreach (var command in CollectCommands(setting.Value))
-            {
-                var exe = ExecutableExtractor.Extract(command);
-                if (exe is not null) raw.Add((exe, command, $"hook:{evt}"));
-            }
+
+            // Iterate contributions (not the merged value) so each command keeps its source file —
+            // needed to resolve ${CLAUDE_PLUGIN_ROOT} against the plugin that defined it.
+            foreach (var contribution in setting.Contributions)
+                foreach (var command in CollectCommands(contribution.Value))
+                {
+                    var exe = ExecutableExtractor.Extract(command);
+                    if (exe is null) continue;
+                    var resolved = PluginScriptResolver.Resolve(command, contribution.Origin.FilePath, roots);
+                    raw.Add((exe, command, $"hook:{evt}", resolved));
+                }
         }
 
         foreach (var server in mcpServers)
@@ -35,7 +45,11 @@ public sealed class DependencyExtractor
             var rawCmd = server.Args.Count > 0
                 ? $"{server.Command} {string.Join(' ', server.Args)}"
                 : server.Command;
-            raw.Add((exe, rawCmd, $"mcp:{server.Name}"));
+            // Same resolution as hooks: a plugin server whose command is itself a ${CLAUDE_PLUGIN_ROOT}
+            // path is a file check, not a PATH lookup. (Templates usually sit in args, where the command
+            // is an ordinary runtime like node/uvx — those still resolve on PATH and are unaffected.)
+            var resolved = PluginScriptResolver.Resolve(server.Command, server.OriginFile, roots);
+            raw.Add((exe, rawCmd, $"mcp:{server.Name}", resolved));
         }
 
         return raw
@@ -46,7 +60,8 @@ public sealed class DependencyExtractor
                 ReferencedBy: g.Select(x => x.Source)
                     .Distinct(StringComparer.Ordinal)
                     .OrderBy(x => x, StringComparer.Ordinal)
-                    .ToList()))
+                    .ToList(),
+                ResolvedPath: g.Select(x => x.ResolvedPath).FirstOrDefault(p => p is not null)))
             .OrderBy(d => d.Name, StringComparer.Ordinal)
             .ToList();
     }

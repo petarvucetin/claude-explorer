@@ -6,11 +6,15 @@ namespace ClaudeExplorer.Core.Tests.Dependencies;
 
 public class DependencyExtractorTests
 {
-    private static EffectiveConfig HooksConfig(string @event, string hooksJson)
+    private static EffectiveConfig HooksConfig(
+        string @event, string hooksJson, string file = "/home/.claude/settings.json")
     {
+        var arr = JsonNode.Parse(hooksJson);
+        var contrib = new SettingContribution(
+            new SettingOrigin(ScopeKind.Plugin, file, $"hooks.{@event}"), arr?.DeepClone());
         var setting = new EffectiveSetting(
-            $"hooks.{@event}", MergeStrategy.ArrayConcat, JsonNode.Parse(hooksJson),
-            Winner: null, Contributions: Array.Empty<SettingContribution>(), HasConflict: false);
+            $"hooks.{@event}", MergeStrategy.ArrayConcat, arr,
+            Winner: null, Contributions: new[] { contrib }, HasConflict: false);
         return new EffectiveConfig(new[] { setting });
     }
 
@@ -56,6 +60,41 @@ public class DependencyExtractorTests
         var npx = Assert.Single(refs);
         Assert.Equal("npx", npx.Name);
         Assert.Equal(new[] { "hook:PreToolUse", "mcp:srv" }, npx.ReferencedBy);
+    }
+
+    [Fact]
+    public void Resolves_plugin_root_templated_mcp_command_to_an_absolute_script_path()
+    {
+        const string root = "/home/.claude/plugins/cache/o/some-plugin/1.0";
+        var servers = new[]
+        {
+            new McpServer("srv", "${CLAUDE_PLUGIN_ROOT}/bin/server", Array.Empty<string>(),
+                ScopeKind.Plugin, OriginFile: $"{root}/.mcp.json"),
+        };
+
+        var refs = new DependencyExtractor().Extract(
+            new EffectiveConfig(Array.Empty<EffectiveSetting>()), servers, new[] { root });
+
+        var server = Assert.Single(refs);
+        Assert.Equal("server", server.Name);
+        Assert.Equal($"{root}/bin/server", server.ResolvedPath);
+        Assert.Equal(new[] { "mcp:srv" }, server.ReferencedBy);
+    }
+
+    [Fact]
+    public void Resolves_plugin_root_templated_hook_to_an_absolute_script_path()
+    {
+        const string root = "/home/.claude/plugins/cache/o/superpowers/5.1.0";
+        var config = HooksConfig("SessionStart",
+            """[ { "matcher": "startup", "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start" } ] } ]""",
+            file: $"{root}/hooks/hooks.json");
+
+        var refs = new DependencyExtractor().Extract(config, Array.Empty<McpServer>(), new[] { root });
+
+        var runHook = Assert.Single(refs);
+        Assert.Equal("run-hook", runHook.Name);
+        Assert.Equal($"{root}/hooks/run-hook.cmd", runHook.ResolvedPath);
+        Assert.Equal(new[] { "hook:SessionStart" }, runHook.ReferencedBy);
     }
 
     [Fact]

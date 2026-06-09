@@ -12,7 +12,11 @@ namespace ClaudeExplorer.Core.Dependencies;
 /// An MCP server definition relevant to dependency health. Only stdio servers (those with a
 /// <c>command</c>) carry an executable dependency; url/sse servers have <c>Command == null</c>.
 /// </summary>
-public sealed record McpServer(string Name, string? Command, IReadOnlyList<string> Args, ScopeKind Scope);
+/// <param name="OriginFile">Absolute path of the file that defined this server. For a plugin server
+/// this lives under the plugin root, so a <c>${CLAUDE_PLUGIN_ROOT}</c> command resolves the same way a
+/// plugin hook does. Empty when unknown.</param>
+public sealed record McpServer(
+    string Name, string? Command, IReadOnlyList<string> Args, ScopeKind Scope, string OriginFile = "");
 
 /// <summary>
 /// Reader for MCP server definitions used by the dependency health check. Pulls servers from the
@@ -43,13 +47,19 @@ public sealed class McpServerReader
         var servers = new List<McpServer>();
 
         foreach (var file in new SettingsLocator(_fs).Locate(userDir, projectDir, enterprisePath))
-            servers.AddRange(ReadServers(TryParse(file.Path), file.Scope, allowRoot: false));
+            servers.AddRange(ReadServers(TryParse(file.Path), file.Scope, allowRoot: false, file.Path));
 
-        servers.AddRange(ReadServers(TryParse($"{userDir}/.claude.json"), ScopeKind.User, allowRoot: false));
-        servers.AddRange(ReadServers(TryParse($"{projectDir}/.mcp.json"), ScopeKind.Project, allowRoot: true));
+        var claudeJson = $"{userDir}/.claude.json";
+        servers.AddRange(ReadServers(TryParse(claudeJson), ScopeKind.User, allowRoot: false, claudeJson));
+
+        var projectMcp = $"{projectDir}/.mcp.json";
+        servers.AddRange(ReadServers(TryParse(projectMcp), ScopeKind.Project, allowRoot: true, projectMcp));
 
         foreach (var plugin in _plugins.Locate(userDir))
-            servers.AddRange(ReadServers(TryParse($"{plugin.RootPath}/.mcp.json"), ScopeKind.Plugin, allowRoot: true));
+        {
+            var pluginMcp = $"{plugin.RootPath}/.mcp.json";
+            servers.AddRange(ReadServers(TryParse(pluginMcp), ScopeKind.Plugin, allowRoot: true, pluginMcp));
+        }
 
         return servers;
     }
@@ -61,7 +71,7 @@ public sealed class McpServerReader
         catch (JsonException) { return null; }
     }
 
-    private static IEnumerable<McpServer> ReadServers(JsonObject? root, ScopeKind scope, bool allowRoot)
+    private static IEnumerable<McpServer> ReadServers(JsonObject? root, ScopeKind scope, bool allowRoot, string originFile)
     {
         var servers = McpJson.ServersObject(root, allowRoot);
         if (servers is null) yield break;
@@ -73,7 +83,7 @@ public sealed class McpServerReader
             var args = obj["args"] is JsonArray arr
                 ? arr.Select(a => (string?)a ?? "").Where(a => a.Length > 0).ToList()
                 : new List<string>();
-            yield return new McpServer(name, command, args, scope);
+            yield return new McpServer(name, command, args, scope, originFile);
         }
     }
 }

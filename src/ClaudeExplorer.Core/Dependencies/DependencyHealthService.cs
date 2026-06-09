@@ -1,4 +1,5 @@
 using ClaudeExplorer.Core.Io;
+using ClaudeExplorer.Core.Plugins;
 
 namespace ClaudeExplorer.Core.Dependencies;
 
@@ -11,6 +12,7 @@ public sealed class DependencyHealthService
 {
     private readonly EffectiveConfigService _config;
     private readonly McpServerReader _mcp;
+    private readonly PluginRootReader _plugins;
     private readonly DependencyExtractor _extractor;
     private readonly DependencyChecker _checker;
 
@@ -18,15 +20,17 @@ public sealed class DependencyHealthService
     {
         _config = new EffectiveConfigService(fileSystem);
         _mcp = new McpServerReader(fileSystem);
+        _plugins = new PluginRootReader(fileSystem);
         _extractor = new DependencyExtractor();
-        _checker = new DependencyChecker(resolver, runner);
+        _checker = new DependencyChecker(resolver, runner, fileSystem);
     }
 
     public DependencyReport Check(string userDir, string projectDir, string? enterprisePath = null)
     {
         var config = _config.Compute(userDir, projectDir, enterprisePath);
         var servers = _mcp.Read(userDir, projectDir, enterprisePath);
-        var refs = _extractor.Extract(config, servers);
+        var roots = _plugins.ReadRoots(userDir);
+        var refs = _extractor.Extract(config, servers, roots);
         return _checker.Check(refs);
     }
 }

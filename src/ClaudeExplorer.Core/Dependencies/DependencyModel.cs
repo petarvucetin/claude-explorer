@@ -5,10 +5,16 @@ namespace ClaudeExplorer.Core.Dependencies;
 /// hooks/MCP servers; <see cref="ReferencedBy"/> lists each source (e.g. "hook:PreToolUse",
 /// "mcp:playwright").
 /// </summary>
+/// <param name="ResolvedPath">
+/// For a plugin-local script referenced via <c>${CLAUDE_PLUGIN_ROOT}</c>, the absolute path the
+/// template expands to (so health is a file-existence check, not a PATH lookup). <c>null</c> for an
+/// ordinary PATH runtime.
+/// </param>
 public sealed record DependencyRef(
     string Name,
     string Raw,
-    IReadOnlyList<string> ReferencedBy);
+    IReadOnlyList<string> ReferencedBy,
+    string? ResolvedPath = null);
 
 public enum DependencyStatusKind
 {

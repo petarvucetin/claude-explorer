@@ -70,6 +70,8 @@ public class McpServerReaderTests
         Assert.Equal("playwright", pw.Name);
         Assert.Equal("npx", pw.Command);
         Assert.Equal(ScopeKind.Plugin, pw.Scope);
+        // the defining file is stamped so a ${CLAUDE_PLUGIN_ROOT} command can be resolved later
+        Assert.Equal("/home/.claude/plugins/cache/official/playwright/unknown/.mcp.json", pw.OriginFile);
     }
 
     [Fact]
