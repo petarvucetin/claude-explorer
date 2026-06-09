@@ -10,6 +10,8 @@
     <div><div class="k">Subagents</div><h1>Subagents</h1></div>
     <div class="scope">@Vm.Groups.Sum(g => g.Items.Count) SUBAGENTS<br />tools &amp; model per agent</div>
 </div>
+<CompareBar />
+<DiffOverlay Category="Subagents" />
 
 @if (Vm.IsLoading)
 {
