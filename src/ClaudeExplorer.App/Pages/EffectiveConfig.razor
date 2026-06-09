@@ -18,6 +18,8 @@
         <div class="scope">@Vm.View.Rows.Count SETTINGS · <b>@Vm.View.ConflictCount CONFLICTS</b></div>
     }
 </div>
+<CompareBar />
+<DiffOverlay Category="Settings" />
 
 @if (Vm.IsLoading)
 {
