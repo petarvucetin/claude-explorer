@@ -113,8 +113,20 @@ public class EnvironmentComparerTests
     public void Produces_seven_categories()
     {
         var c = EnvironmentComparer.Compare(Snap(), Snap());
-        Assert.Equal(new[] { "Settings", "Commands", "Skills", "Subagents", "MCP", "Memory", "Plugins", "Dependencies" },
+        Assert.Equal(new[] { "Settings", "Commands", "Skills", "Subagents", "MCP", "Hooks", "Memory", "Plugins", "Dependencies" },
             c.Categories.Select(x => x.Name).ToArray());
+    }
+
+    [Fact]
+    public void Hooks_category_keys_groups_by_event_and_index()
+    {
+        var hooks = System.Text.Json.Nodes.JsonNode.Parse(
+            """[ { "matcher":"Bash", "hooks":[ {"type":"command","command":"echo a"} ] } ]""");
+        var a = Snap(settings: new[] { new EffectiveSetting("hooks.PreToolUse", MergeStrategy.ArrayConcat, hooks, null, Array.Empty<SettingContribution>(), false) });
+        var b = Snap();
+
+        var cat = EnvironmentComparer.Compare(a, b).Find("Hooks")!;
+        Assert.Equal(DiffStatus.OnlyA, cat.Rows.Single(r => r.Key == "PreToolUse#0").Status);
     }
 
     [Fact]
