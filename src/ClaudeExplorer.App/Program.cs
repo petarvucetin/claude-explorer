@@ -113,6 +113,7 @@ internal static class Program
         builder.Services.AddTransient<McpViewModel>();
         builder.Services.AddTransient<PluginsViewModel>();
         builder.Services.AddTransient<HooksViewModel>();
+        builder.Services.AddTransient<ClaudeExplorer.App.Screens.Memory.MemoryViewModel>();
 
         // Batch-B screen ViewModels (transient).
         builder.Services.AddTransient(sp => new MarketplaceViewModel(

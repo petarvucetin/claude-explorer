@@ -30,6 +30,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
         Subagents <span class="count">@Shell?.Subagents</span>
     </NavLink>
+    <NavLink class="nav" href="memory">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h13l3 3v13H4z"/><path d="M8 4v6h8"/><path d="M8 14h8M8 17h5"/></svg>
+        Memory
+    </NavLink>
     <NavLink class="nav" href="hooks">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5v6a6 6 0 0 0 6 6h4"/><path d="m11 13 3 3-3 3"/></svg>
         Hooks @if (Shell?.HasHookProblem == true) { <span class="count bad">1&#x2717;</span> } else { <span class="count">@Shell?.Hooks</span> }

@@ -1,0 +1,74 @@
+@page "/memory"
+@using ClaudeExplorer.App.Screens.Memory
+@inject MemoryViewModel Vm
+@inject RefreshService Refresh
+@implements IDisposable
+
+<div class="pagehead">
+    <div><div class="k">Project Memory</div><h1>Memory</h1></div>
+    <div class="scope">@Vm.Rows.Count CLAUDE.md FILES</div>
+</div>
+
+<CompareBar />
+<DiffOverlay Category="Memory" />
+
+@if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card"><div class="sub" style="padding:18px">Loading…</div></CornerTickPanel>
+}
+else if (Vm.ErrorMessage is not null)
+{
+    <CornerTickPanel Class="card error-panel"><div class="rowx"><div class="glyph bad"></div>
+        <div class="body"><div class="ttl">Failed to load memory</div><div class="meta">@Vm.ErrorMessage</div></div></div></CornerTickPanel>
+}
+else
+{
+    <div class="browser-layout">
+        <CornerTickPanel Class="card master-panel">
+            @if (Vm.Rows.Count == 0) { <div class="sub" style="padding:16px">No CLAUDE.md files found for this workspace.</div> }
+            @foreach (var row in Vm.Rows)
+            {
+                var sel = row;
+                <div class="master-item @(Vm.Selected == row ? "selected" : "")" @onclick="() => Vm.Selected = sel">
+                    <span class="master-item-name">@row.Name</span>
+                    <span class="scope-tag s-@row.Scope.ToString().ToLowerInvariant()">@row.Scope</span>
+                </div>
+            }
+        </CornerTickPanel>
+        <div class="detail-panel">
+            @if (Vm.Selected is { } s)
+            {
+                <CornerTickPanel Class="card" style="padding:18px">
+                    <h2 style="margin:0 0 6px;font-size:19px">@s.Name</h2>
+                    <div class="kv">
+                        <span class="kvk">scope</span><span class="kvv">@s.Scope</span>
+                        <span class="kvk">file</span><span class="kvv">@s.Path</span>
+                    </div>
+                    <div style="margin-top:12px"><CodeViewer Title="@s.Path" Content="@s.Content" /></div>
+                </CornerTickPanel>
+            }
+            else
+            {
+                <CornerTickPanel Class="card"><div class="sub" style="padding:24px;text-align:center;color:var(--ink-faint)">Select a memory file to see its contents.</div></CornerTickPanel>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Vm.PropertyChanged += OnVmChanged;
+        Refresh.Requested += OnRefreshRequested;
+        Vm.Load();
+    }
+
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+    private void OnRefreshRequested() => Vm.Load();
+
+    public void Dispose()
+    {
+        Vm.PropertyChanged -= OnVmChanged;
+        Refresh.Requested -= OnRefreshRequested;
+    }
+}
