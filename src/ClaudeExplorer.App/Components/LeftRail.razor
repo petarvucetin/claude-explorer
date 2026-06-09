@@ -16,6 +16,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
         Dependencies @if (Shell?.HasDependencyProblem == true) { <span class="count bad">1&#x2717;</span> }
     </NavLink>
+    <NavLink class="nav" href="plugins">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v4H6a2 2 0 0 0-2 2v3h2.5a2.5 2.5 0 1 1 0 5H4v3a2 2 0 0 0 2 2h3v-2.5a2.5 2.5 0 1 1 5 0V22h3a2 2 0 0 0 2-2v-4h-4"/></svg>
+        Plugins <span class="count">@Shell?.Plugins</span>
+    </NavLink>
 
     <div class="lbl">Config Artifacts</div>
     <NavLink class="nav" href="commands">
@@ -41,10 +45,6 @@
     <NavLink class="nav" href="mcp">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></svg>
         MCP @if (Shell?.HasMcpProblem == true) { <span class="count bad">1&#x2717;</span> } else { <span class="count">@Shell?.Mcp</span> }
-    </NavLink>
-    <NavLink class="nav" href="plugins">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v4H6a2 2 0 0 0-2 2v3h2.5a2.5 2.5 0 1 1 0 5H4v3a2 2 0 0 0 2 2h3v-2.5a2.5 2.5 0 1 1 5 0V22h3a2 2 0 0 0 2-2v-4h-4"/></svg>
-        Plugins <span class="count">@Shell?.Plugins</span>
     </NavLink>
 
     <div class="lbl">Discover</div>
