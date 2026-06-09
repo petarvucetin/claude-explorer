@@ -135,6 +135,10 @@ internal static class Program
             sp.GetRequiredService<SafeMutationService>(),
             sp.GetRequiredService<ClaudeExplorer.Core.Sync.ConfigCopyService>(),
             sp.GetRequiredService<Func<string>>()));
+        builder.Services.AddSingleton(sp => new CompareContext(
+            sp.GetRequiredService<EnvironmentService>(),
+            sp.GetRequiredService<ProjectRegistry>(),
+            sp.GetRequiredService<IEnvironmentCompareDataSource>()));
 
         builder.RootComponents.Add<App>("app");
 
