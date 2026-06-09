@@ -11,6 +11,29 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Latest (2026-06-08)
+- **Per-screen Compare/Sync shipped on `feat-per-screen-compare-sync`** (tip `750ff1f`, 443 tests):
+  Compare/Sync moved out of the central `/compare` page into every artifact screen as a reusable
+  overlay. Key changes:
+  - **`CompareBar` + `DiffOverlay` components** (A/B picker + per-row diff chips + Copy/Move/Undo)
+    wired on Commands, Skills, Subagents, Hooks, MCP, EffectiveConfig, Plugins, Dependencies, Memory.
+  - **`CompareContext` singleton** — persistent A/B endpoint selection across navigation.
+  - **Enriched diff rows** — `CompareRow.PathA/PathB/ContentA/ContentB` carry resolved on-disk paths
+    so Commands/Subagents/Skills/Memory copy/move now works.
+  - **`CopyRequestBuilder`** — pure per-category path builder (Settings/Memory/MCP/Hooks → settings
+    JSON; Commands/Subagents → file; Skills → dir).
+  - **Recursive Skills directory copy/move** — `CopyPlan` extended with `Writes`/`Removals` lists;
+    `CopyViewModel.Undo()` reverses the whole group in reverse order.
+  - **Undo-able delete** — `ChangeKind.Delete` + `Mutator.ApplyDelete` (backup → delete → record;
+    Undo re-creates original); exposed via `SafeMutationService.ApplyDelete`.
+  - **Hooks compare category** — `EnvironmentComparer` now produces `hooks.<event>#<index>` rows;
+    "Agents" renamed to "Subagents" throughout.
+  - **Memory screen** — new `/memory` page (`MemoryRowsMapper.Discover` → global/project/local/nested
+    CLAUDE.md; `MemoryViewModel`); left-rail entry added under Config Artifacts.
+  - **Central Compare page retired** — `Compare.razor`, `CompareViewModel`, `CompareViewModelTests`
+    deleted; left-rail Analyze block removed.
+  - **"＋ Add project endpoint…"** action moved into the environment selector dropdown.
+  - Spec/plan: `docs/superpowers/specs/2026-06-08-per-screen-compare-design.md`,
+    `docs/superpowers/plans/2026-06-08-14-per-screen-compare-sync.md`.
 - **Compare / Sync (base + projects) shipped to `main`** (tip `0df2a1c`): the env-vs-env Compare
   screen is generalized so endpoints are **bases** (environments' `~/.claude`) **+ projects** (added
   folders, persisted via `ProjectRegistry`). Compares each endpoint's **owned** config across categories
@@ -33,7 +56,7 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
   `docs/superpowers/plans/2026-06-08-12-hooks-inline-editor.md`.
 - Also note: a `.grp-label` section-header restyle (blue tick + dark name + count chip) shipped earlier
   the same day (`089dc2e`).
-- **`dotnet test` → 416 passing** (245 Core + 171 App). `.NET SDK 10.0.300`+.
+- **`dotnet test` → 443 passing** (253 Core + 190 App). `.NET SDK 10.0.300`+.
 - **The phase-by-phase prose below is from 2026-06-07 and is behind `main`** — Phases 10–11 (env
   settings sync, artifact-split/real MCP+Plugins screens) and the work above are not reflected in it.
 
