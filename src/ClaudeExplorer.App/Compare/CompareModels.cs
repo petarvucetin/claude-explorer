@@ -3,7 +3,10 @@ namespace ClaudeExplorer.App.Compare;
 /// <summary>A is the left environment, B the right.</summary>
 public enum DiffStatus { Same, Differs, OnlyA, OnlyB }
 
-public sealed record CompareRow(string Key, DiffStatus Status, string? ValueA, string? ValueB);
+public sealed record CompareRow(
+    string Key, DiffStatus Status, string? ValueA, string? ValueB,
+    string? PathA = null, string? PathB = null, string? ContentA = null, string? ContentB = null,
+    string? SourcePath = null);
 
 public sealed record CompareCategory(string Name, IReadOnlyList<CompareRow> Rows, bool ViewOnly = false)
 {

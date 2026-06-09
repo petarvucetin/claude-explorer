@@ -11,8 +11,9 @@ public class EnvironmentComparerTests
     private static EffectiveSetting Setting(string key, JsonNode? value) =>
         new(key, MergeStrategy.ScalarLastWins, value, null, Array.Empty<SettingContribution>(), false);
 
-    private static ResolvedArtifact Art(ArtifactKind kind, string name, string? summary) =>
-        new(new DiscoveredArtifact(kind, name, summary, new ArtifactSource(ArtifactSourceKind.User), $"/{name}"),
+    private static ResolvedArtifact Art(ArtifactKind kind, string name, string? summary, string path = "") =>
+        new(new DiscoveredArtifact(kind, name, summary, new ArtifactSource(ArtifactSourceKind.User),
+            string.IsNullOrEmpty(path) ? $"/{name}" : path),
             Array.Empty<DiscoveredArtifact>());
 
     private static EnvironmentSnapshot Snap(
@@ -87,7 +88,7 @@ public class EnvironmentComparerTests
         var c = EnvironmentComparer.Compare(a, b);
         Assert.Equal(DiffStatus.Differs, Cat(c, "Commands").Rows.Single(r => r.Key == "deploy").Status);
         Assert.Equal(DiffStatus.Same, Cat(c, "Skills").Rows.Single(r => r.Key == "lint").Status);
-        Assert.Equal(DiffStatus.OnlyB, Cat(c, "Agents").Rows.Single(r => r.Key == "review").Status);
+        Assert.Equal(DiffStatus.OnlyB, Cat(c, "Subagents").Rows.Single(r => r.Key == "review").Status);
     }
 
     [Fact]
@@ -112,7 +113,7 @@ public class EnvironmentComparerTests
     public void Produces_seven_categories()
     {
         var c = EnvironmentComparer.Compare(Snap(), Snap());
-        Assert.Equal(new[] { "Settings", "Commands", "Skills", "Agents", "MCP", "Memory", "Plugins", "Dependencies" },
+        Assert.Equal(new[] { "Settings", "Commands", "Skills", "Subagents", "MCP", "Memory", "Plugins", "Dependencies" },
             c.Categories.Select(x => x.Name).ToArray());
     }
 
@@ -135,5 +136,30 @@ public class EnvironmentComparerTests
         Assert.True(cmp.Find("Plugins")!.ViewOnly);
         Assert.True(cmp.Find("Dependencies")!.ViewOnly);
         Assert.False(cmp.Find("Settings")!.ViewOnly);
+    }
+
+    [Fact]
+    public void Command_row_carries_each_sides_resolved_file_path_and_content()
+    {
+        var a = Snap(artifacts: new[] { Art(ArtifactKind.Command, "deploy", "v1", "/a/.claude/commands/deploy.md") });
+        var b = Snap(artifacts: new[] { Art(ArtifactKind.Command, "deploy", "v2", "/b/.claude/commands/deploy.md") });
+
+        var row = EnvironmentComparer.Compare(a, b).Find("Commands")!.Rows.Single(r => r.Key == "deploy");
+
+        Assert.Equal("/a/.claude/commands/deploy.md", row.PathA);
+        Assert.Equal("/b/.claude/commands/deploy.md", row.PathB);
+    }
+
+    [Fact]
+    public void OnlyA_command_row_has_null_path_on_the_B_side()
+    {
+        var a = Snap(artifacts: new[] { Art(ArtifactKind.Command, "deploy", "v1", "/a/.claude/commands/deploy.md") });
+        var b = Snap();
+
+        var row = EnvironmentComparer.Compare(a, b).Find("Commands")!.Rows.Single(r => r.Key == "deploy");
+
+        Assert.Equal(DiffStatus.OnlyA, row.Status);
+        Assert.Equal("/a/.claude/commands/deploy.md", row.PathA);
+        Assert.Null(row.PathB);
     }
 }

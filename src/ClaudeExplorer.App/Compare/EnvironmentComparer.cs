@@ -6,7 +6,8 @@ using ClaudeExplorer.Core.Model;
 namespace ClaudeExplorer.App.Compare;
 
 /// <summary>Pure diff of two environment snapshots into per-category rows. No IO — tested by
-/// constructing Core records directly.</summary>
+/// constructing Core records directly. Map values are <see cref="CompareEntry"/> so each row keeps
+/// the resolved on-disk path (+ content where relevant) for copy/move.</summary>
 public static class EnvironmentComparer
 {
     public static EnvironmentComparison Compare(EnvironmentSnapshot a, EnvironmentSnapshot b)
@@ -15,7 +16,7 @@ public static class EnvironmentComparer
             BuildCategory("Settings", SettingsMap(a), SettingsMap(b)),
             BuildCategory("Commands", ArtifactMap(a, ArtifactKind.Command), ArtifactMap(b, ArtifactKind.Command)),
             BuildCategory("Skills", ArtifactMap(a, ArtifactKind.Skill), ArtifactMap(b, ArtifactKind.Skill)),
-            BuildCategory("Agents", ArtifactMap(a, ArtifactKind.Subagent), ArtifactMap(b, ArtifactKind.Subagent)),
+            BuildCategory("Subagents", ArtifactMap(a, ArtifactKind.Subagent), ArtifactMap(b, ArtifactKind.Subagent)),
             BuildCategory("MCP", McpMap(a), McpMap(b)),
             BuildCategory("Memory", MemoryMap(a), MemoryMap(b)),
             BuildCategory("Plugins", PluginMap(a), PluginMap(b), viewOnly: true),
@@ -23,44 +24,55 @@ public static class EnvironmentComparer
         });
 
     private static CompareCategory BuildCategory(
-        string name, IReadOnlyDictionary<string, string> a, IReadOnlyDictionary<string, string> b,
+        string name, IReadOnlyDictionary<string, CompareEntry> a, IReadOnlyDictionary<string, CompareEntry> b,
         bool viewOnly = false)
     {
         var rows = new List<CompareRow>();
         foreach (var key in a.Keys.Union(b.Keys).OrderBy(k => k, StringComparer.Ordinal))
         {
-            var hasA = a.TryGetValue(key, out var va);
-            var hasB = b.TryGetValue(key, out var vb);
+            var hasA = a.TryGetValue(key, out var ea);
+            var hasB = b.TryGetValue(key, out var eb);
             var status = (hasA, hasB) switch
             {
-                (true, true) => va == vb ? DiffStatus.Same : DiffStatus.Differs,
+                (true, true) => ea!.Display == eb!.Display ? DiffStatus.Same : DiffStatus.Differs,
                 (true, false) => DiffStatus.OnlyA,
                 _ => DiffStatus.OnlyB,
             };
-            rows.Add(new CompareRow(key, status, hasA ? va : null, hasB ? vb : null));
+            rows.Add(new CompareRow(
+                key, status,
+                hasA ? ea!.Display : null, hasB ? eb!.Display : null,
+                hasA ? NullIfEmpty(ea!.Path) : null, hasB ? NullIfEmpty(eb!.Path) : null,
+                hasA ? NullIfEmpty(ea!.Content) : null, hasB ? NullIfEmpty(eb!.Content) : null));
         }
         return new CompareCategory(name, rows, viewOnly);
     }
 
-    private static Dictionary<string, string> SettingsMap(EnvironmentSnapshot s)
-        => s.Settings.ToDictionary(x => x.Key, x => Canonical(x.Value), StringComparer.Ordinal);
+    private static string? NullIfEmpty(string s) => string.IsNullOrEmpty(s) ? null : s;
 
-    private static Dictionary<string, string> ArtifactMap(EnvironmentSnapshot s, ArtifactKind kind)
-        => s.Artifacts.OfKind(kind).ToDictionary(a => a.Winner.Name, a => a.Winner.Summary ?? "", StringComparer.Ordinal);
+    private static Dictionary<string, CompareEntry> SettingsMap(EnvironmentSnapshot s)
+        => s.Settings.ToDictionary(x => x.Key, x => new CompareEntry(Canonical(x.Value)), StringComparer.Ordinal);
 
-    private static Dictionary<string, string> McpMap(EnvironmentSnapshot s)
+    private static Dictionary<string, CompareEntry> ArtifactMap(EnvironmentSnapshot s, ArtifactKind kind)
+        => s.Artifacts.OfKind(kind).ToDictionary(
+            a => a.Winner.Name,
+            a => new CompareEntry(a.Winner.Summary ?? "", a.Winner.FilePath),
+            StringComparer.Ordinal);
+
+    private static Dictionary<string, CompareEntry> McpMap(EnvironmentSnapshot s)
         => s.Mcp.GroupBy(m => m.Name, StringComparer.Ordinal)
-               .ToDictionary(g => g.Key, g => $"{g.First().Command} {string.Join(" ", g.First().Args)}".Trim(), StringComparer.Ordinal);
+               .ToDictionary(g => g.Key,
+                   g => new CompareEntry($"{g.First().Command} {string.Join(" ", g.First().Args)}".Trim()),
+                   StringComparer.Ordinal);
 
-    private static Dictionary<string, string> PluginMap(EnvironmentSnapshot s)
-        => s.Plugins.Distinct(StringComparer.Ordinal).ToDictionary(p => p, _ => "installed", StringComparer.Ordinal);
+    private static Dictionary<string, CompareEntry> PluginMap(EnvironmentSnapshot s)
+        => s.Plugins.Distinct(StringComparer.Ordinal).ToDictionary(p => p, _ => new CompareEntry("installed"), StringComparer.Ordinal);
 
-    private static Dictionary<string, string> DepMap(EnvironmentSnapshot s)
+    private static Dictionary<string, CompareEntry> DepMap(EnvironmentSnapshot s)
         => s.Dependencies.Results.GroupBy(r => r.Ref.Name, StringComparer.Ordinal)
-               .ToDictionary(g => g.Key, g => g.First().Status.Kind.ToString(), StringComparer.Ordinal);
+               .ToDictionary(g => g.Key, g => new CompareEntry(g.First().Status.Kind.ToString()), StringComparer.Ordinal);
 
-    private static Dictionary<string, string> MemoryMap(EnvironmentSnapshot s)
-        => s.Memory.ToDictionary(kv => kv.Key, kv => Descriptor(kv.Value), StringComparer.Ordinal);
+    private static Dictionary<string, CompareEntry> MemoryMap(EnvironmentSnapshot s)
+        => s.Memory.ToDictionary(kv => kv.Key, kv => new CompareEntry(Descriptor(kv.Value), Content: kv.Value), StringComparer.Ordinal);
 
     private static string Descriptor(string content)
     {
