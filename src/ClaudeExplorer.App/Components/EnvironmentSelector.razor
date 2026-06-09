@@ -1,4 +1,5 @@
 @inject EnvironmentService EnvService
+@inject ClaudeExplorer.App.Environments.ProjectRegistry Projects
 @implements IDisposable
 
 <div class="envsel">
@@ -23,6 +24,7 @@
                 }
                 <div class="env-dropdown-sep">Actions</div>
                 <div class="env-dropdown-item" @onclick="AddEnvironment">＋ Add custom root…</div>
+                <div class="env-dropdown-item" @onclick="AddProject">＋ Add project endpoint…</div>
                 <div class="env-dropdown-item" @onclick="RefreshEnvs">↺ Refresh</div>
             </div>
         }
@@ -52,9 +54,28 @@
     </div>
 }
 
+@if (_addProjOpen)
+{
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:rgba(0,0,0,.18);" @onclick="CancelAddProject"></div>
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:201;background:var(--panel);border:1.5px solid var(--edge-2);border-radius:8px;padding:20px 24px;min-width:360px;box-shadow:6px 6px 0 var(--edge);">
+        <div style="font-weight:800;font-size:13px;text-transform:uppercase;margin-bottom:12px;">Add Project Endpoint</div>
+        <label style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);">Project folder path</label>
+        <input class="search-box" style="width:100%;margin:6px 0;" @bind="_projPath" placeholder="D:/work/myproject" />
+        <label style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);">Display name</label>
+        <input class="search-box" style="width:100%;margin:6px 0;" @bind="_projName" placeholder="My Project" />
+        <div style="display:flex;gap:9px;margin-top:14px;">
+            <button class="btn-primary" @onclick="ConfirmAddProject">Add</button>
+            <button class="btn-secondary" @onclick="CancelAddProject">Cancel</button>
+        </div>
+    </div>
+}
+
 @code {
     private bool _leftOpen;
     private bool _addOpen;
+    private bool _addProjOpen;
+    private string _projPath = "";
+    private string _projName = "";
     private string _addPath = "";
     private string _addName = "";
 
@@ -94,6 +115,28 @@
     }
 
     private void CancelAdd() => _addOpen = false;
+
+    private void AddProject()
+    {
+        _leftOpen = false;
+        _addProjOpen = true;
+        _projPath = "";
+        _projName = "";
+    }
+
+    private void ConfirmAddProject()
+    {
+        if (!string.IsNullOrWhiteSpace(_projPath))
+        {
+            var name = string.IsNullOrWhiteSpace(_projName)
+                ? System.IO.Path.GetFileName(_projPath.TrimEnd('/', '\\'))
+                : _projName;
+            Projects.Add(name, EnvService.Active.Id, _projPath.Trim());
+        }
+        _addProjOpen = false;
+    }
+
+    private void CancelAddProject() => _addProjOpen = false;
 
     private void RefreshEnvs()
     {
