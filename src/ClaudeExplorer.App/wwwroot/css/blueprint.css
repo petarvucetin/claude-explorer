@@ -1180,3 +1180,35 @@ td.diffval code { background: var(--amber-wash); border-color: var(--amber); col
 .hookpanel .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: 2px 2px 0 var(--blue-wash); }
 .hookpanel .btn.ghost { border-color: var(--edge); color: var(--ink-soft); }
 .cmp-legend b { color: var(--ink); }
+
+/* Compare — endpoint pickers (from compare-sync.html) */
+.endpoints { display: flex; align-items: center; gap: 14px; margin: 4px 0 18px; flex-wrap: wrap; }
+.ep { flex: 1; border: 1.5px solid var(--edge-2); border-radius: 8px; background: var(--panel); padding: 9px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 3px 3px 0 var(--blue-wash); min-width: 160px; }
+.ep .side { font-family: "Spline Sans Mono", monospace; font-size: 9px; font-weight: 700; letter-spacing: .1em; color: var(--ink-faint); }
+.ep .name { font-weight: 800; font-size: 14px; }
+.ep .path { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--ink-soft); margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+.kind { width: 9px; height: 9px; border-radius: 2px; border: 1.5px solid var(--edge-2); flex: none; }
+.kind.base { background: var(--blue); }
+.kind.proj { background: var(--amber); }
+.swap { width: 34px; height: 34px; border: 1.5px solid var(--edge-2); border-radius: 8px; background: var(--panel); display: grid; place-items: center; font-size: 15px; cursor: pointer; flex: none; }
+.swap:hover { background: var(--blue-wash); border-color: var(--blue); }
+.addproj { font-family: "Spline Sans Mono", monospace; font-size: 11px; font-weight: 700; color: var(--blue); border: 1.5px dashed var(--blue); border-radius: 8px; padding: 9px 12px; cursor: pointer; background: var(--blue-wash); flex: none; white-space: nowrap; }
+.addproj:hover { background: var(--blue); color: #fff; }
+
+/* category tab — view-only badge */
+.cat.ro { color: var(--ink-faint); }
+.cat.ro .vo { font-size: 8px; font-weight: 700; color: var(--ink-faint); border: 1px solid var(--edge); border-radius: 3px; padding: 0 4px; text-transform: uppercase; }
+.cat .b { font-size: 9px; background: var(--paper); border: 1px solid var(--edge); border-radius: 9px; padding: 0 6px; color: var(--ink-faint); }
+.cat.active .b { background: var(--blue-wash); border-color: var(--blue); color: var(--blue); }
+
+/* endpoint-picker dropdown */
+.ep-pick-wrap { position: relative; flex: 1; min-width: 160px; }
+.ep-pick-wrap select { width: 100%; font-family: "Spline Sans Mono", monospace; font-size: 11px; border: 1.5px solid var(--edge-2); border-radius: 8px; background: var(--panel); padding: 9px 12px; color: var(--ink); cursor: pointer; box-shadow: 3px 3px 0 var(--blue-wash); appearance: auto; }
+.ep-pick-wrap select:focus { outline: 2px solid var(--blue); }
+
+/* scount — dot variant for summary bar */
+.scount .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex: none; }
+.scount.same .dot  { background: var(--green); }
+.scount.diff .dot  { background: var(--amber); }
+.scount.onlya .dot { background: var(--blue); }
+.scount.onlyb .dot { background: var(--wsl); }

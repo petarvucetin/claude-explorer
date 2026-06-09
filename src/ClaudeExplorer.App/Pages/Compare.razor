@@ -1,20 +1,75 @@
 @page "/compare"
+@using ClaudeExplorer.App.Compare
+@using ClaudeExplorer.App.Environments
 @inject CompareViewModel Vm
+@inject ProjectRegistry Projects
+@inject EnvironmentService EnvService
 @inject RefreshService Refresh
 @implements IDisposable
 
 <div class="pagehead">
     <div>
         <div class="k">Analyze · @(Vm.LeftEndpoint?.Label ?? "—") ⇄ @(Vm.RightEndpoint?.Label ?? "—")</div>
-        <h1>Environment Compare</h1>
+        <h1>Compare / Sync</h1>
     </div>
     @if (Vm.LeftEndpoint is not null && Vm.RightEndpoint is not null)
     {
         <div class="cmp-legend">
-            <b>@Vm.LeftEndpoint.Label</b><br>
-            <b>@Vm.RightEndpoint.Label</b>
+            <b>A · @Vm.LeftEndpoint.Label</b><br>
+            <b>B · @Vm.RightEndpoint.Label</b>
         </div>
     }
+</div>
+
+<!-- Endpoint pickers -->
+<div class="endpoints">
+    <!-- Left (A) picker -->
+    <div class="ep-pick-wrap">
+        <select value="@Vm.LeftEndpoint?.Id" @onchange="OnLeftChanged" title="Left endpoint (A)">
+            <optgroup label="Bases">
+                @foreach (var ep in Vm.Endpoints.Where(e => e.Kind == EndpointKind.Base))
+                {
+                    <option value="@ep.Id" selected="@(ep.Id == Vm.LeftEndpoint?.Id)">@ep.Label</option>
+                }
+            </optgroup>
+            @if (Vm.Endpoints.Any(e => e.Kind == EndpointKind.Project))
+            {
+                <optgroup label="Projects">
+                    @foreach (var ep in Vm.Endpoints.Where(e => e.Kind == EndpointKind.Project))
+                    {
+                        <option value="@ep.Id" selected="@(ep.Id == Vm.LeftEndpoint?.Id)">@ep.Label</option>
+                    }
+                </optgroup>
+            }
+        </select>
+    </div>
+
+    <!-- Swap button -->
+    <div class="swap" @onclick="OnSwap" title="Swap A ⇄ B">⇄</div>
+
+    <!-- Right (B) picker -->
+    <div class="ep-pick-wrap">
+        <select value="@Vm.RightEndpoint?.Id" @onchange="OnRightChanged" title="Right endpoint (B)">
+            <optgroup label="Bases">
+                @foreach (var ep in Vm.Endpoints.Where(e => e.Kind == EndpointKind.Base))
+                {
+                    <option value="@ep.Id" selected="@(ep.Id == Vm.RightEndpoint?.Id)">@ep.Label</option>
+                }
+            </optgroup>
+            @if (Vm.Endpoints.Any(e => e.Kind == EndpointKind.Project))
+            {
+                <optgroup label="Projects">
+                    @foreach (var ep in Vm.Endpoints.Where(e => e.Kind == EndpointKind.Project))
+                    {
+                        <option value="@ep.Id" selected="@(ep.Id == Vm.RightEndpoint?.Id)">@ep.Label</option>
+                    }
+                </optgroup>
+            }
+        </select>
+    </div>
+
+    <!-- Add project button -->
+    <div class="addproj" @onclick="OpenAddProject">＋ Add project…</div>
 </div>
 
 @if (Vm.Endpoints.Count < 2)
@@ -24,7 +79,7 @@
             <div class="glyph info"></div>
             <div class="body">
                 <div class="ttl">Only one endpoint discovered.</div>
-                <div class="meta">Add a WSL distro with <code>~/.claude</code>, add a custom root via the environment selector, or add a project endpoint.</div>
+                <div class="meta">Add a WSL distro with <code>~/.claude</code>, add a custom root via the environment selector, or add a project endpoint using <em>＋ Add project…</em> above.</div>
             </div>
         </div>
     </CornerTickPanel>
@@ -38,56 +93,50 @@ else if (Vm.ErrorMessage is not null)
         </div>
     </CornerTickPanel>
 }
+else if (Vm.IsLoading)
+{
+    <CornerTickPanel Class="card">
+        <div class="rowx"><div class="body"><div class="ttl">Loading comparison…</div></div></div>
+    </CornerTickPanel>
+}
 else if (Vm.Comparison is { } cmp)
 {
-    @* TODO(B6): endpoint pickers + Add project *@
-    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
-        <span style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);">COMPARE</span>
-        <select class="search-box" style="width:auto;" value="@Vm.LeftEndpoint?.Id" @onchange="OnLeftChanged">
-            @foreach (var ep in Vm.Endpoints)
-            {
-                <option value="@ep.Id">@ep.Label</option>
-            }
-        </select>
-        <span class="vs">vs</span>
-        <select class="search-box" style="width:auto;" value="@Vm.RightEndpoint?.Id" @onchange="OnRightChanged">
-            @foreach (var ep in Vm.Endpoints)
-            {
-                <option value="@ep.Id">@ep.Label</option>
-            }
-        </select>
-    </div>
-
-    @* Category tabs *@
+    <!-- Category tabs -->
     <div class="cats">
         @foreach (var cat in cmp.Categories)
         {
-            <div class="cat @(cat.Name == Vm.SelectedCategory?.Name ? "active" : "")"
+            var diffCount = cat.Differs + cat.OnlyA + cat.OnlyB;
+            <div class="cat @(cat.Name == Vm.SelectedCategory?.Name ? "active" : "") @(cat.ViewOnly ? "ro" : "")"
                  @onclick="() => Vm.SelectCategory(cat.Name)">
                 @cat.Name
-                @if (cat.Differs > 0 || cat.OnlyA > 0 || cat.OnlyB > 0)
+                <span class="b">@(cat.Rows.Count)</span>
+                @if (diffCount > 0)
                 {
-                    <span class="warn">@(cat.Differs + cat.OnlyA + cat.OnlyB) differ</span>
+                    <span class="warn">@diffCount !</span>
                 }
-                else
+                @if (cat.ViewOnly)
                 {
-                    <span class="n">· @cat.Same same</span>
+                    <span class="vo">view</span>
                 }
             </div>
         }
     </div>
 
-    @* Summary bar *@
+    <!-- Summary bar -->
     @if (Vm.SelectedCategory is { } sel)
     {
         <div class="summary">
-            <div class="scount same">◆ @sel.Same same</div>
-            <div class="scount diff">◆ @sel.Differs differ</div>
-            <div class="scount onlya">◆ @sel.OnlyA @(Vm.LeftEndpoint?.Label ?? "A") only</div>
-            <div class="scount onlyb">◆ @sel.OnlyB @(Vm.RightEndpoint?.Label ?? "B") only</div>
+            <span class="scount same"><span class="dot same"></span><b>@sel.Same</b> same</span>
+            <span class="scount diff"><span class="dot differ"></span><b>@sel.Differs</b> differ</span>
+            <span class="scount onlya"><span class="dot la"></span><b>@sel.OnlyA</b> @(Vm.LeftEndpoint?.Label ?? "A") only</span>
+            <span class="scount onlyb"><span class="dot lb"></span><b>@sel.OnlyB</b> @(Vm.RightEndpoint?.Label ?? "B") only</span>
+            @if (sel.ViewOnly)
+            {
+                <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--ink-faint);margin-left:auto;">view only — copy disabled</span>
+            }
         </div>
 
-        @* Diff table *@
+        <!-- Diff table -->
         @if (sel.Rows.Count == 0)
         {
             <CornerTickPanel Class="card">
@@ -100,10 +149,10 @@ else if (Vm.Comparison is { } cmp)
                 <table class="cmp-table">
                     <thead>
                         <tr>
-                            <th style="width:30%">@sel.Name</th>
-                            <th class="h-left" style="width:28%">@Vm.LeftEndpoint?.Label</th>
-                            <th class="h-left" style="width:28%">@Vm.RightEndpoint?.Label</th>
-                            <th style="width:14%">Status</th>
+                            <th style="width:28%">@sel.Name</th>
+                            <th class="h-left" style="width:33%">A · @(Vm.LeftEndpoint?.Label ?? "Left")</th>
+                            <th class="h-right" style="width:33%">B · @(Vm.RightEndpoint?.Label ?? "Right")</th>
+                            <th style="width:6%">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -140,70 +189,126 @@ else if (Vm.Comparison is { } cmp)
         }
     }
 }
-else if (Vm.IsLoading)
+
+<!-- Add Project Modal -->
+@if (_addOpen)
 {
-    <CornerTickPanel Class="card">
-        <div class="rowx"><div class="body"><div class="ttl">Loading comparison…</div></div></div>
-    </CornerTickPanel>
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:rgba(0,0,0,.18);" @onclick="CancelAdd"></div>
+    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:201;background:var(--panel);border:1.5px solid var(--edge-2);border-radius:8px;padding:20px 24px;min-width:360px;box-shadow:6px 6px 0 var(--edge);">
+        <div style="font-weight:800;font-size:13px;text-transform:uppercase;margin-bottom:12px;">Add Project Endpoint</div>
+        <label style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);">Project folder path</label>
+        <input class="search-box" style="width:100%;margin:6px 0;" @bind="_addPath" placeholder="D:/work/myproject" />
+        <label style="font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--ink-faint);">Display name</label>
+        <input class="search-box" style="width:100%;margin:6px 0;" @bind="_addName" placeholder="My Project" />
+        @if (_addError is not null)
+        {
+            <div class="ed-err">@_addError</div>
+        }
+        <div style="display:flex;gap:9px;margin-top:14px;">
+            <button class="btn-primary" @onclick="ConfirmAdd">Add</button>
+            <button class="btn-secondary" @onclick="CancelAdd">Cancel</button>
+        </div>
+    </div>
 }
 
 @code {
-    private string? _leftId;
-    private string? _rightId;
+    private bool _addOpen;
+    private string _addPath = "";
+    private string _addName = "";
+    private string? _addError;
 
     protected override void OnInitialized()
     {
         Vm.PropertyChanged += OnVmChanged;
         Refresh.Requested += OnRefreshRequested;
+        EnvService.Changed += OnEnvChanged;
+        Projects.Changed += OnProjectsChanged;
         Vm.Load();
     }
 
     private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         => InvokeAsync(StateHasChanged);
 
-    private void OnRefreshRequested() => Vm.Load();
+    private void OnRefreshRequested() { Vm.Load(); InvokeAsync(StateHasChanged); }
+
+    private void OnEnvChanged() { Vm.Load(); InvokeAsync(StateHasChanged); }
+
+    private void OnProjectsChanged() { Vm.Load(); InvokeAsync(StateHasChanged); }
 
     private void OnLeftChanged(ChangeEventArgs e)
     {
-        _leftId = e.Value?.ToString();
-        if (_leftId is not null) Vm.SetEndpoints(_leftId, _rightId ?? Vm.RightEndpoint?.Id ?? _leftId);
+        var id = e.Value?.ToString();
+        if (id is not null) Vm.SetEndpoints(id, Vm.RightEndpoint?.Id ?? id);
     }
 
     private void OnRightChanged(ChangeEventArgs e)
     {
-        _rightId = e.Value?.ToString();
-        if (_rightId is not null) Vm.SetEndpoints(_leftId ?? Vm.LeftEndpoint?.Id ?? _rightId, _rightId);
+        var id = e.Value?.ToString();
+        if (id is not null) Vm.SetEndpoints(Vm.LeftEndpoint?.Id ?? id, id);
+    }
+
+    private void OnSwap() => Vm.Swap();
+
+    private void OpenAddProject()
+    {
+        _addPath = "";
+        _addName = "";
+        _addError = null;
+        _addOpen = true;
+    }
+
+    private void ConfirmAdd()
+    {
+        if (string.IsNullOrWhiteSpace(_addPath))
+        {
+            _addError = "Path is required.";
+            return;
+        }
+        var name = string.IsNullOrWhiteSpace(_addName)
+            ? System.IO.Path.GetFileName(_addPath.TrimEnd('/', '\\'))
+            : _addName;
+        Projects.Add(name, EnvService.Active.Id, _addPath.Trim());
+        _addOpen = false;
+        Vm.Load();
+    }
+
+    private void CancelAdd()
+    {
+        _addOpen = false;
+        _addError = null;
     }
 
     private static string RowClass(DiffStatus s) => s switch
     {
         DiffStatus.Differs => "r-diff",
-        DiffStatus.OnlyA => "r-onlya",
-        DiffStatus.OnlyB => "r-onlyb",
-        _ => "",
+        DiffStatus.OnlyA   => "r-onlya",
+        DiffStatus.OnlyB   => "r-onlyb",
+        _                  => "",
     };
 
     private static string StatClass(DiffStatus s) => s switch
     {
-        DiffStatus.Same => "same",
+        DiffStatus.Same    => "same",
         DiffStatus.Differs => "diff",
-        DiffStatus.OnlyA => "onlya",
-        DiffStatus.OnlyB => "onlyb",
-        _ => "",
+        DiffStatus.OnlyA   => "onlya",
+        DiffStatus.OnlyB   => "onlyb",
+        _                  => "",
     };
 
     private static string StatLabel(DiffStatus s) => s switch
     {
-        DiffStatus.Same => "SAME",
+        DiffStatus.Same    => "SAME",
         DiffStatus.Differs => "DIFFERS",
-        DiffStatus.OnlyA => "LEFT ONLY",
-        DiffStatus.OnlyB => "RIGHT ONLY",
-        _ => "",
+        DiffStatus.OnlyA   => "LEFT ONLY",
+        DiffStatus.OnlyB   => "RIGHT ONLY",
+        _                  => "",
     };
 
     public void Dispose()
     {
         Vm.PropertyChanged -= OnVmChanged;
         Refresh.Requested -= OnRefreshRequested;
+        EnvService.Changed -= OnEnvChanged;
+        Projects.Changed -= OnProjectsChanged;
     }
 }
