@@ -20,13 +20,14 @@ public class EnvironmentComparerTests
         IReadOnlyList<ResolvedArtifact>? artifacts = null,
         IReadOnlyList<McpServer>? mcp = null,
         IReadOnlyList<string>? plugins = null,
-        IReadOnlyList<DependencyResult>? deps = null) =>
+        IReadOnlyList<DependencyResult>? deps = null,
+        Dictionary<string, string>? memory = null) =>
         new(settings ?? Array.Empty<EffectiveSetting>(),
             new ArtifactCatalog(artifacts ?? Array.Empty<ResolvedArtifact>()),
             mcp ?? Array.Empty<McpServer>(),
             plugins ?? Array.Empty<string>(),
             new DependencyReport(deps ?? Array.Empty<DependencyResult>()),
-            new Dictionary<string, string>());
+            memory ?? new Dictionary<string, string>());
 
     private static CompareCategory Cat(EnvironmentComparison c, string name) => c.Categories.Single(x => x.Name == name);
 
@@ -111,7 +112,28 @@ public class EnvironmentComparerTests
     public void Produces_seven_categories()
     {
         var c = EnvironmentComparer.Compare(Snap(), Snap());
-        Assert.Equal(new[] { "Settings", "Commands", "Skills", "Agents", "MCP", "Plugins", "Dependencies" },
+        Assert.Equal(new[] { "Settings", "Commands", "Skills", "Agents", "MCP", "Memory", "Plugins", "Dependencies" },
             c.Categories.Select(x => x.Name).ToArray());
+    }
+
+    [Fact]
+    public void Memory_category_diffs_claude_md_by_content()
+    {
+        var a = Snap(memory: new() { ["CLAUDE.md"] = "rules v1", ["CLAUDE.local.md"] = "x" });
+        var b = Snap(memory: new() { ["CLAUDE.md"] = "rules v2" });
+
+        var cat = EnvironmentComparer.Compare(a, b).Find("Memory")!;
+
+        Assert.Equal(DiffStatus.Differs, cat.Rows.Single(r => r.Key == "CLAUDE.md").Status);
+        Assert.Equal(DiffStatus.OnlyA, cat.Rows.Single(r => r.Key == "CLAUDE.local.md").Status);
+    }
+
+    [Fact]
+    public void Plugins_and_dependencies_categories_are_view_only()
+    {
+        var cmp = EnvironmentComparer.Compare(Snap(), Snap());
+        Assert.True(cmp.Find("Plugins")!.ViewOnly);
+        Assert.True(cmp.Find("Dependencies")!.ViewOnly);
+        Assert.False(cmp.Find("Settings")!.ViewOnly);
     }
 }

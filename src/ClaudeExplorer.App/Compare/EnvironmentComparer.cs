@@ -17,12 +17,14 @@ public static class EnvironmentComparer
             BuildCategory("Skills", ArtifactMap(a, ArtifactKind.Skill), ArtifactMap(b, ArtifactKind.Skill)),
             BuildCategory("Agents", ArtifactMap(a, ArtifactKind.Subagent), ArtifactMap(b, ArtifactKind.Subagent)),
             BuildCategory("MCP", McpMap(a), McpMap(b)),
-            BuildCategory("Plugins", PluginMap(a), PluginMap(b)),
-            BuildCategory("Dependencies", DepMap(a), DepMap(b)),
+            BuildCategory("Memory", MemoryMap(a), MemoryMap(b)),
+            BuildCategory("Plugins", PluginMap(a), PluginMap(b), viewOnly: true),
+            BuildCategory("Dependencies", DepMap(a), DepMap(b), viewOnly: true),
         });
 
     private static CompareCategory BuildCategory(
-        string name, IReadOnlyDictionary<string, string> a, IReadOnlyDictionary<string, string> b)
+        string name, IReadOnlyDictionary<string, string> a, IReadOnlyDictionary<string, string> b,
+        bool viewOnly = false)
     {
         var rows = new List<CompareRow>();
         foreach (var key in a.Keys.Union(b.Keys).OrderBy(k => k, StringComparer.Ordinal))
@@ -37,7 +39,7 @@ public static class EnvironmentComparer
             };
             rows.Add(new CompareRow(key, status, hasA ? va : null, hasB ? vb : null));
         }
-        return new CompareCategory(name, rows);
+        return new CompareCategory(name, rows, viewOnly);
     }
 
     private static Dictionary<string, string> SettingsMap(EnvironmentSnapshot s)
@@ -56,6 +58,16 @@ public static class EnvironmentComparer
     private static Dictionary<string, string> DepMap(EnvironmentSnapshot s)
         => s.Dependencies.Results.GroupBy(r => r.Ref.Name, StringComparer.Ordinal)
                .ToDictionary(g => g.Key, g => g.First().Status.Kind.ToString(), StringComparer.Ordinal);
+
+    private static Dictionary<string, string> MemoryMap(EnvironmentSnapshot s)
+        => s.Memory.ToDictionary(kv => kv.Key, kv => Descriptor(kv.Value), StringComparer.Ordinal);
+
+    private static string Descriptor(string content)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+        var hash = System.Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes))[..8];
+        return $"present · {bytes.Length} B · {hash}";
+    }
 
     /// <summary>Canonical comparable form of a setting value; arrays compare as sorted sets.</summary>
     private static string Canonical(JsonNode? node)

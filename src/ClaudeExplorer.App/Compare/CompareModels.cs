@@ -5,7 +5,7 @@ public enum DiffStatus { Same, Differs, OnlyA, OnlyB }
 
 public sealed record CompareRow(string Key, DiffStatus Status, string? ValueA, string? ValueB);
 
-public sealed record CompareCategory(string Name, IReadOnlyList<CompareRow> Rows)
+public sealed record CompareCategory(string Name, IReadOnlyList<CompareRow> Rows, bool ViewOnly = false)
 {
     public int Same => Rows.Count(r => r.Status == DiffStatus.Same);
     public int Differs => Rows.Count(r => r.Status == DiffStatus.Differs);
