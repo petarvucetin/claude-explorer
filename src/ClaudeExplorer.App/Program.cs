@@ -130,6 +130,11 @@ internal static class Program
         builder.Services.AddSingleton(sp => new InstalledPluginsReader(sp.GetRequiredService<IFileSystem>()));
         builder.Services.AddSingleton<IEnvironmentCompareDataSource, EngineEnvironmentCompareDataSource>();
         builder.Services.AddTransient<CompareViewModel>();
+        builder.Services.AddSingleton(sp => new ClaudeExplorer.Core.Sync.ConfigCopyService(sp.GetRequiredService<IFileSystem>()));
+        builder.Services.AddTransient(sp => new CopyViewModel(
+            sp.GetRequiredService<SafeMutationService>(),
+            sp.GetRequiredService<ClaudeExplorer.Core.Sync.ConfigCopyService>(),
+            sp.GetRequiredService<Func<string>>()));
 
         builder.RootComponents.Add<App>("app");
 

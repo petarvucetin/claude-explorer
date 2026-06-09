@@ -1212,3 +1212,23 @@ td.diffval code { background: var(--amber-wash); border-color: var(--amber); col
 .scount.diff .dot  { background: var(--amber); }
 .scount.onlya .dot { background: var(--blue); }
 .scount.onlyb .dot { background: var(--wsl); }
+
+/* Compare — per-row copy/move buttons */
+.acts { display: flex; gap: 5px; justify-content: center; padding: 6px; }
+.cbtn { font-family: "Spline Sans Mono", monospace; font-size: 13px; font-weight: 800; width: 30px; height: 26px; border: 1.5px solid var(--edge-2); border-radius: 6px; background: var(--panel); color: var(--blue); cursor: pointer; }
+.cbtn:hover:not(:disabled) { background: var(--blue); color: #fff; }
+.cbtn:disabled { color: var(--edge); border-color: var(--edge); cursor: default; opacity: .5; }
+.cbtn.off { color: var(--edge); border-color: var(--edge); cursor: default; }
+.synced { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--green); text-align: center; padding: 6px; }
+.acts-soon { font-family: "Spline Sans Mono", monospace; font-size: 9px; color: var(--ink-faint); text-align: center; padding: 6px 4px; white-space: nowrap; }
+
+/* Compare — confirm panel (inline drop-down) */
+.copy-confirm-wrap { position: relative; }
+.copy-confirm-panel { position: absolute; right: 0; top: 32px; z-index: 300; background: var(--panel); border: 1.5px solid var(--blue); border-radius: 8px; padding: 14px 16px; min-width: 280px; box-shadow: 4px 4px 0 var(--blue-wash); font-size: 12px; }
+.copy-confirm-panel .cp-dir { font-family: "Spline Sans Mono", monospace; font-size: 10.5px; color: var(--ink-soft); margin-bottom: 10px; }
+.copy-confirm-panel .cp-dir strong { color: var(--ink); }
+.copy-confirm-panel .cp-scope { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; font-family: "Spline Sans Mono", monospace; font-size: 10.5px; }
+.copy-confirm-panel .cp-warn { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--amber); background: var(--amber-wash); border: 1px solid var(--amber); border-radius: 4px; padding: 5px 8px; margin-bottom: 10px; }
+.copy-confirm-panel .cp-bar { display: flex; gap: 7px; }
+.copy-confirm-panel .cp-err { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--red); background: var(--red-wash); border: 1px solid var(--red); border-radius: 4px; padding: 5px 8px; margin-top: 8px; }
+.copy-confirm-panel .cp-ok { font-family: "Spline Sans Mono", monospace; font-size: 10px; color: var(--green); background: var(--paper); border: 1px solid var(--green); border-radius: 4px; padding: 5px 8px; margin-top: 8px; display: flex; align-items: center; gap: 8px; }

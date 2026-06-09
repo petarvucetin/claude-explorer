@@ -2,6 +2,7 @@
 @using ClaudeExplorer.App.Compare
 @using ClaudeExplorer.App.Environments
 @inject CompareViewModel Vm
+@inject CopyViewModel CopyVm
 @inject ProjectRegistry Projects
 @inject EnvironmentService EnvService
 @inject RefreshService Refresh
@@ -149,15 +150,18 @@ else if (Vm.Comparison is { } cmp)
                 <table class="cmp-table">
                     <thead>
                         <tr>
-                            <th style="width:28%">@sel.Name</th>
-                            <th class="h-left" style="width:33%">A · @(Vm.LeftEndpoint?.Label ?? "Left")</th>
-                            <th class="h-right" style="width:33%">B · @(Vm.RightEndpoint?.Label ?? "Right")</th>
-                            <th style="width:6%">Status</th>
+                            <th style="width:26%">@sel.Name</th>
+                            <th class="h-left" style="width:31%">A · @(Vm.LeftEndpoint?.Label ?? "Left")</th>
+                            <th class="h-right" style="width:31%">B · @(Vm.RightEndpoint?.Label ?? "Right")</th>
+                            <th style="width:5%">Status</th>
+                            <th style="width:7%">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var row in sel.Rows)
                         {
+                            var capturedRow = row;
+                            var capturedSel = sel;
                             <tr class="@RowClass(row.Status)">
                                 <td class="cmp-key">@row.Key</td>
                                 <td class="@(row.Status == DiffStatus.Differs ? "diffval" : "")">
@@ -181,6 +185,97 @@ else if (Vm.Comparison is { } cmp)
                                     }
                                 </td>
                                 <td><span class="cmp-stat @StatClass(row.Status)">@StatLabel(row.Status)</span></td>
+                                <td>
+                                    @if (!sel.ViewOnly && IsCopyEnabled(sel.Name))
+                                    {
+                                        @if (row.Status == DiffStatus.Same)
+                                        {
+                                            <div class="synced">✓</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="acts copy-confirm-wrap">
+                                                <button class="cbtn"
+                                                    disabled="@(row.Status == DiffStatus.OnlyB)"
+                                                    title="Copy A → B"
+                                                    @onclick="() => OpenConfirm(capturedRow, capturedSel, aToB: true)">→</button>
+                                                <button class="cbtn"
+                                                    disabled="@(row.Status == DiffStatus.OnlyA)"
+                                                    title="Copy B → A"
+                                                    @onclick="() => OpenConfirm(capturedRow, capturedSel, aToB: false)">←</button>
+                                            </div>
+                                            @if (_confirmRow == row && _confirmCat == sel.Name)
+                                            {
+                                                <div class="copy-confirm-panel">
+                                                    <div class="cp-dir">
+                                                        @if (_confirmAtoB)
+                                                        {
+                                                            <span><strong>A</strong> (@(Vm.LeftEndpoint?.Label ?? "A")) → <strong>B</strong> (@(Vm.RightEndpoint?.Label ?? "B"))</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span><strong>B</strong> (@(Vm.RightEndpoint?.Label ?? "B")) → <strong>A</strong> (@(Vm.LeftEndpoint?.Label ?? "A"))</span>
+                                                        }
+                                                    </div>
+                                                    @{
+                                                        var tgtEp = _confirmAtoB ? Vm.RightEndpoint : Vm.LeftEndpoint;
+                                                        var srcEp = _confirmAtoB ? Vm.LeftEndpoint : Vm.RightEndpoint;
+                                                    }
+                                                    @if (sel.Name == "Settings" && tgtEp?.Kind == EndpointKind.Project)
+                                                    {
+                                                        <div class="cp-scope">
+                                                            <label>
+                                                                <input type="radio" name="cp-local-@row.Key" value="false"
+                                                                    checked="@(!_confirmLocal)"
+                                                                    @onchange="() => _confirmLocal = false" />
+                                                                settings.json (shared)
+                                                            </label>
+                                                            <label>
+                                                                <input type="radio" name="cp-local-@row.Key" value="true"
+                                                                    checked="@(_confirmLocal)"
+                                                                    @onchange="() => _confirmLocal = true" />
+                                                                settings.local.json
+                                                            </label>
+                                                        </div>
+                                                    }
+                                                    @if (srcEp?.Kind == EndpointKind.Base)
+                                                    {
+                                                        <div class="cp-warn">⚠ Move removes from the global base — affects all projects.</div>
+                                                    }
+                                                    @if (_confirmApplied)
+                                                    {
+                                                        <div class="cp-ok">
+                                                            ✓ Applied.
+                                                            <button class="cbtn" style="font-size:10px;width:auto;padding:0 8px;" @onclick="UndoLast">Undo</button>
+                                                        </div>
+                                                    }
+                                                    else if (CopyVm.Error is { } err)
+                                                    {
+                                                        <div class="cp-err">@err</div>
+                                                    }
+                                                    @if (!_confirmApplied)
+                                                    {
+                                                        <div class="cp-bar">
+                                                            <button class="btn-primary" @onclick="() => ExecuteCopy(capturedRow, capturedSel, move: false)">Copy</button>
+                                                            <button class="btn-secondary" @onclick="() => ExecuteCopy(capturedRow, capturedSel, move: true)">Move</button>
+                                                            <button class="btn-secondary" @onclick="CloseConfirm">Cancel</button>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="cp-bar">
+                                                            <button class="btn-secondary" @onclick="CloseConfirm">Close</button>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                    }
+                                    else if (!sel.ViewOnly && !IsCopyEnabled(sel.Name))
+                                    {
+                                        <div class="acts-soon">file copy — soon</div>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -212,10 +307,18 @@ else if (Vm.Comparison is { } cmp)
 }
 
 @code {
+    // ── Add-project modal state ───────────────────────────────────────────────
     private bool _addOpen;
     private string _addPath = "";
     private string _addName = "";
     private string? _addError;
+
+    // ── Copy/move confirm panel state ─────────────────────────────────────────
+    private CompareRow? _confirmRow;
+    private string? _confirmCat;
+    private bool _confirmAtoB;
+    private bool _confirmLocal;      // Settings: target is settings.local.json
+    private bool _confirmApplied;    // shows the applied toast
 
     protected override void OnInitialized()
     {
@@ -276,6 +379,104 @@ else if (Vm.Comparison is { } cmp)
     {
         _addOpen = false;
         _addError = null;
+    }
+
+    // ── Copy/move helpers ─────────────────────────────────────────────────────
+
+    private static bool IsCopyEnabled(string catName) =>
+        catName is "Settings" or "Memory" or "MCP";
+
+    private void OpenConfirm(CompareRow row, CompareCategory cat, bool aToB)
+    {
+        _confirmRow = row;
+        _confirmCat = cat.Name;
+        _confirmAtoB = aToB;
+        _confirmLocal = false;
+        _confirmApplied = false;
+        CopyVm.Error?.ToString(); // reset via re-open (field is set only after op)
+    }
+
+    private void CloseConfirm()
+    {
+        _confirmRow = null;
+        _confirmCat = null;
+        _confirmApplied = false;
+    }
+
+    private void ExecuteCopy(CompareRow row, CompareCategory cat, bool move)
+    {
+        if (Vm.LeftEndpoint is null || Vm.RightEndpoint is null) return;
+        var srcEp  = _confirmAtoB ? Vm.LeftEndpoint  : Vm.RightEndpoint;
+        var tgtEp  = _confirmAtoB ? Vm.RightEndpoint : Vm.LeftEndpoint;
+        var req = BuildRequest(cat.Name, row.Key, srcEp, tgtEp, _confirmLocal);
+
+        if (move) CopyVm.Move(req);
+        else       CopyVm.Copy(req);
+
+        if (CopyVm.Error is null)
+        {
+            _confirmApplied = true;
+            Vm.Load();
+        }
+    }
+
+    private void UndoLast()
+    {
+        CopyVm.Undo();
+        _confirmApplied = false;
+        if (CopyVm.Error is null)
+        {
+            CloseConfirm();
+            Vm.Load();
+        }
+    }
+
+    private static string SettingsRoot(CompareEndpoint e) =>
+        e.Kind == EndpointKind.Base
+            ? $"{e.UserDir}/.claude"
+            : $"{e.ProjectDir}/.claude";
+
+    private static CopyRequest BuildRequest(
+        string category, string key,
+        CompareEndpoint src, CompareEndpoint tgt,
+        bool local)
+    {
+        switch (category)
+        {
+            case "Settings":
+            {
+                var srcPath = $"{SettingsRoot(src)}/settings.json";
+                var tgtPath = local
+                    ? $"{SettingsRoot(tgt)}/settings.local.json"
+                    : $"{SettingsRoot(tgt)}/settings.json";
+                return new CopyRequest("Settings", key,
+                    SourceSettingsPath: srcPath, TargetSettingsPath: tgtPath);
+            }
+            case "Memory":
+            {
+                var srcPath = src.Kind == EndpointKind.Base
+                    ? $"{src.UserDir}/.claude/{key}"
+                    : $"{src.ProjectDir}/{key}";
+                var tgtPath = tgt.Kind == EndpointKind.Base
+                    ? $"{tgt.UserDir}/.claude/{key}"
+                    : $"{tgt.ProjectDir}/{key}";
+                return new CopyRequest("Memory", key,
+                    SourceFilePath: srcPath, TargetFilePath: tgtPath);
+            }
+            case "MCP":
+            {
+                var srcPath = src.Kind == EndpointKind.Base
+                    ? $"{src.UserDir}/.claude.json"
+                    : $"{src.ProjectDir}/.mcp.json";
+                var tgtPath = tgt.Kind == EndpointKind.Base
+                    ? $"{tgt.UserDir}/.claude.json"
+                    : $"{tgt.ProjectDir}/.mcp.json";
+                return new CopyRequest("MCP", key,
+                    SourceMcpPath: srcPath, TargetMcpPath: tgtPath);
+            }
+            default:
+                throw new InvalidOperationException($"BuildRequest called for unsupported category '{category}'.");
+        }
     }
 
     private static string RowClass(DiffStatus s) => s switch
