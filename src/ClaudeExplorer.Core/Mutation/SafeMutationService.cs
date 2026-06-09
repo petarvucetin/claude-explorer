@@ -29,6 +29,11 @@ public sealed class SafeMutationService
     public EditPreview PreviewSettingsEdit(EditMode mode, string projectDir, SettingOrigin? winner, string newContent)
         => _mutator.PreviewSettingsEdit(_resolver.Resolve(mode, projectDir, winner), newContent);
 
+    /// <summary>Build a preview for an arbitrary file edit with an explicit validation result.
+    /// Used by the App layer to apply copy/move plans from <c>ConfigCopyService</c>.</summary>
+    public EditPreview PreviewEdit(ResolvedTarget target, string newContent, ValidationResult validation)
+        => _mutator.PreviewEdit(target, newContent, validation);
+
     public ChangeLogEntry ApplyEdit(EditPreview preview, string timestamp, string? description = null)
         => _mutator.ApplyEdit(preview, timestamp, description);
 

@@ -1,0 +1,149 @@
+using ClaudeExplorer.App.Compare;
+using ClaudeExplorer.App.Tests.Fakes;
+using ClaudeExplorer.Core.Mutation;
+using ClaudeExplorer.Core.Sync;
+
+namespace ClaudeExplorer.App.Tests.Compare;
+
+public class CopyViewModelTests
+{
+    private const string Ts = "2026-06-08T00:00:00Z";
+
+    private static (SafeMutationService svc, InMemoryFileSystem fs, CopyViewModel vm) Build()
+    {
+        var fs = new InMemoryFileSystem();
+        var backupFs = new InMemoryFileSystem();
+        var svc = new SafeMutationService(fs, fs, new FileBackupStore(backupFs, backupFs, "/bk"), new FakeProcessRunner());
+        var vm = new CopyViewModel(svc, new ConfigCopyService(fs), () => Ts);
+        return (svc, fs, vm);
+    }
+
+    // ── Copy ─────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Copy_settings_key_writes_target_and_logs()
+    {
+        var (svc, fs, vm) = Build();
+        fs.AddFile("/base/.claude/settings.json", """{ "model": "opus" }""");
+
+        vm.Copy(new CopyRequest("Settings", "model",
+            "/base/.claude/settings.json", "/proj/.claude/settings.json"));
+
+        Assert.Null(vm.Error);
+        Assert.NotNull(vm.Applied);
+        Assert.Contains("opus", fs.ReadAllText("/proj/.claude/settings.json"));
+        Assert.Single(svc.ChangeLog.Entries);
+    }
+
+    [Fact]
+    public void Copy_settings_key_description_is_logged()
+    {
+        var (svc, fs, vm) = Build();
+        fs.AddFile("/base/.claude/settings.json", """{ "model": "sonnet" }""");
+
+        vm.Copy(new CopyRequest("Settings", "model",
+            "/base/.claude/settings.json", "/proj/.claude/settings.json"));
+
+        Assert.Null(vm.Error);
+        var entry = svc.ChangeLog.Entries.Single();
+        Assert.Contains("Settings", entry.Description);
+        Assert.Contains("model", entry.Description);
+        Assert.Equal(Ts, entry.Timestamp);
+    }
+
+    [Fact]
+    public void Copy_undo_reverts_target_write()
+    {
+        var (svc, fs, vm) = Build();
+        fs.AddFile("/base/.claude/settings.json", """{ "model": "opus" }""");
+
+        vm.Copy(new CopyRequest("Settings", "model",
+            "/base/.claude/settings.json", "/proj/.claude/settings.json"));
+
+        Assert.NotNull(vm.Applied);
+        var appliedEntry = vm.Applied!;
+
+        vm.Undo();
+
+        Assert.Null(vm.Error);
+        // The target should no longer exist (was created fresh, undo deletes it).
+        var targetExists = fs.FileExists("/proj/.claude/settings.json");
+        var undoneEntry = svc.ChangeLog.Entries.First(e => e.Id == appliedEntry.Id);
+        Assert.True(undoneEntry.IsUndone);
+        // Either the file is gone or it no longer contains "opus".
+        if (targetExists)
+            Assert.DoesNotContain("opus", fs.ReadAllText("/proj/.claude/settings.json"));
+    }
+
+    // ── Move ─────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Move_settings_key_writes_target_and_removes_source_key()
+    {
+        var (svc, fs, vm) = Build();
+        fs.AddFile("/base/.claude/settings.json", """{ "model": "opus", "outputStyle": "auto" }""");
+        fs.AddFile("/proj/.claude/settings.json", """{}""");
+
+        vm.Move(new CopyRequest("Settings", "model",
+            "/base/.claude/settings.json", "/proj/.claude/settings.json"));
+
+        Assert.Null(vm.Error);
+        // Target receives the value.
+        Assert.Contains("opus", fs.ReadAllText("/proj/.claude/settings.json"));
+        // Source no longer has the key.
+        Assert.DoesNotContain("opus", fs.ReadAllText("/base/.claude/settings.json"));
+        // Two change-log entries: target write + source removal.
+        Assert.Equal(2, svc.ChangeLog.Entries.Count);
+    }
+
+    [Fact]
+    public void Move_settings_key_source_still_has_other_keys()
+    {
+        var (_, fs, vm) = Build();
+        fs.AddFile("/base/.claude/settings.json", """{ "model": "opus", "outputStyle": "auto" }""");
+
+        vm.Move(new CopyRequest("Settings", "model",
+            "/base/.claude/settings.json", "/proj/.claude/settings.json"));
+
+        Assert.Null(vm.Error);
+        // "outputStyle" stays in the source.
+        Assert.Contains("outputStyle", fs.ReadAllText("/base/.claude/settings.json"));
+    }
+
+    // ── File move not supported ───────────────────────────────────────────────
+
+    [Fact]
+    public void Move_file_category_copies_but_reports_unsupported_error()
+    {
+        var (svc, fs, vm) = Build();
+        fs.AddFile("/base/.claude/CLAUDE.md", "# notes");
+
+        vm.Move(new CopyRequest("Memory", "CLAUDE.md",
+            SourceFilePath: "/base/.claude/CLAUDE.md",
+            TargetFilePath: "/proj/.claude/CLAUDE.md"));
+
+        // Copy still applied.
+        Assert.True(fs.FileExists("/proj/.claude/CLAUDE.md"));
+        Assert.Contains("notes", fs.ReadAllText("/proj/.claude/CLAUDE.md"));
+        // Error set to "not supported" message.
+        Assert.NotNull(vm.Error);
+        Assert.Contains("not supported", vm.Error, StringComparison.OrdinalIgnoreCase);
+        // Source untouched.
+        Assert.True(fs.FileExists("/base/.claude/CLAUDE.md"));
+        // Only the target write is logged (not a source removal).
+        Assert.Single(svc.ChangeLog.Entries);
+    }
+
+    // ── Error handling ────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Copy_with_unknown_category_sets_error()
+    {
+        var (_, _, vm) = Build();
+
+        vm.Copy(new CopyRequest("Unknown", "key", "/a.json", "/b.json"));
+
+        Assert.NotNull(vm.Error);
+        Assert.Null(vm.Applied);
+    }
+}
