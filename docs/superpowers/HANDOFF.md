@@ -11,6 +11,16 @@ Full spec: `CLAUDE.md`. UI direction **Blueprint**: prototypes + screenshots in
 prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026-06-07-00-roadmap.md`.
 
 ## Latest (2026-06-08)
+- **Compare / Sync (base + projects) shipped to `main`** (tip `0df2a1c`): the env-vs-env Compare
+  screen is generalized so endpoints are **bases** (environments' `~/.claude`) **+ projects** (added
+  folders, persisted via `ProjectRegistry`). Compares each endpoint's **owned** config across categories
+  incl. a new **Memory** (CLAUDE.md) category (Plugins/Deps are view-only), and supports per-row
+  **copy/move in any direction** through safe-mutation — for Settings, Memory, and MCP rows
+  (commands/skills/subagents copy deferred: the diff row lacks the artifact path; file-move-delete also
+  deferred). New: `Compare/CompareEndpoint`, `Environments/ProjectRegistry`, `Compare/CopyViewModel`;
+  Core `Sync/SettingsKeyEditor` + `Sync/ConfigCopyService`. Left-rail reorg: Hooks/MCP/Plugins folded
+  into **Config Artifacts**. Spec/plan: `docs/superpowers/specs/2026-06-08-compare-sync-base-projects-design.md`,
+  `docs/superpowers/plans/2026-06-08-13-compare-sync-base-projects.md`.
 - **Hooks inline editor shipped to `main`** (tip `41287c5`): Hooks rows redesigned (matcher → fully
   visible tool chips, scope/health top-right, command on its own line); clicking a row opens an inline
   accordion with the hook's matcher-group as **editable, pretty-printed JSON** (spliced back into the
@@ -23,7 +33,7 @@ prototypes). Phase decomposition + per-phase scope: `docs/superpowers/plans/2026
   `docs/superpowers/plans/2026-06-08-12-hooks-inline-editor.md`.
 - Also note: a `.grp-label` section-header restyle (blue tick + dark name + count chip) shipped earlier
   the same day (`089dc2e`).
-- **`dotnet test` → 391 passing** (237 Core + 154 App). `.NET SDK 10.0.300`+.
+- **`dotnet test` → 416 passing** (245 Core + 171 App). `.NET SDK 10.0.300`+.
 - **The phase-by-phase prose below is from 2026-06-07 and is behind `main`** — Phases 10–11 (env
   settings sync, artifact-split/real MCP+Plugins screens) and the work above are not reflected in it.
 
