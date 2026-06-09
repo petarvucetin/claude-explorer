@@ -22,3 +22,6 @@ Thumbs.db
 # Playwright / UX exploration tooling artifacts
 .playwright-mcp/
 ux-explorations/.playwright-mcp/
+
+# Brainstorming visual companion
+.superpowers/
