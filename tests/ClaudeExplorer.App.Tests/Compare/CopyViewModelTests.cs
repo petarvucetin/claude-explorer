@@ -110,6 +110,26 @@ public class CopyViewModelTests
         Assert.Contains("outputStyle", fs.ReadAllText("/base/.claude/settings.json"));
     }
 
+    [Fact]
+    public void Move_undo_restores_source_key_and_reverts_target()
+    {
+        var (_, fs, vm) = Build();
+        fs.AddFile("/base/.claude/settings.json", """{ "model": "opus", "outputStyle": "auto" }""");
+        fs.AddFile("/proj/.claude/settings.json", """{}""");
+
+        vm.Move(new CopyRequest("Settings", "model",
+            "/base/.claude/settings.json", "/proj/.claude/settings.json"));
+        Assert.Null(vm.Error);
+        Assert.DoesNotContain("opus", fs.ReadAllText("/base/.claude/settings.json"));
+
+        vm.Undo();
+
+        Assert.Null(vm.Error);
+        // Both halves reverted: source key restored, target no longer has the moved key.
+        Assert.Contains("opus", fs.ReadAllText("/base/.claude/settings.json"));
+        Assert.DoesNotContain("opus", fs.ReadAllText("/proj/.claude/settings.json"));
+    }
+
     // ── File move not supported ───────────────────────────────────────────────
 
     [Fact]

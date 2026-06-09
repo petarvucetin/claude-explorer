@@ -52,7 +52,7 @@ public sealed class EngineEnvironmentCompareDataSource : IEnvironmentCompareData
         if (endpoint.Kind == EndpointKind.Base)
         {
             var u = endpoint.UserDir;
-            AddMemory(mem, "CLAUDE.md", $"{u}/CLAUDE.md");
+            AddMemory(mem, "CLAUDE.md", $"{u}/.claude/CLAUDE.md");
         }
         else
         {

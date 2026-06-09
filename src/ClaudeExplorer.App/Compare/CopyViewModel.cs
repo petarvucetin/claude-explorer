@@ -28,6 +28,10 @@ public sealed class CopyViewModel
     /// if nothing has been applied yet.</summary>
     public ChangeLogEntry? Applied { get; private set; }
 
+    /// <summary>The change-log entry for the source removal half of a Move (if any), so
+    /// <see cref="Undo"/> can revert both halves.</summary>
+    private ChangeLogEntry? _appliedSource;
+
     /// <summary>A human-readable error from the last <see cref="Copy"/> / <see cref="Move"/> /
     /// <see cref="Undo"/> call, or <c>null</c> if the last operation succeeded.</summary>
     public string? Error { get; private set; }
@@ -47,6 +51,7 @@ public sealed class CopyViewModel
     public void Copy(CopyRequest req)
     {
         Error = null;
+        _appliedSource = null;
         try
         {
             var plan = _copier.PlanCopy(req);
@@ -64,6 +69,7 @@ public sealed class CopyViewModel
     public void Move(CopyRequest req)
     {
         Error = null;
+        _appliedSource = null;
         try
         {
             var plan = _copier.PlanMove(req);
@@ -84,7 +90,7 @@ public sealed class CopyViewModel
                     ? new SettingsValidator().Validate(removal.NewContent)
                     : ValidationResult.Ok;
                 var sourcePreview = _svc.PreviewEdit(sourceTarget, removal.NewContent, sourceValidation);
-                _svc.ApplyEdit(sourcePreview, _nowIso(), $"Move {req.Category} {req.Key} (remove source)");
+                _appliedSource = _svc.ApplyEdit(sourcePreview, _nowIso(), $"Move {req.Category} {req.Key} (remove source)");
             }
         }
         catch (Exception ex)
@@ -100,6 +106,9 @@ public sealed class CopyViewModel
         if (Applied is null) return;
         try
         {
+            // Reverse both halves of a Move: restore the source (undo its removal), then revert the
+            // target write. A plain Copy has no source entry.
+            if (_appliedSource is not null) { _svc.Undo(_appliedSource); _appliedSource = null; }
             _svc.Undo(Applied);
         }
         catch (Exception ex)
