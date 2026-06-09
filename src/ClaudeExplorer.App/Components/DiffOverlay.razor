@@ -1,0 +1,201 @@
+@using ClaudeExplorer.App.Compare
+@using ClaudeExplorer.App.Services
+@inject CompareContext Compare
+@inject CopyViewModel CopyVm
+@inject RefreshService Refresh
+@implements IDisposable
+
+@if (Compare.IsComparing && Compare.Comparison(Category) is { } cat)
+{
+    <div class="diff-overlay">
+        <div class="do-head">
+            <span class="do-title">@Category diff · A @(Compare.EndpointA?.Label) ⇄ B @(Compare.EndpointB?.Label)</span>
+            <span class="do-counts">
+                <span class="dc same">@cat.Same =</span>
+                <span class="dc diff">@cat.Differs ≠</span>
+                <span class="dc onlya">@cat.OnlyA ◑</span>
+                <span class="dc onlyb">@cat.OnlyB ○</span>
+            </span>
+            @if (cat.ViewOnly) { <span class="do-ro">view only</span> }
+        </div>
+
+        @if (cat.Rows.Count == 0)
+        {
+            <div class="do-empty">No items in this category on either side.</div>
+        }
+
+        @foreach (var row in cat.Rows)
+        {
+            var r = row;
+            var selected = _selKey == row.Key;
+            <div class="do-row @(selected ? "sel" : "")" @onclick="() => Toggle(r)">
+                <span class="diffchip @ChipClass(row.Status)">@Chip(row.Status)</span>
+                <span class="do-key">@row.Key</span>
+            </div>
+            @if (selected)
+            {
+                <div class="do-detail">
+                    <div class="do-sides">
+                        <div class="do-side">
+                            <div class="do-side-h">A · @(Compare.EndpointA?.Label)</div>
+                            <pre class="do-val">@(row.ContentA ?? row.ValueA ?? "— not set —")</pre>
+                        </div>
+                        <div class="do-side">
+                            <div class="do-side-h">B · @(Compare.EndpointB?.Label)</div>
+                            <pre class="do-val">@(row.ContentB ?? row.ValueB ?? "— not set —")</pre>
+                        </div>
+                    </div>
+
+                    @if (!cat.ViewOnly && IsCopyable(Category))
+                    {
+                        @if (row.Status == DiffStatus.Same)
+                        {
+                            <div class="do-synced">✓ in sync</div>
+                        }
+                        else
+                        {
+                            <div class="do-acts">
+                                <button class="cbtn" disabled="@(row.Status == DiffStatus.OnlyB)" title="Copy A → B"
+                                        @onclick="() => OpenConfirm(r, aToB: true)">→ A to B</button>
+                                <button class="cbtn" disabled="@(row.Status == DiffStatus.OnlyA)" title="Copy B → A"
+                                        @onclick="() => OpenConfirm(r, aToB: false)">← B to A</button>
+                            </div>
+                        }
+
+                        @if (_confirmKey == row.Key)
+                        {
+                            var srcEp = _aToB ? Compare.EndpointA : Compare.EndpointB;
+                            var tgtEp = _aToB ? Compare.EndpointB : Compare.EndpointA;
+                            <div class="do-confirm">
+                                <div class="do-dir">@(srcEp?.Label) → @(tgtEp?.Label)</div>
+                                @if (Category == "Settings" && tgtEp?.Kind == EndpointKind.Project)
+                                {
+                                    <div class="do-scope">
+                                        <label><input type="radio" name="do-tgt-@row.Key" checked="@(!_local)" @onchange="() => _local = false" /> settings.json (shared)</label>
+                                        <label><input type="radio" name="do-tgt-@row.Key" checked="@(_local)" @onchange="() => _local = true" /> settings.local.json</label>
+                                    </div>
+                                }
+                                @if (srcEp?.Kind == EndpointKind.Base)
+                                {
+                                    <div class="do-warn">⚠ Move removes from the global base — affects all projects.</div>
+                                }
+                                @if (_done)
+                                {
+                                    <div class="do-ok">✓ Applied. <button class="cbtn sm" @onclick="UndoLast">Undo</button> <button class="cbtn sm" @onclick="CloseConfirm">Close</button></div>
+                                }
+                                else if (CopyVm.Error is { } err)
+                                {
+                                    <div class="do-err">@err <button class="cbtn sm" @onclick="CloseConfirm">Close</button></div>
+                                }
+                                else
+                                {
+                                    <div class="do-bar">
+                                        <button class="btn-primary" @onclick="() => Execute(r, move: false)">Copy</button>
+                                        <button class="btn-secondary" @onclick="() => Execute(r, move: true)">Move</button>
+                                        <button class="btn-secondary" @onclick="CloseConfirm">Cancel</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else if (!cat.ViewOnly)
+                    {
+                        <div class="do-soon">copy not available for this category</div>
+                    }
+                </div>
+            }
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Category { get; set; } = "";
+
+    private string? _selKey;
+    private string? _confirmKey;
+    private bool _aToB;
+    private bool _local;
+    private bool _done;
+
+    protected override void OnInitialized()
+    {
+        Compare.Changed += OnChanged;
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private void Toggle(CompareRow row)
+    {
+        _selKey = _selKey == row.Key ? null : row.Key;
+        CloseConfirm();
+    }
+
+    private static bool IsCopyable(string category) =>
+        category is "Settings" or "Memory" or "MCP" or "Hooks" or "Commands" or "Subagents" or "Skills";
+
+    private void OpenConfirm(CompareRow row, bool aToB)
+    {
+        _confirmKey = row.Key;
+        _aToB = aToB;
+        _local = false;
+        _done = false;
+    }
+
+    private void CloseConfirm()
+    {
+        _confirmKey = null;
+        _done = false;
+    }
+
+    private void Execute(CompareRow row, bool move)
+    {
+        var srcEp = _aToB ? Compare.EndpointA : Compare.EndpointB;
+        var tgtEp = _aToB ? Compare.EndpointB : Compare.EndpointA;
+        if (srcEp is null || tgtEp is null) return;
+
+        // Hand the builder the SOURCE side's resolved path for the chosen direction.
+        var srcPath = _aToB ? row.PathA : row.PathB;
+        var orientedRow = row with { SourcePath = srcPath };
+
+        var req = CopyRequestBuilder.Build(Category, orientedRow, srcEp, tgtEp, _local);
+        if (move) CopyVm.Move(req); else CopyVm.Copy(req);
+
+        if (CopyVm.Error is null)
+        {
+            _done = true;
+            // Re-diff so chips reflect the new state (CompareContext rebuilds from fresh snapshots).
+            Compare.SetB(Compare.EndpointB!.Id);
+            Refresh.Request();
+        }
+    }
+
+    private void UndoLast()
+    {
+        CopyVm.Undo();
+        if (CopyVm.Error is null)
+        {
+            _done = false;
+            CloseConfirm();
+            Compare.SetB(Compare.EndpointB!.Id);
+            Refresh.Request();
+        }
+    }
+
+    private static string Chip(DiffStatus s) => s switch
+    {
+        DiffStatus.Same => "=",
+        DiffStatus.Differs => "≠",
+        DiffStatus.OnlyA => "◑",
+        _ => "○",
+    };
+
+    private static string ChipClass(DiffStatus s) => s switch
+    {
+        DiffStatus.Same => "same",
+        DiffStatus.Differs => "diff",
+        DiffStatus.OnlyA => "onlya",
+        _ => "onlyb",
+    };
+
+    public void Dispose() => Compare.Changed -= OnChanged;
+}

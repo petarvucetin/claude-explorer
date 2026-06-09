@@ -1,0 +1,50 @@
+@using ClaudeExplorer.App.Compare
+@inject CompareContext Compare
+@implements IDisposable
+
+<div class="cmpbar">
+    <span class="cmpbar-lbl">Compare with</span>
+
+    <select class="cmpbar-pick" value="@Compare.EndpointA?.Id" @onchange="OnAChanged" title="Endpoint A">
+        @foreach (var ep in Compare.Endpoints)
+        {
+            <option value="@ep.Id" selected="@(ep.Id == Compare.EndpointA?.Id)">@ep.Label</option>
+        }
+    </select>
+
+    <button class="cmpbar-swap" @onclick="() => Compare.Swap()" disabled="@(!Compare.IsComparing)" title="Swap A ⇄ B">⇄</button>
+
+    <select class="cmpbar-pick" value="@Compare.EndpointB?.Id" @onchange="OnBChanged" title="Endpoint B (pick to compare)">
+        <option value="" selected="@(Compare.EndpointB is null)">— off —</option>
+        @foreach (var ep in Compare.Endpoints)
+        {
+            <option value="@ep.Id" selected="@(ep.Id == Compare.EndpointB?.Id)">@ep.Label</option>
+        }
+    </select>
+
+    @if (Compare.IsComparing)
+    {
+        <span class="cmpbar-on">comparing</span>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized() => Compare.Changed += OnChanged;
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnAChanged(ChangeEventArgs e)
+    {
+        var id = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(id)) Compare.SetA(id);
+    }
+
+    private void OnBChanged(ChangeEventArgs e)
+    {
+        var id = e.Value?.ToString();
+        if (string.IsNullOrEmpty(id)) Compare.ClearB();
+        else Compare.SetB(id);
+    }
+
+    public void Dispose() => Compare.Changed -= OnChanged;
+}
