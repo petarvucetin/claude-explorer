@@ -87,6 +87,9 @@ internal static class Program
             sp.GetRequiredService<IFileSystem>(), sp.GetRequiredService<IFileWriter>(),
             sp.GetRequiredService<IBackupStore>(), sp.GetRequiredService<IProcessRunner>()));
 
+        // Markdown rendering (formatted viewer).
+        builder.Services.AddSingleton<ClaudeExplorer.Core.Rendering.MarkdownRenderer>();
+
         // App-wide services.
         builder.Services.AddSingleton<RefreshService>();
 

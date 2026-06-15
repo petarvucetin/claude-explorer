@@ -9,3 +9,10 @@ window.cx.highlight = function (el) {
     if (window.hljs.lineNumbersBlock) window.hljs.lineNumbersBlock(el, { singleLine: true });
     el.dataset.cxHighlighted = el.textContent.length.toString();
 };
+
+// Highlight every <pre><code> block inside a rendered-markdown container. Best-effort: no-op
+// when highlight.js is unavailable.
+window.cx.highlightAll = function (root) {
+    if (!root || !window.hljs) return;
+    root.querySelectorAll('pre code').forEach(function (el) { window.hljs.highlightElement(el); });
+};

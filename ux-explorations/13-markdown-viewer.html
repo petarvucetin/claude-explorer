@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MarkdownViewer — Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Spline+Sans+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F5; --grid:#D8DEE7; --grid-bold:#CAD2DD; --panel:#FBFCFE;
+    --ink:#16202E; --ink-soft:#54616F; --ink-faint:#8893A1; --edge:#C2CAD6; --edge-2:#1A2230;
+    --blue:#1F47D6; --blue-soft:#3E63E0; --blue-wash:#E1E8FB;
+    --amber:#B5710C; --amber-wash:#F6ECD6; --red:#C2362B; --green:#2E7D4F; --green-wash:#DDEEE2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:"Archivo",sans-serif; color:var(--ink); background:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+      linear-gradient(var(--grid-bold) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid-bold) 1px,transparent 1px);
+    background-size:24px 24px,24px 24px,120px 120px,120px 120px;
+    margin:0; padding:34px;
+  }
+  .wrap{max-width:1280px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:26px;}
+  .pagehead{grid-column:1/-1; margin-bottom:2px;}
+  .k{font-family:"Spline Sans Mono",monospace; font-size:11px; letter-spacing:.18em; color:var(--blue); text-transform:uppercase; display:flex; align-items:center; gap:9px;}
+  .k::before{content:""; width:18px; height:2px; background:var(--blue);}
+  h1.page{font-size:26px; margin:6px 0 0; letter-spacing:.01em;}
+  .sub{font-family:"Spline Sans Mono",monospace; font-size:11.5px; color:var(--ink-soft); margin-top:5px;}
+
+  /* corner-tick card */
+  .card{position:relative; background:var(--panel); border:1.5px solid var(--edge); border-radius:8px; padding:16px;}
+  .card::before,.card::after{content:""; position:absolute; width:12px; height:12px; border:2px solid var(--edge-2);}
+  .card::before{top:-1px; left:-1px; border-right:none; border-bottom:none;}
+  .card::after{bottom:-1px; right:-1px; border-left:none; border-top:none;}
+  .cap{font-family:"Spline Sans Mono",monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:10px;}
+
+  /* ── MarkdownViewer ─────────────────────────────────────────── */
+  .mdview{border:1.5px solid var(--edge-2); border-radius:4px; overflow:hidden; font-family:"Spline Sans Mono",monospace;}
+  .mdview-head{
+    background:var(--ink); color:var(--ink-faint); font-size:10px; letter-spacing:.08em;
+    padding:6px 8px 6px 12px; text-transform:uppercase; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .mdview-head .path{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .seg{display:flex; border:1px solid #2B3850; border-radius:5px; overflow:hidden; flex:none;}
+  .seg button{
+    font-family:"Spline Sans Mono",monospace; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    padding:3px 10px; background:transparent; color:var(--ink-faint); border:none; cursor:pointer;
+  }
+  .seg button + button{border-left:1px solid #2B3850;}
+  .seg button.on{background:var(--blue); color:#fff;}
+
+  /* rendered (light, ink-on-paper, on-brand for reading) */
+  .md-rendered{background:var(--panel); color:var(--ink); padding:18px 20px; max-height:520px; overflow:auto; font-family:"Archivo",sans-serif; line-height:1.62; font-size:14px;}
+  .md-rendered h1,.md-rendered h2,.md-rendered h3{font-family:"Archivo",sans-serif; line-height:1.2; margin:20px 0 9px;}
+  .md-rendered h1{font-size:21px; font-weight:800; letter-spacing:.01em; text-transform:uppercase; padding-bottom:7px; border-bottom:2px solid var(--blue-wash); margin-top:2px;}
+  .md-rendered h2{font-size:16.5px; font-weight:700; display:flex; align-items:center; gap:9px;}
+  .md-rendered h2::before{content:""; width:14px; height:3px; border-radius:2px; background:var(--blue); flex:none;}
+  .md-rendered h3{font-size:13.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+  .md-rendered p{margin:9px 0; color:var(--ink-soft);}
+  .md-rendered strong{color:var(--ink); font-weight:700;}
+  .md-rendered a{color:var(--blue); text-decoration:underline; text-underline-offset:2px;}
+  .md-rendered ul,.md-rendered ol{margin:9px 0; padding-left:20px; color:var(--ink-soft);}
+  .md-rendered li{margin:4px 0;}
+  .md-rendered ul li::marker{color:var(--blue);}
+  .md-rendered code{font-family:"Spline Sans Mono",monospace; font-size:12px; color:var(--blue); background:var(--blue-wash); border-radius:4px; padding:1px 5px;}
+  .md-rendered pre{background:#0E1623; border-radius:6px; padding:12px 14px; overflow-x:auto; margin:12px 0;}
+  .md-rendered pre code{display:block; color:#C9D1DB; background:none; padding:0; font-size:11.5px; line-height:1.7;}
+  .md-rendered blockquote{margin:11px 0; padding:4px 14px; border-left:3px solid var(--blue); color:var(--ink-soft); background:var(--blue-wash);}
+  .md-rendered hr{border:none; border-top:1px dashed var(--grid-bold); margin:16px 0;}
+  .md-rendered table{border-collapse:collapse; font-size:12.5px; margin:11px 0; width:100%;}
+  .md-rendered th,.md-rendered td{border:1px solid var(--edge); padding:6px 10px; text-align:left;}
+  .md-rendered th{background:var(--blue-wash); font-family:"Spline Sans Mono",monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+  /* frontmatter rendered as a metadata block, not dumped as text */
+  .md-fm{display:grid; grid-template-columns:120px 1fr; gap:5px 12px; font-family:"Spline Sans Mono",monospace; font-size:11px; background:var(--paper); border:1px dashed var(--edge-2); border-radius:6px; padding:11px 13px; margin-bottom:6px;}
+  .md-fm .fmk{color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em;}
+  .md-fm .fmv{color:var(--ink); word-break:break-word;}
+  .md-fm .fm-badge{grid-column:1/-1; font-size:9px; font-weight:700; letter-spacing:.08em; color:var(--amber); text-transform:uppercase;}
+
+  /* source (the existing dark code viewer) */
+  .md-source{background:#0E1623; color:#C9D1DB; font-size:11.5px; line-height:1.7; padding:12px 0; margin:0; max-height:520px; overflow:auto; font-family:"Spline Sans Mono",monospace;}
+  .md-source code{display:block;}
+  .md-source .ln{display:inline-block; width:36px; color:#4A5568; text-align:right; margin-right:14px; user-select:none; border-right:1px solid #1E2D40; padding-right:8px;}
+
+  .hidden{display:none;}
+  .note{grid-column:1/-1; font-family:"Spline Sans Mono",monospace; font-size:11px; color:var(--ink-faint); margin-top:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="pagehead">
+    <div class="k">Component · MarkdownViewer</div>
+    <h1 class="page">Formatted markdown for <code style="font-family:'Spline Sans Mono';font-size:18px;color:var(--blue)">.md</code> previews</h1>
+    <div class="sub">Default = Rendered · one-click toggle to Source · non-.md files keep the raw CodeViewer</div>
+  </div>
+
+  <!-- CARD A: CLAUDE.md (no frontmatter) -->
+  <div class="card" id="cardA">
+    <div class="cap">Memory · CLAUDE.md</div>
+    <div class="mdview">
+      <div class="mdview-head">
+        <span class="path">~/.claude/CLAUDE.md</span>
+        <span class="seg">
+          <button class="on" data-view="rendered" data-card="A">Rendered</button>
+          <button data-view="source" data-card="A">Source</button>
+        </span>
+      </div>
+      <div class="md-rendered" id="A-rendered">
+        <h1>Claude Explorer</h1>
+        <p>Cross-platform desktop app to <strong>discover</strong>, safely edit, and get
+        recommendations for the settings that affect Claude Code's behavior.</p>
+        <h2>Effective config</h2>
+        <p>Computes the merged config per project and shows, for every setting, the winning
+        source — rendered as a <strong>precedence matrix</strong>.</p>
+        <ul>
+          <li>Permissions: <code>allow</code> / <code>deny</code> / <code>ask</code></li>
+          <li>Hooks resolved across scopes with provenance</li>
+          <li>Deep-link back to <code>settings.json</code> at the exact line</li>
+        </ul>
+        <h3>Probe safety</h3>
+        <blockquote>Never execute the actual hook/MCP command — only <code>--version</code>
+        probes against a known allowlist.</blockquote>
+        <pre><code>"hooks": {
+  "SessionStart": [
+    { "command": "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" }
+  ]
+}</code></pre>
+      </div>
+      <pre class="md-source hidden" id="A-source"><code><span class="ln">1</span># Claude Explorer
+<span class="ln">2</span>
+<span class="ln">3</span>Cross-platform desktop app to **discover**, safely edit, and get
+<span class="ln">4</span>recommendations for the settings that affect Claude Code's behavior.
+<span class="ln">5</span>
+<span class="ln">6</span>## Effective config
+<span class="ln">7</span>
+<span class="ln">8</span>Computes the merged config per project ... a **precedence matrix**.
+<span class="ln">9</span>
+<span class="ln">10</span>- Permissions: `allow` / `deny` / `ask`
+<span class="ln">11</span>- Hooks resolved across scopes with provenance</code></pre>
+    </div>
+  </div>
+
+  <!-- CARD B: skill .md WITH frontmatter -->
+  <div class="card" id="cardB">
+    <div class="cap">Skills · SKILL.md (with frontmatter)</div>
+    <div class="mdview">
+      <div class="mdview-head">
+        <span class="path">~/.claude/skills/graphify/SKILL.md</span>
+        <span class="seg">
+          <button class="on" data-view="rendered" data-card="B">Rendered</button>
+          <button data-view="source" data-card="B">Source</button>
+        </span>
+      </div>
+      <div class="md-rendered" id="B-rendered">
+        <div class="md-fm">
+          <div class="fm-badge">frontmatter</div>
+          <div class="fmk">name</div><div class="fmv">graphify</div>
+          <div class="fmk">description</div><div class="fmv">any input → knowledge graph → clustered communities → HTML + JSON + audit report</div>
+        </div>
+        <h1>Graphify</h1>
+        <p>Turn any input — code, docs, papers, images — into a navigable
+        <strong>knowledge graph</strong> with clustered communities.</p>
+        <h2>Pipeline</h2>
+        <ol>
+          <li>Extract entities &amp; relations</li>
+          <li>Build graph, detect communities</li>
+          <li>Emit <code>graph.html</code>, <code>graph.json</code>, audit report</li>
+        </ol>
+        <table>
+          <thead><tr><th>Output</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>graph.html</td><td>interactive viewer</td></tr>
+            <tr><td>graph.json</td><td>machine-readable</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre class="md-source hidden" id="B-source"><code><span class="ln">1</span>---
+<span class="ln">2</span>name: graphify
+<span class="ln">3</span>description: any input → knowledge graph → ... audit report
+<span class="ln">4</span>---
+<span class="ln">5</span>
+<span class="ln">6</span># Graphify
+<span class="ln">7</span>
+<span class="ln">8</span>Turn any input — code, docs, papers, images — into a navigable
+<span class="ln">9</span>**knowledge graph** with clustered communities.</code></pre>
+    </div>
+  </div>
+
+  <div class="note">Left: CLAUDE.md (plain). Right: a skill SKILL.md — YAML frontmatter is lifted into a metadata block instead of being dumped as text. Toggle is live — click Rendered / Source.</div>
+</div>
+
+<script>
+  document.querySelectorAll('.seg button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const card=btn.dataset.card, view=btn.dataset.view;
+      document.querySelectorAll(`.seg button[data-card="${card}"]`).forEach(b=>b.classList.toggle('on', b===btn));
+      document.getElementById(`${card}-rendered`).classList.toggle('hidden', view!=='rendered');
+      document.getElementById(`${card}-source`).classList.toggle('hidden', view!=='source');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+@inject IJSRuntime JS
+@inject ClaudeExplorer.Core.Rendering.MarkdownRenderer Renderer
+
+<div class="mdview">
+    <div class="mdview-head">
+        <span class="path">@Title</span>
+        <div class="seg">
+            <button class="@(_source ? "" : "on")" @onclick="() => _source = false">Rendered</button>
+            <button class="@(_source ? "on" : "")" @onclick="() => _source = true">Source</button>
+        </div>
+    </div>
+    @if (_source)
+    {
+        <pre class="md-source"><code>@for (var i = 0; i < _lines.Length; i++)
+{<span class="ln">@(i + 1)</span>@_lines[i]
+}</code></pre>
+    }
+    else
+    {
+        <div class="md-rendered" @ref="_el">
+            @if (_fm.Count > 0)
+            {
+                <div class="md-fm">
+                    <div class="fm-badge">frontmatter</div>
+                    @foreach (var kv in _fm)
+                    {
+                        <span class="fmk">@kv.Key</span><span class="fmv">@kv.Value</span>
+                    }
+                </div>
+            }
+            @((MarkupString)_html)
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Content { get; set; } = "";
+
+    private bool _source;
+    private IReadOnlyDictionary<string, string> _fm = new Dictionary<string, string>();
+    private string _html = "";
+    private string[] _lines = Array.Empty<string>();
+    private ElementReference _el;
+    private string? _highlighted;
+
+    protected override void OnParametersSet()
+    {
+        var rendered = Renderer.Render(Content);
+        _fm = rendered.Fields;
+        _html = rendered.Html;
+        _lines = (Content ?? "").Replace("\r\n", "\n").Split('\n');
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_source && _highlighted != Content)
+        {
+            await JS.InvokeVoidAsync("cx.highlightAll", _el);
+            _highlighted = Content;
+        }
+    }
+}

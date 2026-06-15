@@ -1,5 +1,6 @@
 @page "/mcp"
 @using ClaudeExplorer.App.Screens.Mcp
+@using ClaudeExplorer.App.Util
 @using ClaudeExplorer.Core.Mcp
 @inject McpViewModel Vm
 @inject RefreshService Refresh
@@ -72,7 +73,7 @@ else if (Vm.View is { } view)
             </div>
             @if (Fs.FileExists(sel.SourceFile))
             {
-                <div style="margin-top:12px"><CodeViewer Title="@sel.SourceFile" Content="@Fs.ReadAllText(sel.SourceFile)" /></div>
+                <div style="margin-top:12px"><CodeViewer Title="@sel.SourceFile" Content="@JsonFormat.TryPretty(Fs.ReadAllText(sel.SourceFile))" Language="json" Capped="true" /></div>
             }
         </CornerTickPanel>
     }

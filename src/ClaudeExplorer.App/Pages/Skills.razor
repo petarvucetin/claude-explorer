@@ -62,7 +62,7 @@ else
                     </div>
                     @if (Fs.FileExists(s.FilePath))
                     {
-                        <div style="margin-top:12px"><CodeViewer Title="@s.FilePath" Content="@Fs.ReadAllText(s.FilePath)" /></div>
+                        <div style="margin-top:12px"><MarkdownViewer Title="@s.FilePath" Content="@Fs.ReadAllText(s.FilePath)" /></div>
                     }
                 </CornerTickPanel>
             }
