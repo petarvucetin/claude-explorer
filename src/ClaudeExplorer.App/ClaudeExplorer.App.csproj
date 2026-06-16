@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>ClaudeExplorer.App</RootNamespace>
+    <ApplicationIcon>app.ico</ApplicationIcon>
     <!-- Photino serves files from the output directory, so wwwroot must be copied there. -->
     <StaticWebAssetsEnabled>true</StaticWebAssetsEnabled>
   </PropertyGroup>
@@ -21,6 +22,9 @@
 
   <ItemGroup>
     <Content Update="wwwroot\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="app.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

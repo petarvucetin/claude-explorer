@@ -151,6 +151,7 @@ internal static class Program
 
         app.MainWindow
             .SetTitle("Claude Explorer")
+            .SetIconFile("app.ico")
             .SetUseOsDefaultSize(false)
             .SetSize(1320, 860)
             .Center();
